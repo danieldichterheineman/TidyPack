@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tidy Pack – skiss</title>
+<!--
+  Skiss av hur Tidy Pack ungefär ser ut i spelet. Ingen kod körs mot spelet och inget laddas från nätet.
+  Skärmen är 1366 × 768 enheter, som spelets gränssnitt vid skala 1 (UI Scale 1) på en
+  bred skärm. Måtten i enheter är därför samma som i SetSize och SetPoint i koden.
+  Typsnitt, bilder och exakt storlek blir annorlunda i spelet – finjustera där.
+
+  Fönstret är spelets eget väskfönster (ContainerFrameCombinedBags). Tidy Pack ordnar bara om
+  rutorna i det. Måtten nedan (BUTTON, SPACING, COLUMNS osv.) ska vara samma som i Layout.lua.
+-->
+<style>
+  :root {
+    --wow-gold: #ffd100;       /* NORMAL_FONT_COLOR: rubriker och vanlig text */
+    --wow-white: #ffffff;      /* HIGHLIGHT_FONT_COLOR: framhävd text */
+    --wow-gray: #808080;       /* GRAY_FONT_COLOR: avstängt */
+    --wow-green: #1aff1a;      /* GREEN_FONT_COLOR */
+    --title-font: "Friz Quadrata", "Friz Quadrata TT", Georgia, "Times New Roman", serif;
+    --text-font: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px; background: #0b0d12; color: #d8d8d8;
+    font: 15px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #fff; }
+  .note { margin: 0 0 12px; color: #a8a8a8; max-width: 900px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0 0 12px; font-size: 14px; }
+  .controls fieldset { border: 1px solid #2a2f3a; border-radius: 6px; padding: 6px 12px; margin: 0; }
+  .controls legend { color: #a8a8a8; padding: 0 4px; }
+  .controls label { margin-right: 12px; cursor: pointer; white-space: nowrap; }
+
+  /* Skärmen: 1366 × 768 enheter, skalas ned för att få plats i webbläsaren. */
+  .viewport { width: 100%; max-width: 1366px; aspect-ratio: 1366 / 768; position: relative; overflow: hidden;
+    border-radius: 6px; box-shadow: 0 0 0 1px #2a2f3a; }
+  .screen { position: absolute; left: 0; top: 0; width: 1366px; height: 768px; transform-origin: 0 0;
+    background: radial-gradient(ellipse at 50% 35%, #3d4a3a 0%, #222a22 45%, #111511 100%); }
+
+  /* Spelets standardgränssnitt, ungefär där det ligger från början. */
+  .blizz { position: absolute; border: 1px dashed rgba(255,255,255,.28); border-radius: 4px;
+    color: rgba(255,255,255,.45); font: 12px var(--text-font); display: flex; align-items: center;
+    justify-content: center; text-align: center; background: rgba(0,0,0,.18); }
+
+  /* Spelets väskfönster: ram med porträtt, titelrad och stängknapp. */
+  .bagframe { position: absolute; background: linear-gradient(160deg, #24221f 0%, #171614 60%, #100f0e 100%);
+    border: 2px solid #6e6252; border-radius: 6px; box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6); }
+  .bagframe .titlebar { position: absolute; left: 0; right: 0; top: 0; height: 24px; border-bottom: 1px solid #000;
+    background: linear-gradient(#3a3631, #24221f); font: 13px/24px var(--title-font); color: var(--wow-gold);
+    text-align: center; text-shadow: 1px 1px 0 #000; }
+  .bagframe .titlebar .free { color: var(--wow-white); margin-left: 6px; }
+  .portrait { position: absolute; left: -10px; top: -10px; width: 58px; height: 58px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #b08a4a, #5a3a18 70%); border: 3px solid #c9a227;
+    box-shadow: 0 0 0 1px #000; }
+  .portrait::after { content: ""; position: absolute; left: 15px; top: 17px; width: 22px; height: 20px;
+    border-radius: 4px 4px 8px 8px; background: #3a2410; box-shadow: inset 0 3px 0 #7a5228; }
+  .close { position: absolute; top: 2px; right: 3px; width: 20px; height: 20px; border-radius: 50%;
+    background: radial-gradient(#b22219, #5b0d08); border: 1px solid #d4af37; color: #ffd9a0;
+    font: bold 12px/18px Arial, sans-serif; text-align: center; }
+
+  /* Innehållet. Alla lägen räknas från fönstrets övre vänstra hörn. */
+  .abs { position: absolute; }
+  .search { height: 20px; border: 1px solid #5a5a5a; border-radius: 3px; background: #050505;
+    font: 12px var(--text-font); color: var(--wow-gray); padding: 1px 6px 0 22px; line-height: 17px; }
+  .search::before { content: ""; position: absolute; left: 6px; top: 4px; width: 8px; height: 8px;
+    border: 2px solid #9a9a9a; border-radius: 50%; }
+  .search::after { content: ""; position: absolute; left: 15px; top: 13px; width: 5px; height: 2px;
+    background: #9a9a9a; transform: rotate(45deg); }
+  .section { font: 15px var(--title-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
+  .divider { height: 1px; background: linear-gradient(90deg, rgba(150,130,90,0), rgba(150,130,90,.7) 15%, rgba(150,130,90,.7) 85%, rgba(150,130,90,0)); }
+  .header { font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
+  .slot { width: 37px; height: 37px; border-radius: 3px; border: 1px solid #000;
+    box-shadow: inset 0 0 0 1px #3a3a3a; }
+  .slot .count, .slot .ilvl, .slot .boe { position: absolute; font: bold 11px var(--text-font); color: #fff;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
+  .slot .count { right: 2px; bottom: 0; font-size: 12px; }
+  .slot .ilvl { left: 2px; top: 0; }
+  .slot .boe { left: 2px; bottom: 0; }
+  .slot.q2 { box-shadow: inset 0 0 0 2px #1eff00; }   /* ovanlig: grön ram */
+  .slot.q3 { box-shadow: inset 0 0 0 2px #0070dd; }   /* sällsynt: blå ram */
+  .slot.junk::after { content: ""; position: absolute; left: 2px; top: 2px; width: 9px; height: 9px;
+    border-radius: 50%; background: radial-gradient(#e8d070, #8a6a10); box-shadow: 0 0 0 1px #000; }
+  .slot.quest::after { content: "!"; position: absolute; left: 3px; top: 0; font: bold 14px Arial, sans-serif;
+    color: #ffd100; text-shadow: 1px 1px 0 #000; }
+  .slot.upgrade::after { content: ""; position: absolute; right: 2px; top: 2px; width: 0; height: 0;
+    border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #1aff1a;
+    filter: drop-shadow(0 0 1px #000); }
+  .slot.new { box-shadow: inset 0 0 0 2px #fff6a0, 0 0 8px 2px rgba(255,240,140,.8); }
+  .slot.empty { background: #141414; box-shadow: inset 0 0 0 1px #2a2a2a; }
+  .slot.cursor { outline: 3px solid #4fc3ff; outline-offset: 2px; }
+  .money { font: 12px var(--text-font); color: var(--wow-white); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
+  .coin { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 1px;
+    vertical-align: -1px; box-shadow: 0 0 0 1px #000; }
+  .coin.gold { background: radial-gradient(#fff2a0, #c9a227); }
+  .coin.silver { background: radial-gradient(#ffffff, #9a9a9a); }
+  .coin.copper { background: radial-gradient(#ffc090, #a0522d); }
+
+  /* Förklaringar till skissen. */
+  .callout { position: absolute; font: 12px -apple-system, "Segoe UI", sans-serif; color: #fff;
+    background: #2563eb; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  ul { max-width: 900px; padding-left: 20px; }
+  li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+  <h1>Tidy Pack – skiss</h1>
+  <p class="note">Ungefär så här ser spelets väskfönster ut med Tidy Pack, vid standardskalan. Fönstret,
+    sökrutan och pengarna är spelets egna – Tidy Pack ordnar bara sakerna i grupper. Typsnitt och bilder
+    blir lite annorlunda i spelet. Håll musen över en ruta för att se vad det är för sak.</p>
+
+  <div class="controls">
+    <fieldset>
+      <legend>Prova</legend>
+      <label><input type="checkbox" id="gamepadToggle"> Med handkontroll</label>
+    </fieldset>
+  </div>
+
+  <div class="viewport" id="viewport">
+    <div class="screen" id="screen">
+      <!-- Spelets standardgränssnitt (ungefärligt) -->
+      <div class="blizz" style="left:20px; top:20px; width:230px; height:80px;">Spelarram</div>
+      <div class="blizz" style="left:270px; top:20px; width:230px; height:80px;">Målram</div>
+      <div class="blizz" style="right:16px; top:16px; width:180px; height:180px; border-radius:50%;">Minikarta</div>
+      <div class="blizz" style="left:16px; bottom:16px; width:430px; height:180px;">Chatt</div>
+      <div class="blizz" style="left:458px; bottom:16px; width:450px; height:90px;">Aktionsfält</div>
+      <div class="blizz" style="right:16px; bottom:16px; width:240px; height:40px;">Väskknappar och menyer</div>
+
+      <!-- Spelets väskfönster. Spelet lägger det nere till höger, ovanför väskknapparna. -->
+      <div class="bagframe" id="window"></div>
+      <div id="callouts"></div>
+    </div>
+  </div>
+
+  <ul>
+    <li><b>Fönstret är spelets eget</b> väskfönster (alla väskor i ett). Spelet bestämmer var det ligger: nere
+      till höger, ovanför väskknapparna. Det är 12 rutor brett (514 enheter) och höjden följer innehållet.</li>
+    <li><b>Grupperna</b> kommer alltid i samma ordning: Potions, Food &amp; Drink, Consumables, sedan
+      <i>Equipment</i> (Weapons, Armor, Ammo), <i>Crafting</i> (Trade Goods, Recipes) och sist Quest Items,
+      Keys, Bags, Miscellaneous, Junk och Empty. Grupper som är tomma visas inte. Inom en grupp: bäst kvalitet
+      först, sedan namn och sist storleken på högen. Små grupper delar rad.</li>
+    <li><b>På rutorna</b>: nivån på vapen och rustning uppe till vänster, <b>BoE</b> nere till vänster på saker
+      som binds när du tar på dem, och antalet nere till höger. Gråa saker får spelets eget skräpmynt när du
+      står hos en handlare.</li>
+    <li><b>Lediga platser</b> visas som en enda ruta med antalet (19). Släpp en sak där, så hamnar den på
+      första lediga plats.</li>
+    <li><b>Väskor</b>: de väskor du har på dig syns inte bland sakerna. Lösa väskor ligger i gruppen Bags. Den
+      gröna pilen betyder att väskan är större än din minsta väska: högerklicka (eller tryck på spelets
+      knapp för att använda med handkontrollen), så byts din minsta väska ut och sakerna i den flyttas med.</li>
+    <li><b>Med handkontroll</b> (kryssa i rutan ovanför) fungerar allt som i spelets vanliga väskor: markören
+      hoppar mellan rutorna, och spelets egna knappar för att använda, utrusta, sälja, dela och förstöra finns
+      kvar. Nycklarna från nyckelringen hamnar då i gruppen Keys.</li>
+    <li><b>Spelets egen sökruta, pengar och markering av nya saker</b> används som de är. Spelets knapp för att
+      städa väskorna döljs, eftersom sakerna ändå alltid visas grupperade.</li>
+  </ul>
+
+<script>
+  // ---------------------------------------------------------------------------------
+  // Samma mått som i Layout.lua (enheter i spelet vid skala 1).
+  const BUTTON = 37, SPACING = 5, COLUMNS = 12;
+  const CELL = BUTTON + SPACING;
+  const GRID_WIDTH = COLUMNS * BUTTON + (COLUMNS - 1) * SPACING;   // 499
+  const FRAME_WIDTH = GRID_WIDTH + 15;                              // 514, som spelets egen marginal
+  const LEFT = 8;               // rutornas vänsterkant i fönstret
+  const TOP = 64;               // där grupperna börjar (under titelraden och sökrutan)
+  const HEADER = 18;            // gruppens rubrik, inklusive luft under den
+  const GROUP_GAP = 12;         // avstånd mellan grupper som delar rad
+  const SHELF_GAP = 6;          // avstånd mellan rader av grupper
+  const SECTION_GAP = 16;       // avstånd före en ny sektion (med en tunn linje i mitten)
+  const SECTION_TITLE = 22;     // sektionens rubrik, t.ex. Equipment
+  const BOTTOM = 34;            // spelets rad med pengar längst ned
+  const ANCHOR_X = -4, ANCHOR_Y = 85;   // spelet lägger fönstret så här från nedre högra hörnet
+
+  // Sektioner och grupper i fast ordning.
+  const SECTIONS = [
+    { title: null, groups: ["Potions", "Food & Drink", "Consumables"] },
+    { title: "Equipment", groups: ["Weapons", "Armor", "Ammo"] },
+    { title: "Crafting", groups: ["Trade Goods", "Recipes"] },
+    { title: null, groups: ["Quest Items", "Keys", "Bags", "Miscellaneous", "Junk", "Empty"] },
+  ];
+
+  // Exempel på vad en karaktär i nivå 30 kan bära. q = kvalitet: 0 grå, 1 vit, 2 grön, 3 blå.
+  const items = [
+    ["Potions", "Healing Potion", 1, 5, { cursor: true }],
+    ["Potions", "Minor Mana Potion", 1, 3],
+    ["Potions", "Elixir of Lion's Strength", 1, 2],
+    ["Food & Drink", "Roasted Boar Meat", 1, 20],
+    ["Food & Drink", "Refreshing Spring Water", 1, 15],
+    ["Consumables", "Heavy Wool Bandage", 1, 12],
+    ["Consumables", "Scroll of Stamina", 1, 1],
+    ["Weapons", "Gnarled Staff", 2, 1, { ilvl: 22, boe: true }],
+    ["Weapons", "Bronze Shortsword", 1, 1, { ilvl: 18 }],
+    ["Armor", "Emberglow Ring", 3, 1, { ilvl: 30, isNew: true }],
+    ["Armor", "Fisherman's Hat", 2, 1, { ilvl: 20, boe: true }],
+    ["Armor", "Ranger's Cloak", 2, 1, { ilvl: 24, boe: true }],
+    ["Armor", "Sturdy Leather Belt", 1, 1, { ilvl: 12 }],
+    ["Armor", "Tarnished Chain Gloves", 1, 1, { ilvl: 14 }],
+    ["Trade Goods", "Moss Agate", 2, 1],
+    ["Trade Goods", "Bronze Bar", 1, 3],
+    ["Trade Goods", "Coarse Thread", 1, 5],
+    ["Trade Goods", "Copper Ore", 1, 10],
+    ["Trade Goods", "Light Leather", 1, 10],
+    ["Trade Goods", "Linen Cloth", 1, 20],
+    ["Trade Goods", "Linen Cloth", 1, 13],
+    ["Trade Goods", "Peacebloom", 1, 6],
+    ["Trade Goods", "Rough Stone", 1, 12],
+    ["Trade Goods", "Silverleaf", 1, 9],
+    ["Trade Goods", "Tin Ore", 1, 4],
+    ["Trade Goods", "Wool Cloth", 1, 8],
+    ["Recipes", "Pattern: Fine Leather Boots", 2, 1],
+    ["Quest Items", "Gnoll Paw", 1, 6, { quest: true, isNew: true }],
+    ["Quest Items", "Murloc Fin", 1, 4, { quest: true }],
+    ["Quest Items", "Sealed Letter", 1, 1, { quest: true }],
+    ["Keys", "Cellar Key", 1, 1, { gamepadOnly: true }],
+    ["Keys", "Skeleton Key", 1, 1, { gamepadOnly: true }],
+    ["Bags", "Heavy Brown Bag (14 slots)", 1, 1, { upgrade: true }],
+    ["Bags", "Small Brown Pouch (6 slots)", 1, 1],
+    ["Miscellaneous", "Box of Spare Parts", 1, 1],
+    ["Miscellaneous", "Hearthstone", 1, 1],
+    ["Junk", "Broken Fang", 0, 3, { junk: true }],
+    ["Junk", "Cracked Pottery", 0, 1, { junk: true }],
+    ["Junk", "Ruined Pelt", 0, 2, { junk: true }],
+    ["Junk", "Tattered Cloth Vest", 0, 1, { junk: true }],
+    ["Junk", "Torn Wing", 0, 4, { junk: true }],
+    ["Empty", "19 free slots", -1, 19, { empty: true }],
+  ].map(([group, name, quality, count, extra]) => ({ group, name, quality, count, ...(extra || {}) }));
+
+  // Färger för "ikonerna" – bara för att rutorna ska gå att skilja åt i skissen.
+  const ICON = {
+    "Potions": ["#b0304a", "#3a0c18"], "Food & Drink": ["#a07040", "#3a2410"], "Consumables": ["#a0384a", "#3a1018"],
+    "Weapons": ["#8a8a9a", "#2a2a34"], "Armor": ["#7a6a5a", "#2e2620"], "Trade Goods": ["#6a7a4a", "#222a14"],
+    "Recipes": ["#b09a6a", "#3a3020"], "Quest Items": ["#8a7040", "#2a2010"], "Keys": ["#9a8a50", "#3a3018"],
+    "Bags": ["#8a5a3a", "#2a1a10"], "Miscellaneous": ["#4a6a8a", "#141e2a"], "Junk": ["#5a5a5a", "#222"],
+  };
+
+  // Ordningen inom en grupp: kvalitet (bäst först), namn, storlek på högen (störst först).
+  function compareItems(a, b) {
+    if (a.quality !== b.quality) return b.quality - a.quality;
+    if (a.name !== b.name) return a.name < b.name ? -1 : 1;
+    return b.count - a.count;
+  }
+
+  // Lägger ut sektionerna uppifrån och ned. Inom en sektion läggs grupperna rad för rad
+  // ("hyllor"): en grupp delar rad med föregående om den får plats, annars börjar en ny rad.
+  function layout(gamepad) {
+    const placed = [];
+    let y = TOP, firstSection = true;
+    for (const section of SECTIONS) {
+      const groups = section.groups
+        .map(name => ({ name, list: items.filter(i => i.group === name && (gamepad || !i.gamepadOnly)).sort(compareItems) }))
+        .filter(g => g.list.length > 0);
+      if (groups.length === 0) continue;
+      if (!firstSection) {
+        placed.push({ divider: true, y: y + SECTION_GAP / 2 });
+        y += SECTION_GAP;
+      }
+      if (section.title) {
+        placed.push({ section: section.title, y });
+        y += SECTION_TITLE;
+      }
+      firstSection = false;
+      let x = 0, shelfHeight = 0;
+      for (const g of groups) {
+        const cols = Math.min(g.list.length, COLUMNS);
+        const rows = Math.ceil(g.list.length / COLUMNS);
+        const width = cols * BUTTON + (cols - 1) * SPACING;
+        const height = HEADER + rows * BUTTON + (rows - 1) * SPACING;
+        let left = x === 0 ? 0 : x + GROUP_GAP;
+        if (x > 0 && left + width > GRID_WIDTH) {          // får inte plats: ny rad
+          y += shelfHeight + SHELF_GAP;
+          left = 0; shelfHeight = 0;
+        }
+        placed.push({ header: g.name, x: left, y });
+        g.list.forEach((item, i) => placed.push({ item, x: left + (i % COLUMNS) * CELL, y: y + HEADER + Math.floor(i / COLUMNS) * CELL }));
+        x = left + width;
+        shelfHeight = Math.max(shelfHeight, height);
+      }
+      y += shelfHeight;
+    }
+    return { placed, bottom: y };
+  }
+
+  function render() {
+    const gamepad = document.getElementById("gamepadToggle").checked;
+    const result = layout(gamepad);
+    const height = result.bottom + BOTTOM;
+    const left = 1366 + ANCHOR_X - FRAME_WIDTH, top = 768 - ANCHOR_Y - height;
+
+    const win = document.getElementById("window");
+    win.style.width = FRAME_WIDTH + "px";
+    win.style.height = height + "px";
+    win.style.left = left + "px";
+    win.style.top = top + "px";
+
+    let html = `<div class="titlebar">Combined Backpack${gamepad ? '<span class="free">(19)</span>' : ""}</div>`;
+    html += `<div class="portrait"></div>`;
+    if (!gamepad) html += `<div class="close">×</div>`;
+    // Spelets sökruta: smalare med mus, hela bredden med handkontroll.
+    html += `<div class="abs search" style="left:62px; top:35px; width:${gamepad ? FRAME_WIDTH - 62 - 12 : 330}px;">Search</div>`;
+
+    for (const p of result.placed) {
+      if (p.divider) {
+        html += `<div class="abs divider" style="left:${LEFT}px; top:${p.y}px; width:${GRID_WIDTH}px;"></div>`;
+      } else if (p.section) {
+        html += `<div class="abs section" style="left:${LEFT}px; top:${p.y}px;">${p.section}</div>`;
+      } else if (p.header) {
+        html += `<div class="abs header" style="left:${LEFT + p.x}px; top:${p.y}px;">${p.header}</div>`;
+      } else {
+        const it = p.item;
+        const [c1, c2] = ICON[it.group] || ["#333", "#111"];
+        const classes = ["abs", "slot"];
+        if (it.empty) classes.push("empty");
+        if (it.quality >= 2) classes.push("q" + it.quality);
+        if (it.quest) classes.push("quest");
+        if (it.upgrade) classes.push("upgrade");
+        if (it.isNew) classes.push("new");
+        if (gamepad && it.cursor) classes.push("cursor");
+        const bg = it.empty ? "" : `background: linear-gradient(135deg, ${c1}, ${c2});`;
+        let inner = "";
+        if (it.count > 1) inner += `<span class="count">${it.count}</span>`;
+        if (it.ilvl) inner += `<span class="ilvl">${it.ilvl}</span>`;
+        if (it.boe) inner += `<span class="boe">BoE</span>`;
+        html += `<div class="${classes.join(" ")}" style="left:${LEFT + p.x}px; top:${p.y}px; ${bg}" title="${it.name}">${inner}</div>`;
+      }
+    }
+
+    // Spelets egen rad med pengar, nere till höger.
+    html += `<div class="abs money" style="right:10px; top:${height - 26}px;">` +
+      `123<span class="coin gold"></span> 45<span class="coin silver"></span> 67<span class="coin copper"></span></div>`;
+    win.innerHTML = html;
+
+    // Förklaringar till vänster om fönstret.
+    const find = pred => result.placed.find(p => p.item && pred(p.item));
+    const callouts = [["Spelets eget väskfönster – Tidy Pack ordnar bara sakerna →", top + 2]];
+    callouts.push(["Spelets egen sökruta →", top + 35]);
+    const hat = find(i => i.name === "Fisherman's Hat");
+    if (hat) callouts.push(["Nivå uppe till vänster, BoE nere till vänster →", top + hat.y + 10]);
+    const bag = find(i => i.upgrade);
+    if (bag) callouts.push(["Grön pil: större än din minsta väska – högerklicka för att byta →", top + bag.y + 2]);
+    const empty = find(i => i.empty);
+    if (empty) callouts.push(["Lediga platser: släpp en sak här →", top + empty.y + 10]);
+    callouts.push(["Spelets egen rad med pengar →", top + height - 28]);
+    if (gamepad) {
+      const potion = find(i => i.cursor);
+      callouts.push(["Handkontrollens markör – spelets egna knappar fungerar som vanligt →", top + potion.y + 22]);
+    }
+    callouts.sort((a, b) => a[1] - b[1]);
+    for (let i = 1; i < callouts.length; i++) {           // håll isär förklaringar som hamnar för nära
+      callouts[i][1] = Math.max(callouts[i][1], callouts[i - 1][1] + 24);
+    }
+    document.getElementById("callouts").innerHTML = callouts
+      .map(([text, y]) => `<div class="callout" style="right:${1366 - left + 14}px; top:${y}px;">${text}</div>`)
+      .join("");
+  }
+
+  document.getElementById("gamepadToggle").addEventListener("change", render);
+  render();
+
+  // Skalar ned skärmen så att hela den syns i webbläsarfönstret.
+  function fit() {
+    const viewport = document.getElementById("viewport");
+    document.getElementById("screen").style.transform = `scale(${viewport.clientWidth / 1366})`;
+  }
+  window.addEventListener("resize", fit);
+  fit();
+</script>
+</body>
+</html>
