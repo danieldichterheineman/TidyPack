@@ -352,6 +352,11 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   värdet, ★-menyn utan sak (19) och inställningssidan och skräplistans sida (20, bara
   utseendet). Fel som hittades: fyra etiketter på inställningssidan var för långa och
   slutade med "..." – kortade. Resten av listan är inte provad.
+- 2026-11-09, `v0.2.0-alpha2`: mer luft syns, fliken Bags fungerar. Fel: flikarna hade
+  olika storlek (spelets valda flik är högre och de andras text flyttas ned, så "Sets"
+  kapades av ramen), och tom flik Sets lade texten långt ovanför fönstret och krympte
+  fönstret. Rättat: båda flikarna använder den valda flikens bilder, 80 enheter breda, den
+  andra lite mörkare; listan placeras när höjden är känd och är minst 120 hög.
 
 ## Arbetssätt
 - Kärnreglerna i pluginet wow-addon-skills gäller.
@@ -447,6 +452,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - 2026-11-09: Specialväskor i egna grupper längst ned under en linje, med väskans ikon och
   namn (användarens önskan: tydligt att de inte hör till de vanliga väskorna). Linjen ändrar
   beslutet om "inga linjer" – den syns bara när en specialväska finns.
+- 2026-11-09: Flikarna Bags och Sets är alltid lika stora (användarens önskan), till
+  skillnad från spelets egna flikar där den valda är högre.
 - 2026-11-09: Egna set (användarens önskan): egna samlingar per karaktär, inte spelets
   utrustningsset. Läggs till via ★-menyn (högerklick används av spelet). Flikarna Bags och
   Sets ovanför fönstret; klick på ett set tar på det direkt, med varning när något saknas.

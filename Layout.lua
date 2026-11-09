@@ -348,10 +348,16 @@ local function layoutSetsView(atMerchant)
     wipe(groupFirst)
     wipe(groupOfButton)
     newGroupIndex = nil
+    -- Allt hänger i raden med pengar och räknas uppifrån, så höjden måste vara känd innan
+    -- något placeras. Därför samlas platserna först och sätts sedan.
+    local placements = {}
     local rows
     contentHeight, rows = ns.LayoutSetsView(function(region, x, y)
-        anchor(region, x, y)
+        placements[#placements + 1] = { region, x, y }
     end, GRID_WIDTH)
+    for _, placement in ipairs(placements) do
+        anchor(placement[1], placement[2], placement[3])
+    end
     for index, row in ipairs(rows) do
         shownButtons[row] = true
         groupFirst[index] = row

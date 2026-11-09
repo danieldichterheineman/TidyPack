@@ -13,6 +13,8 @@ local L = ns.L
 local ROW_HEIGHT = 44
 local ROW_GAP = 4
 local HINT_HEIGHT = 22
+local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
+local TAB_WIDTH = 80    -- båda flikarna är alltid lika breda
 local DEFAULT_ICON = 134400 -- frågetecknet (INV_Misc_QuestionMark)
 local WARNING_ICON = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
@@ -25,10 +27,35 @@ function ns.IsSetsView()
 end
 
 -- Byter mellan "bags" och "sets".
+-- Spelets flikar gör den valda fliken högre än de andra och flyttar ned texten på de
+-- andra. Tidy Packs två flikar ska alltid vara lika stora (användarens önskan), så båda
+-- använder den valda flikens bilder; den flik som inte är vald är bara lite mörkare.
+local function styleTabs()
+    for _, tab in ipairs(tabHost.Tabs) do
+        local selected = tab:GetID() == tabHost.selectedTab
+        for _, part in ipairs({ tab.Left, tab.Middle, tab.Right }) do
+            part:Hide()
+        end
+        for _, part in ipairs({ tab.LeftActive, tab.MiddleActive, tab.RightActive }) do
+            part:Show()
+            local shade = selected and 1 or 0.6
+            part:SetVertexColor(shade, shade, shade)
+        end
+        tab.Text:SetPoint("CENTER", tab, "CENTER", 0, -4)
+        tab:SetNormalFontObject(selected and GameFontHighlightSmall or GameFontNormalSmall)
+        PanelTemplates_TabResize(tab, 0, TAB_WIDTH)
+    end
+end
+
+local function selectTab(id)
+    PanelTemplates_SetTab(tabHost, id)
+    styleTabs()
+end
+
 function ns.SetView(newView)
     view = newView == "sets" and "sets" or "bags"
     if tabHost then
-        PanelTemplates_SetTab(tabHost, view == "sets" and 2 or 1)
+        selectTab(view == "sets" and 2 or 1)
     end
     for _, row in ipairs(rows) do
         row:Hide()
@@ -161,7 +188,7 @@ function ns.LayoutSetsView(place, width)
     else
         bottomHint:Hide()
     end
-    return y, shown
+    return math.max(y, MIN_HEIGHT), shown
 end
 
 ---------------------------------------------------------------------------
@@ -177,6 +204,8 @@ ns.OnLoad(function()
     -- En egen ram håller flikarna, så att spelets fönster inte får några nya fält.
     tabHost = CreateFrame("Frame", nil, bagFrame)
     tabHost:SetAllPoints()
+    -- Spelets flikar läser bredden härifrån när de visas (PanelTabButtonMixin:OnShow).
+    tabHost.minTabWidth, tabHost.maxTabWidth = TAB_WIDTH, TAB_WIDTH
 
     local function onTabClick(tab)
         PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
@@ -192,7 +221,7 @@ ns.OnLoad(function()
     -- Till höger om väskans ikon uppe till vänster, så att flikarna inte täcker den.
     tabHost.Tabs[1]:SetPoint("BOTTOMLEFT", bagFrame, "TOPLEFT", 60, -3)
     PanelTemplates_SetNumTabs(tabHost, #labels)
-    PanelTemplates_SetTab(tabHost, 1)
+    selectTab(1)
 
     topHint = tabHost:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     topHint:SetJustifyH("LEFT")
