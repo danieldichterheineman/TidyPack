@@ -114,9 +114,58 @@ function ns.GetLaterQuests(itemID)
     return quests
 end
 
-function ns.IsNeededLater(itemID)
-    local quests = ns.GetLaterQuests(itemID)
-    return quests ~= nil and #quests > 0
+-- Sant om en quest du inte har tagit än behöver saken. now = true räknar direkt (för grå
+-- saker innan de säljs, se Junk.lua). Annars räknas saker som inte är kända än lite i
+-- taget i bakgrunden, högst några millisekunder per bildruta, och väskan läggs om när
+-- något hittats. Questies databas kan vara långsam för saker som många quests använder,
+-- och väskfönstret ska aldrig vänta på den.
+local WORK_BUDGET_MS = 3
+local waiting, waitingList = {}, {}
+local working, foundSomething = false, false
+
+local function work()
+    local started = debugprofilestop()
+    while #waitingList > 0 and debugprofilestop() - started < WORK_BUDGET_MS do
+        local itemID = table.remove(waitingList)
+        waiting[itemID] = nil
+        local quests = ns.GetLaterQuests(itemID)
+        if quests and #quests > 0 then
+            foundSomething = true
+        end
+    end
+    if #waitingList > 0 then
+        C_Timer.After(0, work)
+        return
+    end
+    working = false
+    if foundSomething then
+        foundSomething = false
+        if ns.Refresh then
+            ns.Refresh()
+        end
+    end
+end
+
+function ns.IsNeededLater(itemID, now)
+    if not questie or not itemID or not ns.db.questHints then
+        return false
+    end
+    local quests = questsForItem[itemID]
+    if not quests and now then
+        quests = ns.GetLaterQuests(itemID)
+    end
+    if quests then
+        return #quests > 0
+    end
+    if not waiting[itemID] then
+        waiting[itemID] = true
+        waitingList[#waitingList + 1] = itemID
+        if not working then
+            working = true
+            C_Timer.After(0, work)
+        end
+    end
+    return false
 end
 
 -- "The Cloth Collector (Westfall, level 24)".

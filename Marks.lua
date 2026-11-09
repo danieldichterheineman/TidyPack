@@ -20,8 +20,12 @@
 local addonName, ns = ...
 local L = ns.L
 
-local STAR_ATLAS = "auctionhouse-icon-favorite" -- spelets egen stjärna, från auktionshuset
+-- Knappens bild: spelets kugghjul för inställningar (questlog-icon-setting, samma som
+-- spelets UIPanelIconDropdownButtonTemplate). Stjärnan passade när knappen bara gjorde
+-- favoriter; nu öppnar den också skräplistan, seten och inställningarna.
+local BUTTON_ATLAS = "questlog-icon-setting"
 local BUTTON_SIZE = 26
+local ICON_SIZE = 20
 
 local starButton
 local starHovered = false -- markören (mus eller handkontroll) står på ★
@@ -208,8 +212,14 @@ ns.OnLoad(function()
     starButton = CreateFrame("DropdownButton", nil, bagFrame)
     starButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
     starButton:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9, -34)
-    starButton:SetNormalAtlas(STAR_ATLAS)
-    starButton:SetHighlightAtlas(STAR_ATLAS, "ADD")
+    starButton:SetNormalAtlas(BUTTON_ATLAS)
+    starButton:SetHighlightAtlas(BUTTON_ATLAS, "ADD")
+    -- Bilden lite mindre än knappen, så att kugghjulet inte blir suddigt.
+    for _, texture in ipairs({ starButton:GetNormalTexture(), starButton:GetHighlightTexture() }) do
+        texture:ClearAllPoints()
+        texture:SetPoint("CENTER")
+        texture:SetSize(ICON_SIZE, ICON_SIZE)
+    end
     starButton:SetupMenu(buildMenu)
     starButton:SetMenuAnchor(CreateAnchor("TOPRIGHT", starButton, "BOTTOMRIGHT", 0, -2))
     -- En sak som dras och släpps på ★ öppnar menyn (ett klick gör det redan).
@@ -233,11 +243,10 @@ ns.OnLoad(function()
     ns.RegisterEvent("CURSOR_CHANGED", updateStarButton)
     updateStarButton()
 
-    -- Med handkontroll går spelets sökruta ända till högerkanten. Den kortas av så att ★
-    -- får plats, med samma avstånd till den som spelets egen sorteringsknapp hade.
+    -- Med mus ger spelet sökrutan en fast bredd (330), som slutade långt före knappen när
+    -- Tidy Packs fönster är bredare. Därför går sökrutan i båda lägena fram till knappen,
+    -- med samma avstånd till den som spelets egen sorteringsknapp hade.
     hooksecurefunc(bagFrame, "SetSearchBoxPoint", function(_, searchBox)
-        if InputUtil.IsGamepadUIEnabled() then
-            searchBox:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9 - BUTTON_SIZE - 9, -37)
-        end
+        searchBox:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9 - BUTTON_SIZE - 9, -37)
     end)
 end)

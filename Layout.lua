@@ -334,6 +334,10 @@ end
 
 -- Listan med set i fliken Sets (SetsView.lua) i stället för sakerna.
 local function layoutSetsView(atMerchant)
+    -- Spelet visar sökrutan igen när fönstret uppdateras; i fliken Sets behövs den inte.
+    if BagItemSearchBox and BagItemSearchBox:GetParent() == bagFrame then
+        BagItemSearchBox:Hide()
+    end
     releaseHeaders()
     if divider then
         divider:Hide()

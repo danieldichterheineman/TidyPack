@@ -169,7 +169,7 @@ local function createJunkPage()
     intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     intro:SetPoint("RIGHT", page, "RIGHT", -20, 0)
     intro:SetJustifyH("LEFT")
-    intro:SetText(L["Items on your junk list are suggested for deletion when you loot them, sorted last in Junk and sold by Sell Junk. Alt-right-click an item in your bags, or drop it on the star, to add or remove it."])
+    intro:SetText(L["Items on your junk list are suggested for deletion when you loot them, sorted last in Junk and sold by Sell Junk. Alt-right-click an item in your bags, or drop it on the gear button, to add or remove it."])
 
     -- Lägg till en sak utan att ha den: länk, namn eller nummer.
     junkInput = CreateFrame("EditBox", nil, page, "InputBoxTemplate")
@@ -264,22 +264,30 @@ end
 local function initSetsRow(row, data)
     if not row.icon then
         row:EnableMouse(true)
+        -- Setets rad har en svag bakgrund och setets ikon, så att varje set syns som en
+        -- egen rubrik med sina saker under.
+        row.band = row:CreateTexture(nil, "BACKGROUND")
+        row.band:SetAllPoints()
+        row.band:SetColorTexture(1, 1, 1, 0.06)
+        row.setIcon = row:CreateTexture(nil, "ARTWORK")
+        row.setIcon:SetSize(24, 24)
+        row.setIcon:SetPoint("LEFT", 4, 0)
         row.title = row:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-        row.title:SetPoint("LEFT", 4, 0)
+        row.title:SetPoint("LEFT", row.setIcon, "RIGHT", 8, 0)
         row.count = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
         row.count:SetPoint("LEFT", row.title, "RIGHT", 10, -1)
         row.delete = smallButton(row, L["Delete"], 80, function(self)
             ns.AskDeleteSet(self:GetParent().data.index)
         end)
         row.delete:SetPoint("RIGHT", -6, 0)
-        row.rename = smallButton(row, L["Rename"], 80, function(self)
-            ns.AskRenameSet(self:GetParent().data.index)
+        row.rename = smallButton(row, L["Edit"], 80, function(self)
+            ns.AskEditSet(self:GetParent().data.index)
         end)
         row.rename:SetPoint("RIGHT", row.delete, "LEFT", -6, 0)
 
         row.icon = row:CreateTexture(nil, "ARTWORK")
         row.icon:SetSize(22, 22)
-        row.icon:SetPoint("LEFT", 24, 0)
+        row.icon:SetPoint("LEFT", 36, 0)
         row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
         row.name:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
         row.name:SetPoint("RIGHT", -170, 0)
@@ -314,7 +322,7 @@ local function initSetsRow(row, data)
     end
     row.data = data
     local isSet = data.kind == "set"
-    for _, part in ipairs({ row.title, row.count, row.rename, row.delete }) do
+    for _, part in ipairs({ row.band, row.setIcon, row.title, row.count, row.rename, row.delete }) do
         part:SetShown(isSet)
     end
     for _, part in ipairs({ row.icon, row.name, row.state, row.remove }) do
@@ -326,6 +334,7 @@ local function initSetsRow(row, data)
     end
     if isSet then
         row.title:SetText(set.name)
+        row.setIcon:SetTexture(ns.GetSetIcon(data.index))
         row.count:SetText(#set.items == 1 and L["1 item"] or L["%d items"]:format(#set.items))
         return
     end
@@ -357,7 +366,7 @@ local function createSetsPage()
     intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     intro:SetPoint("RIGHT", page, "RIGHT", -20, 0)
     intro:SetJustifyH("LEFT")
-    intro:SetText(L["Your sets on this character. To add an item, drop it on the star in your bags and choose Add to Set. In the bag window's Sets tab, click a set to put it on."])
+    intro:SetText(L["Your sets on this character. To add an item, drop it on the gear button in your bags and choose Add to Set. In the bag window's Sets tab, click a set to put it on."])
 
     local newButton = smallButton(page, L["New Set"], 120, function()
         ns.AskNewSet()

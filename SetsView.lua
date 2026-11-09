@@ -15,7 +15,6 @@ local ROW_GAP = 4
 local HINT_HEIGHT = 22
 local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
 local TAB_WIDTH = 80    -- båda flikarna är alltid lika breda
-local DEFAULT_ICON = 134400 -- frågetecknet (INV_Misc_QuestionMark)
 local WARNING_ICON = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
 local view = "bags"
@@ -64,6 +63,10 @@ function ns.SetView(newView)
         topHint:SetShown(view == "sets")
         bottomHint:SetShown(view == "sets")
     end
+    -- Sökrutan söker bara bland sakerna, så den visas inte i fliken Sets.
+    if BagItemSearchBox and ns.bagFrame and BagItemSearchBox:GetParent() == ns.bagFrame then
+        BagItemSearchBox:SetShown(view == "bags")
+    end
     if ns.Refresh then
         ns.Refresh()
     end
@@ -94,7 +97,7 @@ local function showRowTooltip(row)
         GameTooltip:AddDoubleLine(name, state[1], 1, 1, 1, r, g, b)
     end
     if #set.items == 0 then
-        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item on the star to add it to a set."])
+        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item on the gear button to add it to a set."])
     end
     GameTooltip_AddBlankLineToTooltip(GameTooltip)
     GameTooltip_AddInstructionLine(GameTooltip, L["Click to put it on. Right-click to edit your sets."])
@@ -142,7 +145,7 @@ end
 local function fillRow(row, index, set)
     row.setIndex = index
     row.name:SetText(set.name)
-    row.icon:SetTexture(set.items[1] and C_Item.GetItemIconByID(set.items[1]) or DEFAULT_ICON)
+    row.icon:SetTexture(ns.GetSetIcon(index))
     local count, missing, worn = ns.GetSetStatus(index)
     if #missing > 0 then
         local first = C_Item.GetItemNameByID(missing[1]) or L["Item %d"]:format(missing[1])
@@ -164,7 +167,7 @@ function ns.LayoutSetsView(place, width)
     local sets = ns.GetSets()
     local y = 0
     topHint:SetText(#sets > 0 and L["Click a set to put it on."]
-        or L["You have no sets yet. Drop an item on the star and choose Add to Set."])
+        or L["You have no sets yet. Drop an item on the gear button and choose Add to Set."])
     place(topHint, 2, y)
     topHint:Show()
     y = y + HINT_HEIGHT
@@ -228,7 +231,7 @@ ns.OnLoad(function()
     topHint:Hide()
     bottomHint = tabHost:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     bottomHint:SetJustifyH("LEFT")
-    bottomHint:SetText(L["Drop an item on the star to add it to a set. Right-click a set to edit."])
+    bottomHint:SetText(L["Drop an item on the gear button to add it to a set. Right-click a set to edit."])
     bottomHint:Hide()
 
     -- Väskfönstret öppnas alltid på fliken Bags.

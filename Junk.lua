@@ -32,7 +32,7 @@ function ns.GetJunkKind(bagID, slot, info)
     if ns.IsJunkMarked(info.itemID) then
         return "marked"
     end
-    if info.quality == Enum.ItemQuality.Poor and not (ns.IsNeededLater and ns.IsNeededLater(info.itemID)) then
+    if info.quality == Enum.ItemQuality.Poor and not (ns.IsNeededLater and ns.IsNeededLater(info.itemID, true)) then
         return "grey"
     end
     return nil

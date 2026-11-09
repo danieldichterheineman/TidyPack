@@ -458,6 +458,17 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - 2026-11-09: Specialväskor i egna grupper längst ned under en linje, med väskans ikon och
   namn (användarens önskan: tydligt att de inte hör till de vanliga väskorna). Linjen ändrar
   beslutet om "inga linjer" – den syns bara när en specialväska finns.
+- 2026-11-09: Knappen i väskfönstret är ett kugghjul (`questlog-icon-setting`, spelets
+  bild för inställningar) i stället för ★, eftersom den nu gör mer än favoriter. Gruppen
+  Favorites behåller stjärnan.
+- 2026-11-09: Namn och ikon för set väljs i spelets egen ruta
+  (`IconSelectorPopupFrameTemplate`, som Forevers utrustningsset), med utrustningens ikoner
+  först. Ikonen sparas som `icon` i setet; äldre set utan ikon visar första sakens ikon.
+  Setens sida har en rubrikrad per set med ikon, namn, antal, Edit och Delete.
+- 2026-11-09: Granskning: sökrutan går nu fram till knappen även med mus (spelet gav den en
+  fast bredd, 330) och döljs i fliken Sets. Questies databas frågas i bakgrunden, högst
+  3 ms per bildruta, så att väskfönstret aldrig väntar på den (Sell Junk frågar direkt för
+  grå saker).
 - 2026-11-09: Flikarna Bags och Sets är alltid lika stora (användarens önskan), till
   skillnad från spelets egna flikar där den valda är högre.
 - 2026-11-09: Egna set (användarens önskan): egna samlingar per karaktär, inte spelets

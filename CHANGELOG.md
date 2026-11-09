@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Favorites: Alt-click an item, or pick it up and drop it on the star button, to keep it at
+- Favorites: Alt-click an item, or pick it up and drop it on the gear button, to keep it at
   the top of your bags. Do the same again to remove it. Favorites are shared by all your
   characters.
 - New: items you have looted since you last opened your bags are shown at the top until you
@@ -23,10 +23,10 @@
   The cursor never stops on a hidden square, not even after you sell something.
 - Locked items show their tooltip at merchants, with a red line saying that Tidy Pack keeps
   them from being sold.
-- The star button's tooltip shows the controller button to use when you play with a
+- The gear button's tooltip shows the controller button to use when you play with a
   controller.
 - Tidy Pack does less work when your quest log changes.
-- Junk list: Alt-right-click an item, or drop it on the star and choose "Add to Junk List".
+- Junk list: Alt-right-click an item, or drop it on the gear button and choose "Add to Junk List".
   Whenever you loot an item on the list, Tidy Pack asks right away whether to delete it.
   Listed items go to Junk with the game's junk coin, are sold by Sell Junk and are suggested
   first when your bags are full. Items you don't have can be added from the settings by
@@ -34,7 +34,7 @@
 - Bags full: when something can't be looted, a small panel under the loot window suggests an
   item to delete – something on your junk list, or your cheapest grey item if the new loot is
   worth more. Nothing is deleted until you press Delete.
-- The star is now the only button Tidy Pack adds to the bag window. It opens the game's own
+- The gear button is the only button Tidy Pack adds to the bag window. It opens the game's own
   menu: drop an item on it to star it or put it on your junk list, or click it for your junk
   list and settings.
 - Settings: Esc → Options → AddOns → Tidy Pack, /tidypack, or the minimap's addon menu. You
@@ -52,6 +52,10 @@
   it on (not in combat). A warning shows what's missing. Items in a set are locked at
   merchants. Sets are saved per character and can be renamed or deleted in the settings.
 - Sell Junk now sits above the right side of your bags.
+- New sets get a name and an icon in the game's own icon picker, like equipment sets. Edit
+  a set's name and icon in the settings.
+- The search box reaches all the way to the gear button, and is hidden in the Sets tab.
+- Quest hints from Questie are worked out in the background, so your bags open instantly.
 
 ## 0.1.0 (not released)
 

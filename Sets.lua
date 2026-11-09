@@ -28,7 +28,9 @@ local function sets()
     return ns.charDb and ns.charDb.sets or {}
 end
 
--- Seten i den ordning de skapades: { { name = "Fishing", items = { itemID, ... } }, ... }
+-- Seten i den ordning de skapades:
+-- { { name = "Fishing", icon = fileID, items = { itemID, ... } }, ... }
+-- icon saknas i set som skapades före 2026-11-09 kväll; då används första sakens ikon.
 function ns.GetSets()
     return sets()
 end
@@ -60,8 +62,17 @@ local function changed()
     end
 end
 
+-- Setets ikon: den valda, annars första sakens, annars ett frågetecken.
+function ns.GetSetIcon(index)
+    local set = sets()[index]
+    if not set then
+        return 134400
+    end
+    return set.icon or (set.items[1] and C_Item.GetItemIconByID(set.items[1])) or 134400
+end
+
 -- Skapar ett nytt set. Returnerar dess plats i listan, eller nil och en förklaring.
-function ns.CreateSet(name)
+function ns.CreateSet(name, icon)
     name = cleanName(name)
     if name == "" then
         return nil, L["Give the set a name."]
@@ -70,12 +81,13 @@ function ns.CreateSet(name)
         return nil, L["You already have a set with that name."]
     end
     local list = sets()
-    list[#list + 1] = { name = name, items = {} }
+    list[#list + 1] = { name = name, icon = icon, items = {} }
     changed()
     return #list
 end
 
-function ns.RenameSet(index, name)
+-- Byter namn och ikon på ett set.
+function ns.EditSet(index, name, icon)
     local set = sets()[index]
     name = cleanName(name)
     if not set then
@@ -89,6 +101,9 @@ function ns.RenameSet(index, name)
         return nil, L["You already have a set with that name."]
     end
     set.name = name
+    if icon then
+        set.icon = icon
+    end
     changed()
     return index
 end
@@ -310,7 +325,7 @@ local function createDialog()
     end)
 end
 
--- Visar rutan. withInput = true ger en textruta med defaultText. onAccept(text) körs vid
+-- Visar frågan (används för att ta bort ett set). withInput = true ger en textruta med defaultText. onAccept(text) körs vid
 -- klick på knappen och kan returnera false och en förklaring för att hålla rutan öppen.
 local function showDialog(text, acceptLabel, withInput, defaultText, onAccept)
     if not dialog then
@@ -330,10 +345,94 @@ local function showDialog(text, acceptLabel, withInput, defaultText, onAccept)
     end
 end
 
--- Frågar efter ett namn och skapar setet. itemID läggs i det nya setet, om det finns.
+---------------------------------------------------------------------------
+-- Rutan för namn och ikon
+---------------------------------------------------------------------------
+-- Spelets egen ruta för namn och ikon (IconSelectorPopupFrameTemplate), samma som
+-- Forever använder när man sparar ett utrustningsset (GearManagerPopupFrameMixin i
+-- Camelot/PaperDollFrame.lua): namn överst, vald ikon till höger, alla ikoner i ett
+-- rutnät, och Okay/Cancel längst ned. Utrustningens ikoner kommer först i rutnätet.
+
+local iconPopup
+
+local function createIconPopup()
+    iconPopup = CreateFrame("Frame", "TidyPackSetIconPopup", UIParent, "IconSelectorPopupFrameTemplate")
+    iconPopup:Hide()
+    iconPopup:ClearAllPoints()
+    iconPopup:SetPoint("TOP", UIParent, "TOP", 0, -100)
+    iconPopup:SetFrameStrata("DIALOG")
+    iconPopup:SetToplevel(true)
+    iconPopup:EnableMouse(true)
+    iconPopup.BorderBox.EditBoxHeaderText:SetText(L["Set name:"])
+    iconPopup.BorderBox.IconSelectorEditBox:SetMaxLetters(MAX_NAME_LENGTH)
+
+    -- Spelets mall anropar de här när rutan visas, döljs och när Okay trycks.
+    function iconPopup:OnShow()
+        IconSelectorPopupFrameTemplateMixin.OnShow(self)
+        self.BorderBox.IconSelectorEditBox:SetFocus()
+        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN)
+        self.iconDataProvider = CreateAndInitFromMixin(IconDataProviderMixin, IconDataProviderExtraType.Equipment)
+        self:SetIconFilter(IconSelectorPopupFrameIconFilterTypes.All)
+        self:Update()
+        self.BorderBox.IconSelectorEditBox:OnTextChanged()
+        local area = self.BorderBox.SelectedIconArea
+        self.IconSelector:SetSelectedCallback(function(_, icon)
+            area.SelectedIconButton:SetIconTexture(icon)
+            area.SelectedIconText.SelectedIconDescription:SetText(ICON_SELECTION_CLICK)
+            area.SelectedIconText.SelectedIconDescription:SetFontObject(GameFontHighlightSmall)
+        end)
+    end
+
+    function iconPopup:OnHide()
+        IconSelectorPopupFrameTemplateMixin.OnHide(self)
+        if self.iconDataProvider then
+            self.iconDataProvider:Release()
+            self.iconDataProvider = nil
+        end
+    end
+
+    function iconPopup:Update()
+        local box = self.BorderBox
+        box.IconSelectorEditBox:SetText(self.startName or "")
+        box.IconSelectorEditBox:HighlightText()
+        local index = self.startIcon and self:GetIndexOfIcon(self.startIcon) or 1
+        self.IconSelector:SetSelectedIndex(index)
+        box.SelectedIconArea.SelectedIconButton:SetIconTexture(self.startIcon or self:GetIconByIndex(1))
+        self.IconSelector:SetSelectionsDataProvider(GenerateClosure(self.GetIconByIndex, self),
+            GenerateClosure(self.GetNumIcons, self))
+        self.IconSelector:ScrollToSelectedIndex()
+        self:SetSelectedIconText()
+    end
+
+    function iconPopup:OkayButton_OnClick()
+        local box = self.BorderBox
+        local ok, problem = self.onAccept(box.IconSelectorEditBox:GetText(),
+            box.SelectedIconArea.SelectedIconButton:GetIconTexture())
+        if not ok then
+            -- Som spelets egen ruta: felet visas mitt på skärmen och rutan står kvar.
+            UIErrorsFrame:AddMessage(problem or "", 1.0, 0.1, 0.1, 1.0)
+            return
+        end
+        IconSelectorPopupFrameTemplateMixin.OkayButton_OnClick(self)
+    end
+end
+
+local function showIconPopup(name, icon, onAccept)
+    if not iconPopup then
+        createIconPopup()
+    end
+    iconPopup:Hide()
+    iconPopup.startName, iconPopup.startIcon, iconPopup.onAccept = name, icon, onAccept
+    iconPopup:Show()
+    if InputUtil.IsGamepadUIEnabled() then
+        iconPopup:GiveGamepadFocus()
+    end
+end
+
+-- Ett nytt set: namn och ikon. Saken (itemID) läggs i setet, och dess ikon är förvald.
 function ns.AskNewSet(itemID)
-    showDialog(L["Name your new set:"], L["Create"], true, "", function(text)
-        local index, problem = ns.CreateSet(text)
+    showIconPopup("", itemID and C_Item.GetItemIconByID(itemID) or nil, function(name, icon)
+        local index, problem = ns.CreateSet(name, icon)
         if not index then
             return false, problem
         end
@@ -344,17 +443,14 @@ function ns.AskNewSet(itemID)
     end)
 end
 
-function ns.AskRenameSet(index)
+-- Ändra namn och ikon på ett set.
+function ns.AskEditSet(index)
     local set = sets()[index]
     if not set then
         return
     end
-    showDialog(L["New name for %s:"]:format(set.name), L["Rename"], true, set.name, function(text)
-        local ok, problem = ns.RenameSet(index, text)
-        if not ok then
-            return false, problem
-        end
-        return true
+    showIconPopup(set.name, ns.GetSetIcon(index), function(name, icon)
+        return ns.EditSet(index, name, icon)
     end)
 end
 

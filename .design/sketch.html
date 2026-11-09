@@ -546,8 +546,8 @@
     html += `<div class="portrait"></div>`;
     if (!gamepad) html += `<div class="close">×</div>`;
     // Spelets sökruta: med handkontroll kortas den av så att ★-knappen får plats.
-    html += `<div class="abs search" style="left:62px; top:35px; width:${gamepad ? FRAME_WIDTH - 62 - (junkButtonShown ? 74 : 44) : 330}px;">Search</div>`;
-    html += `<div class="abs starbutton ${holding ? "" : "idle"}" style="right:9px; top:33px;" title="Drop an item here to star or unstar it">★</div>`;
+    if (!setsTab) html += `<div class="abs search" style="left:62px; top:35px; width:${FRAME_WIDTH - 62 - 44}px;">Search</div>`;
+    html += `<div class="abs starbutton ${holding ? "" : "idle"}" style="right:9px; top:33px;" title="Drop an item here: Favorites, Junk List or a set. Click for the menu.">⚙</div>`;
     // Förslag: skräpknappen bredvid ★, svag tills du håller en sak.
     if (junkButtonShown) html += `<div class="abs trashbutton ${holding ? "" : "idle"}" style="right:39px; top:33px;" title="Drop an item here to mark it as junk"></div>`;
 
