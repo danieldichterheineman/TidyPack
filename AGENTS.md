@@ -18,7 +18,9 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   inte mot `live`.
 - SavedVariables: `TidyPackDB` (per konto)
 - Inga slash-kommandon, ingen inställningssida och ingen rad i addonfacket (se Beslut).
-- Projektmapp: `/Users/danhei1104/TidyPack`, med git (gren `main`, inget fjärrförråd).
+- Projektmapp: `/Users/danhei1104/TidyPack`, med git (gren `main`).
+- GitHub: https://github.com/danieldichterheineman/TidyPack (privat, skapat 2026-11-09).
+  Pusha bara efter ett ja från användaren.
 
 ## Funktioner
 - ✅ Elva grupper i fast ordning: Favorites, New, Consumables, Equipment, Trade Goods,
