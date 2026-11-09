@@ -3,8 +3,8 @@
 -- karaktärer:
 --   ★ Favorit: saken hamnar i gruppen Favorites överst.
 --   Skräplistan: saken hamnar sist i Junk med spelets eget skräpmynt. Tidy Pack frågar om
---   den ska raderas när du lootar den (MakeRoom.lua), den säljs av Sell Junk (Junk.lua) och
---   föreslås först när väskorna är fulla.
+--   den ska raderas när du lootar den (MakeRoom.lua), och den föreslås först när
+--   väskorna är fulla.
 -- Så märker du:
 --   - Mus: Alt-vänsterklick = favorit, Alt-högerklick = skräplistan. Spelets klick gör
 --     ingenting med Alt nedtryckt (i Forever är Alt bara kopplat till besvärjelser och

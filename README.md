@@ -20,9 +20,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   Click a set to put it all on. Missing items are greyed out, and a dot on the tab tells you
   something is missing.
 - **Locked items**: quest items, items your active quests ask for and items in your sets
-  can't be sold by mistake at a merchant. Their tooltip tells you why.
-- **Sell Junk**: one button at a merchant sells your grey items and everything on your junk
-  list – never locked or favorite items – 12 at a time, so all of it can be bought back.
+  can't be sold by mistake at a merchant. Their tooltip tells you why. You can turn the locks
+  off in the settings.
 - **Junk list**: whenever you loot an item on the list, Tidy Pack asks whether to delete it.
 - **Bags full**: when something can't be looted, Tidy Pack suggests an item to delete.
   Nothing is ever deleted until you press Delete.
@@ -40,8 +39,9 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   on your junk list or add it to a set. Click it for your junk list and settings.
 - **Mouse shortcuts**: Alt-click an item to make it a favorite, Alt-right-click to put it on
   your junk list.
-- **Sets tab**: click "New Set", then drop items on the set. Right-click a set to rename it,
-  change its icon, remove an item or delete it.
+- **Sets tab**: click "New Set", then use the set's gear button and choose "Add What I'm
+  Wearing", or drop items on the set. The gear button also renames the set, changes its
+  icon, removes an item or deletes it.
 - **Settings**: type `/tidypack`, use the minimap's addon menu, or go to Esc → Options →
   AddOns → Tidy Pack.
 - **Key bindings**: Esc → Options → Keybindings → AddOns → Tidy Pack, to open the Sets tab
@@ -50,11 +50,11 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 ## Known limitations
 
 - Sets can't be put on in combat – the game doesn't allow anyone to change gear then.
-- Locks, the Sell Junk button and the controller cursor can't change during combat. They
+- Locks and the controller cursor can't change during combat. They
   catch up as soon as combat ends.
 - Quest locks match item names in English, the game's language.
-- The merchant's own "Sell All Junk" button doesn't know about Tidy Pack's locks. With a
-  controller, the Sell Junk button can't be reached, so use the merchant's button there.
+- The merchant's own "Sell All Junk" button sells every grey item. It doesn't know about
+  Tidy Pack's locks or your junk list.
 - Quest hints need Questie, whose data for Forever's new quests isn't complete yet.
 - Tidy Pack turns on the game's "Combined Bags" once, at your first login.
 

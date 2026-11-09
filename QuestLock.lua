@@ -1,7 +1,7 @@
 -- TidyPack – QuestLock.lua
 -- Låser saker som du behöver: quest-saker, vanliga saker som en pågående quest kräver, och
 -- saker i dina utrustningsset. Hos en handlare går låsta saker inte att klicka på
--- (Layout.lua och Gamepad.lua), och Sell Junk säljer dem aldrig (Junk.lua).
+-- (Layout.lua och Gamepad.lua), och de föreslås aldrig för radering (Junk.lua).
 -- ⚠️ Vanliga saker som en quest kräver känns igen på namnet i questloggens text, t.ex.
 -- "Linen Cloth: 3/10", alltså på spelets språk.
 -- ⚠️ Spelets egen knapp "Sell All Junk" i handlarfönstret känner inte till låsen.

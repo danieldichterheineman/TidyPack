@@ -23,7 +23,7 @@ ns.defaults = {
     -- från början.
     suggestOnLoot = true,     -- fråga när en sak från skräplistan lootas (MakeRoom.lua)
     suggestWhenFull = true,   -- föreslå en sak att radera när väskorna är fulla (MakeRoom.lua)
-    sellJunkButton = true,    -- knappen Sell Junk hos en handlare (Junk.lua)
+    lockAtMerchant = true,    -- lås quest- och set-saker hos en handlare (Layout.lua)
     questHints = true,        -- saker som kommande quests behöver (QuestHints.lua)
     itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
 }
@@ -154,3 +154,30 @@ ns.RegisterEvent("PLAYER_LOGIN", function()
         ns.Print(L["Turned on the game's setting that shows all bags in one window."])
     end
 end)
+
+---------------------------------------------------------------------------
+-- När spelet stoppar något i Tidy Packs namn
+---------------------------------------------------------------------------
+
+-- Spelet visar då bara rutan "TidyPack has been blocked from an action only available to
+-- the Blizzard UI", utan att säga vad som stoppades. Spelet skickar namnet på funktionen
+-- med eventet, så Tidy Pack skriver det i chatten – en gång per funktion – och testaren
+-- kan skicka raden vidare. FORBIDDEN gäller funktioner som bara spelet självt får anropa,
+-- BLOCKED sådant som är spärrat i strid.
+local reportedBlocks = {}
+
+local function onActionBlocked(blockedAddon, functionName)
+    if blockedAddon ~= addonName then
+        return
+    end
+    functionName = tostring(functionName or "?")
+    if reportedBlocks[functionName] then
+        return
+    end
+    reportedBlocks[functionName] = true
+    ns.Print(L["The game stopped %s because of Tidy Pack. Please send this line to the author."]
+        :format(functionName))
+end
+
+ns.RegisterEvent("ADDON_ACTION_FORBIDDEN", onActionBlocked)
+ns.RegisterEvent("ADDON_ACTION_BLOCKED", onActionBlocked)

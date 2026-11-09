@@ -168,7 +168,7 @@ local function createJunkPage()
     intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     intro:SetPoint("RIGHT", page, "RIGHT", -20, 0)
     intro:SetJustifyH("LEFT")
-    intro:SetText(L["Items on your junk list are suggested for deletion when you loot them, sorted last in Junk and sold by Sell Junk. Alt-right-click an item in your bags, or drop it on the gear button, to add or remove it."])
+    intro:SetText(L["Items on your junk list are suggested for deletion when you loot them, and sorted last in Junk. Alt-right-click an item in your bags, or drop it on the gear button, to add or remove it."])
 
     -- Lägg till en sak utan att ha den: länk, namn eller nummer.
     junkInput = CreateFrame("EditBox", nil, page, "InputBoxTemplate")
@@ -249,13 +249,6 @@ ns.OnLoad(function()
         L["When you loot an item on your junk list, Tidy Pack asks right away whether to delete it. Nothing is deleted until you press Delete."])
     addCheckbox("suggestWhenFull", L["Suggest a deletion when full"],
         L["When your bags are full and something can't be looted, a panel under the loot window suggests an item to delete: your junk list first, then your cheapest grey item if the new loot is worth more. Nothing is deleted until you press Delete."])
-    addCheckbox("sellJunkButton", L["Show Sell Junk button"],
-        L["At merchants, a button above your bags sells your grey items and your junk list, 12 at a time. Never starred or locked items."],
-        function()
-            if ns.UpdateJunkButton then
-                ns.UpdateJunkButton()
-            end
-        end)
     layout:AddInitializer(CreateSettingsButtonInitializer(L["Junk List"], L["Open"], function()
         ns.OpenSettings("junk")
     end, L["See, add and remove the items on your junk list."], true))
@@ -276,6 +269,13 @@ ns.OnLoad(function()
     end)
 
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Bag window"]))
+    addCheckbox("lockAtMerchant", L["Lock quest and set items"],
+        L["At merchants, items your quests need and items in your sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
+        function()
+            if ns.Refresh then
+                ns.Refresh()
+            end
+        end)
     addCheckbox("itemLevelAndBoE", L["Show item level and BoE"],
         L["On uncommon or better weapons and armor."],
         function()

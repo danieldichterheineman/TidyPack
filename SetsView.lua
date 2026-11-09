@@ -14,7 +14,9 @@ local L = ns.L
 
 local ROW_HEIGHT = 50
 local ROW_GAP = 4
-local EMPTY_HEIGHT = 24
+local EMPTY_TOP = 24     -- tomt läge: luft ovanför texten och under knappen
+local EMPTY_INSET = 30   -- tomt läge: textens marginal på var sida
+local NEW_SET_LEFT, NEW_SET_TOP = 62, -36 -- knappen New Set på sökrutans plats
 local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
 local TAB_WIDTH = 90    -- båda flikarna är lika breda
 local TAB_LEFT = 62     -- där spelets sökruta började, till höger om väskans ikon
@@ -84,6 +86,7 @@ local MINI_SIZE = 22
 local MINI_GAP = 3
 local MAX_MINI = 12     -- fler än så visas som "+3"
 local EMPTY_SLOT = "Interface\\Buttons\\UI-EmptySlot" -- spelets tomma ruta
+local MENU_ATLAS = "questlog-icon-setting"              -- spelets kugghjul
 
 local STATE_TEXT = {
     equipped = { L["Equipped"], GREEN_FONT_COLOR },
@@ -112,7 +115,7 @@ local function showRowTooltip(row)
     end
     GameTooltip_AddBlankLineToTooltip(GameTooltip)
     GameTooltip_AddInstructionLine(GameTooltip, L["Click to put it on. Drop an item here to add it."])
-    GameTooltip_AddInstructionLine(GameTooltip, L["Right-click to edit or delete the set."])
+    GameTooltip_AddInstructionLine(GameTooltip, L["Use the gear button to add what you wear, edit or delete the set."])
     GameTooltip:Show()
 end
 
@@ -127,31 +130,39 @@ local function dropOnRow(row)
     return false
 end
 
--- Högerklick: spelets egen meny med det man kan göra med setet.
-local function showRowMenu(row)
+-- Menyn för ett set, i spelets eget menysystem. Den öppnas från radens kugghjul (syns, och
+-- går att nå med handkontroll) och med högerklick på raden.
+local function buildRowMenu(row, rootDescription)
     local index = row.setIndex
     local set = ns.GetSets()[index]
     if not set then
         return
     end
-    MenuUtil.CreateContextMenu(row, function(_, rootDescription)
-        rootDescription:CreateTitle(set.name)
-        rootDescription:CreateButton(L["Edit Name and Icon..."], function()
-            ns.AskEditSet(index)
-        end)
-        if #set.items > 0 then
-            local removeMenu = rootDescription:CreateButton(L["Remove Item"])
-            for _, itemID in ipairs(set.items) do
-                local name = C_Item.GetItemNameByID(itemID) or L["Item %d"]:format(itemID)
-                local icon = C_Item.GetItemIconByID(itemID)
-                removeMenu:CreateButton((icon and ("|T%s:14:14|t "):format(icon) or "") .. name, function()
-                    ns.SetInSet(index, itemID, false)
-                end)
-            end
+    rootDescription:CreateTitle(set.name)
+    rootDescription:CreateButton(L["Add What I'm Wearing"], function()
+        ns.AddWornToSet(index)
+    end)
+    rootDescription:CreateButton(L["Edit Name and Icon..."], function()
+        ns.AskEditSet(index)
+    end)
+    if #set.items > 0 then
+        local removeMenu = rootDescription:CreateButton(L["Remove Item"])
+        for _, itemID in ipairs(set.items) do
+            local name = C_Item.GetItemNameByID(itemID) or L["Item %d"]:format(itemID)
+            local icon = C_Item.GetItemIconByID(itemID)
+            removeMenu:CreateButton((icon and ("|T%s:14:14|t "):format(icon) or "") .. name, function()
+                ns.SetInSet(index, itemID, false)
+            end)
         end
-        rootDescription:CreateButton(L["Delete Set..."], function()
-            ns.AskDeleteSet(index)
-        end)
+    end
+    rootDescription:CreateButton(L["Delete Set..."], function()
+        ns.AskDeleteSet(index)
+    end)
+end
+
+local function showRowMenu(row)
+    MenuUtil.CreateContextMenu(row, function(_, rootDescription)
+        buildRowMenu(row, rootDescription)
     end)
 end
 
@@ -207,6 +218,27 @@ local function acquireRow(index, parent)
     row.equip:SetScript("OnClick", function(self)
         ns.EquipSet(self:GetParent().setIndex)
     end)
+    -- Kugghjulet bredvid Equip öppnar setets meny: samma bild som väskfönstrets kugghjul
+    -- (Marks.lua), och spelets egen menyknapp, så att den fungerar med handkontroll.
+    row.menu = CreateFrame("DropdownButton", nil, row)
+    row.menu:SetSize(22, 22)
+    row.menu:SetPoint("RIGHT", row.equip, "LEFT", -6, 0)
+    row.menu:SetNormalAtlas(MENU_ATLAS)
+    row.menu:SetHighlightAtlas(MENU_ATLAS, "ADD")
+    for _, texture in ipairs({ row.menu:GetNormalTexture(), row.menu:GetHighlightTexture() }) do
+        texture:ClearAllPoints()
+        texture:SetPoint("CENTER")
+        texture:SetSize(18, 18)
+    end
+    row.menu:SetupMenu(function(owner, rootDescription)
+        buildRowMenu(owner:GetParent(), rootDescription)
+    end)
+    row.menu:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip_SetTitle(GameTooltip, L["Set options"])
+        GameTooltip:Show()
+    end)
+    row.menu:SetScript("OnLeave", GameTooltip_Hide)
     rows[index] = row
     return row
 end
@@ -280,11 +312,19 @@ function ns.LayoutSetsView(place, width)
     local sets = ns.GetSets()
     local y = 0
     if #sets == 0 then
-        place(emptyText, 2, y)
+        -- Tomt läge, som spelets egna tomma listor: en kort förklaring mitt i fönstret och
+        -- knappen under den.
+        emptyText:SetWidth(width - 2 * EMPTY_INSET)
+        place(emptyText, EMPTY_INSET, EMPTY_TOP)
         emptyText:Show()
-        y = y + EMPTY_HEIGHT
+        local buttonY = EMPTY_TOP + math.ceil(emptyText:GetStringHeight()) + 12
+        place(newSetButton, (width - newSetButton:GetWidth()) / 2, buttonY)
+        y = buttonY + newSetButton:GetHeight() + EMPTY_TOP
     else
         emptyText:Hide()
+        -- Med set i listan står knappen på sökrutans plats.
+        newSetButton:ClearAllPoints()
+        newSetButton:SetPoint("TOPLEFT", ns.bagFrame, "TOPLEFT", NEW_SET_LEFT, NEW_SET_TOP)
     end
     for index, set in ipairs(sets) do
         local row = acquireRow(index, newSetButton:GetParent())
@@ -340,16 +380,16 @@ ns.OnLoad(function()
     end
     tabSystem:SetTabVisuallySelected(1)
 
-    emptyText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontDisable")
-    emptyText:SetJustifyH("LEFT")
-    emptyText:SetText(L["You have no sets yet."])
+    emptyText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    emptyText:SetJustifyH("CENTER")
+    emptyText:SetText(L["No sets yet. Create one to put on your gear with one click."])
     emptyText:Hide()
 
     -- "New Set" under listan. Håller du en sak hamnar den i det nya setet.
     newSetButton = CreateFrame("Button", nil, tabHost, "UIPanelButtonTemplate")
     newSetButton:SetSize(120, 22)
     newSetButton:SetText(L["New Set"])
-    newSetButton:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", 62, -36) -- sökrutans plats
+    newSetButton:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", NEW_SET_LEFT, NEW_SET_TOP)
     newSetButton:Hide()
     local function newSet()
         local itemID = cursorItemID()

@@ -147,6 +147,29 @@ function ns.SetInSet(index, itemID, inSet)
     end
 end
 
+-- Lägger allt du har på dig just nu i setet, utom skjorta och tabard. Returnerar hur många
+-- saker som kom till.
+function ns.AddWornToSet(index)
+    local set = sets()[index]
+    if not set then
+        return 0
+    end
+    local added = 0
+    for slot = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
+        local itemID = slot ~= INVSLOT_BODY and slot ~= INVSLOT_TABARD and GetInventoryItemID("player", slot)
+        if itemID and not ns.IsInSet(index, itemID) then
+            set.items[#set.items + 1] = itemID
+            added = added + 1
+        end
+    end
+    if added > 0 then
+        changed()
+    else
+        ns.Print(L["Everything you wear is already in %s."]:format(set.name))
+    end
+    return added
+end
+
 -- Namnen på seten som en sak ingår i, eller nil.
 function ns.GetSetNamesForItem(itemID)
     local names

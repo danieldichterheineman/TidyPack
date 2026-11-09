@@ -353,6 +353,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     sist bland sakerna. Pricken på fliken Sets lyser när ett set saknar en sak. Båda
     flikarnas text är lika stor. Esc → Options → Keybindings → AddOns → Tidy Pack: lägg en
     tangent på "Open the Sets tab" och "Equip set 1" och prova (i strid: ett meddelande).
+29. Specialväska och `/reload`: med en specialväska på plats (t.ex. Apprentice's Mining Pack
+    eller ett koger), gör `/reload` och öppna väskan direkt, med mus och med handkontroll.
+    Grupperna och linjen ovanför specialväskan syns, och inget felmeddelande kommer.
 
 ### Provat i spelet
 - 2026-11-09, testversion `v0.2.0-alpha1` på en annan dator (skärmbilder): addonet laddas
@@ -372,6 +375,15 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   genomgången (`relayout`), sannolikt i delen för specialväskor. Felet är inte hittat
   genom att läsa koden. Därför skriver Tidy Pack nu felet en gång i chatten
   (`safeRelayout`). Väntar på felraden.
+- 2026-11-09, `1.0.0` (zip-filen) med handkontroll, Mining Pack som specialväska: grupperna
+  försvann efter en stund och spelets ruta "TidyPack has been blocked from an action only
+  available to the Blizzard UI" kom. Spelets konsollogg
+  (`_forever_/WTF/SavedVariables/Blizzard_Console.lua`) visade felet: `Layout.lua:280`,
+  `contentHeight` var nil. Linjen ovanför specialväskorna placerades innan höjden var
+  räknad; första genomgången efter inloggning eller `/reload` stannade då, och alla
+  följande likaså. Samma fel förklarar troligen kollegans koger ovan. Rättat. Vad spelet
+  stoppade är inte känt än – Tidy Pack skriver nu funktionens namn i chatten
+  (ADDON_ACTION_FORBIDDEN/BLOCKED), och `taintLog` ska vara på vid nästa prov.
 
 ## Arbetssätt
 - Kärnreglerna i pluginet wow-addon-skills gäller.
@@ -388,7 +400,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   spelet och att användaren skapar projektet.
 - Testversioner för andra datorer läggs som förhandsversion (pre-release) under Releases på
   GitHub, med zip-filen från `package-addon.mjs` (den hamnar i `.release/`, som git
-  ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Taggarna har `alpha` i namnet. När
+  ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Efter 1.0.0: `v1.0.1-alpha1` (2026-11-09, rättelsen för specialväskor, ny bakgrund, set-menyn, utan Sell Junk). Taggarna har `alpha` i namnet. När
   arbetsflödet för automatisk publicering finns laddar varje tagg upp till CurseForge, så
   fråga då först.
 
@@ -523,6 +535,24 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   (`PANEL_BACKGROUND_COLOR`, samma som spelets andra fönster), så questlistan syns svagt
   bakom ett stort väskfönster. Tidy Pack ändrar inte bakgrunden, eftersom fönstret då
   skulle se annorlunda ut än resten av spelet.
+
+- 2026-11-09 (utseende, användarens val A–D efter skärmbilder med handkontroll): hel, mörk
+  bakgrund bakom sakerna (`InsetFrameTemplate` med mörkare marmor, `inset` i `Layout.lua`).
+  Det ändrar beslutet ovan om att behålla spelets genomskinliga bakgrund: när de tomma
+  rutorna döljs lyser questlistan igenom. Fliken Sets har ett tomt läge med text och New Set
+  i mitten. Mer luft mellan grupperna (`SHELF_GAP` 10, `PADDING_TOP` 8). Rubrikerna behåller
+  storleken (`GameFontNormal`): nästa mindre typsnitt är för litet på en tv. Inte provat i
+  spelet – färgen på bakgrunden justeras efter en skärmbild.
+
+- 2026-11-09 (genomgång av funktionerna, användarens val): (1) "Add What I'm Wearing" i
+  setets meny (`ns.AddWornToSet`, allt utom skjorta och tabard). (2) Ett kugghjul på varje
+  set-rad öppnar setets meny (`DropdownButton`), eftersom högerklick inte syns och inte nås
+  med handkontroll; högerklick finns kvar. (3) Inställningen `lockAtMerchant` ("Lock quest
+  and set items"), påslagen från början. (4) Knappen Sell Junk är borttagen (`Junk.lua` har
+  bara `ns.GetJunkKind` kvar, inställningen `sellJunkButton` används inte längre): spelet har
+  `MerchantSellAllJunkButton`. Den säljer alla grå saker och känner inte till låsen eller
+  skräplistan. Beskrivningarna av Sell Junk under Funktioner och i testlistan ovan gäller
+  inte längre. Inte provat i spelet.
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1

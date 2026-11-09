@@ -25,13 +25,14 @@ local CELL = BUTTON + SPACING
 local GRID_WIDTH = COLUMNS * BUTTON + (COLUMNS - 1) * SPACING -- 499
 local HEADER = 18          -- gruppens rubrik, inklusive luft under den
 local GROUP_GAP = 12       -- avstånd mellan grupper som delar rad
-local SHELF_GAP = 6        -- avstånd mellan rader av grupper
+local SHELF_GAP = 10       -- avstånd mellan rader av grupper (luft ovanför nästa rubrik)
 -- Luft mellan ramen och rutorna. Spelets eget rutnät ligger bara 7–8 enheter från ramen
 -- och 4 enheter ovanför pengarna. Tidy Pack lägger till lite mer, så att grupperna inte
 -- trängs mot kanterna (användarens önskan 2026-11-09).
 local BLIZZARD_MONEY_GAP = 4 -- spelets avstånd mellan rutorna och raden med pengar
 local PADDING_SIDE = 6       -- extra på var sida
-local PADDING_TOP = 4        -- extra mellan sökrutan och första rubriken
+local PADDING_TOP = 8        -- extra mellan sökrutan och första rubriken
+local INSET_PAD = 4          -- så långt utanför rutorna går den mörka bakgrunden
 local MONEY_GAP = 9          -- mellan sista raden rutor och raden med pengar
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
 local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
@@ -48,6 +49,7 @@ local FAVORITE_ICON = "|A:auctionhouse-icon-favorite:13:13|a "
 
 local bagFrame                    -- spelets fönster med alla väskor i ett
 local overlay                     -- vår egen ram i spelets fönster, för rubrikerna
+local inset                       -- den mörka, infällda bakgrunden bakom sakerna
 local contentHeight               -- höjden på det Tidy Pack lägger ut
 local chromeWidth, chromeHeight   -- fönstrets kanter, titelrad, sökruta och pengar
 local location = ItemLocation:CreateEmpty() -- återanvänds för att läsa en saks nivå
@@ -237,7 +239,8 @@ local function updateExtras(entry, atMerchant)
 
     -- Låset syns bara hos en handlare, och då går låsta saker inte att klicka på – varken
     -- med mus eller handkontroll – så de kan inte säljas av misstag (se QuestLock.lua).
-    local locked = atMerchant and entry.locked == true
+    -- Låsen går att stänga av i inställningarna (Options.lua).
+    local locked = atMerchant and entry.locked == true and ns.db.lockAtMerchant
     extra.lock:SetShown(locked)
     setLocked(button, locked)
 
@@ -288,6 +291,15 @@ local function applySize()
     end
     local height = contentHeight + chromeHeight + PADDING_TOP + (MONEY_GAP - BLIZZARD_MONEY_GAP)
     bagFrame:SetSize(GRID_WIDTH + chromeWidth + 2 * PADDING_SIDE, height)
+    -- Bakgrunden följer det Tidy Pack lägger ut, och hänger i raden med pengar som allt annat.
+    if inset then
+        inset:ClearAllPoints()
+        inset:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", -GRID_WIDTH - PADDING_SIDE - INSET_PAD,
+            MONEY_GAP + contentHeight + INSET_PAD)
+        inset:SetPoint("BOTTOMRIGHT", bagFrame.MoneyFrame, "TOPRIGHT", -PADDING_SIDE + INSET_PAD,
+            MONEY_GAP - INSET_PAD)
+        inset:Show()
+    end
     NineSliceUtil.UpdateCornerCropping(bagFrame, height)
 end
 
@@ -371,9 +383,6 @@ local function layoutSetsView(atMerchant)
         ns.UpdateSetsNotice()
     end
     applySize()
-    if ns.UpdateJunkButton then
-        ns.UpdateJunkButton()
-    end
     if ns.OnLayoutChanged then
         ns.OnLayoutChanged()
     end
@@ -521,13 +530,17 @@ local function relayout()
             placeGroup("bag" .. bagID, bagHeaderText(bagID))
         end
     end
+    -- Höjden måste vara känd innan något placeras, eftersom allt räknas uppifrån men hänger
+    -- i raden med pengar (se anchor). Linjen placerades tidigare före den här raden: direkt
+    -- efter inloggning eller /reload var höjden då okänd (nil) och genomgången stannade med
+    -- ett fel när du bar en specialväska, och annars hamnade linjen efter förra höjden.
+    contentHeight = y + shelfHeight
     if dividerY then
         anchor(divider, -6, dividerY)
         divider:Show()
     else
         divider:Hide()
     end
-    contentHeight = y + shelfHeight
 
     -- 3. Flytta rubrikerna och spelets rutor dit. Rutor som inte behövs (tomma platser
     --    utom en per väsktyp) döljs.
@@ -559,11 +572,6 @@ local function relayout()
     applySize()
     if ns.UpdateSetsNotice then
         ns.UpdateSetsNotice()
-    end
-
-    -- Knappen Sell Junk ligger ovanför fönstret och följer med när höjden ändras.
-    if ns.UpdateJunkButton then
-        ns.UpdateJunkButton()
     end
 
     -- Handkontrollens markör kan stå på en ruta som just dolts (se Gamepad.lua).
@@ -668,6 +676,16 @@ ns.OnLoad(function()
     overlay = CreateFrame("Frame", nil, bagFrame)
     overlay:SetAllPoints()
 
+    -- En hel, mörk bakgrund bakom sakerna (användarens önskan 2026-11-09). Spelets fönster
+    -- är halvgenomskinligt, och när Tidy Pack döljer de tomma rutorna lyser världen och
+    -- questlistan igenom. Mallen är spelets infällda yta (InsetFrameTemplate, som i handlarens
+    -- fönster), med sin marmor mörkare. Den ritas på fönstrets egen nivå, under rutorna.
+    inset = CreateFrame("Frame", nil, bagFrame, "InsetFrameTemplate")
+    if inset.Bg then
+        inset.Bg:SetVertexColor(0.4, 0.4, 0.4)
+    end
+    inset:Hide()
+
     -- Linjen ovanför specialväskorna, lika bred som rutorna och lite till.
     divider = overlay:CreateTexture(nil, "ARTWORK")
     divider:SetAtlas(DIVIDER_ATLAS)
@@ -681,12 +699,9 @@ ns.OnLoad(function()
     hooksecurefunc(bagFrame, "UpdateItemLayout", safeRelayout)
     hooksecurefunc(bagFrame, "UpdateItems", safeRelayout)
 
-    -- När fönstret stängs glöms gruppen New, och Sell Junk döljs.
+    -- När fönstret stängs glöms gruppen New.
     bagFrame:HookScript("OnHide", function()
         wipe(newItems)
-        if ns.UpdateJunkButton then
-            ns.UpdateJunkButton()
-        end
     end)
 
     -- Rubriken "Backpack" i stället för spelets "Combined Backpack" (användarens önskan).

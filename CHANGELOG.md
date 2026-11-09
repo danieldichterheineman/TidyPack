@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Fixed: with a special bag (a quiver, ammo pouch, soul bag or profession bag such as a
+  mining bag), sorting could stop working after logging in or reloading, leaving the
+  game's own grid.
+- Cleaner look: a solid, dark background behind your items, so the world no longer shows
+  through, and more room between the groups.
+- The Sets tab explains itself when you have no sets yet.
+- Sets: a gear button on every set opens its menu, also with a controller. The new "Add
+  What I'm Wearing" puts everything you wear into the set in one click.
+- New setting: "Lock quest and set items" turns the locks at merchants on or off.
+- Removed the Sell Junk button. Use the merchant's own "Sell All Junk" button instead. Note
+  that it sells every grey item and doesn't know about Tidy Pack's locks or junk list.
+- If the game ever blocks something because of Tidy Pack, a line in chat now says what was
+  blocked, so you can report it.
+
 ## 1.0.0 (2026-11-09)
 
 First public release.
