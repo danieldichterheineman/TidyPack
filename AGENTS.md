@@ -287,12 +287,14 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     handlingar.
 19. ★: klicka utan sak – menyn visar "Junk List…" och "Settings…". Släpp en sak på ★ –
     menyn visar "Add to Favorites" och "Add to Junk List". Menyn ser ut som spelets egna.
+    ★ lyser upp när du pekar på den och medan menyn är öppen.
 20. Inställningar: Esc → Options → AddOns → Tidy Pack, `/tidypack` och addonmenyn vid
-    minikartan öppnar sidan. Varje kryssruta gör det den säger, även efter `/reload`.
+    minikartan öppnar sidan. Ingen etikett slutar med "...", och tooltipen förklarar varje
+    rad. Varje kryssruta gör det den säger, även efter `/reload`.
     Rubriken för quests säger om Questie finns, och utan Questie går kryssrutan inte att
     ändra. Skräplistans sida: lägg till genom att shift-klicka på en länk (t.ex. i chatten)
     medan rutan är aktiv, skriv ett namn eller nummer, eller släpp en sak på sidan; ta bort
-    med det röda krysset.
+    med det röda krysset. Rullningslisten syns bara när listan inte får plats.
 21. Quests i förväg, med Questie installerat: saker som en quest du inte tagit än behöver
     har ett gult utropstecken uppe till höger, och tooltipen visar "Needed later for: ...".
     Utan Questie: en rad i chatten första gången, och aldrig mer.
@@ -304,6 +306,14 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     Svaret är den längsta tid Tidy Pack har tagit under en bildruta, i millisekunder (en
     bildruta är ungefär 16 ms vid 60 bilder per sekund). Addonlistan visar också hur mycket
     av datorns tid varje addon använder.
+
+### Provat i spelet
+- 2026-11-09, testversion `v0.2.0-alpha1` på en annan dator (skärmbilder): addonet laddas
+  (1), väskfönstret visar grupperna utan väskor och kvastknapp (3), Hearthstone ligger i
+  Favorites (6), Empty visar antalet (7), nivå och BoE bara på grönt (12), Junk visar
+  värdet, ★-menyn utan sak (19) och inställningssidan och skräplistans sida (20, bara
+  utseendet). Fel som hittades: fyra etiketter på inställningssidan var för långa och
+  slutade med "..." – kortade. Resten av listan är inte provad.
 
 ## Arbetssätt
 - Kärnreglerna i pluginet wow-addon-skills gäller.
@@ -391,6 +401,13 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   användaren vill kunna välja vad som är på, t.ex. Questie. Huvudsidan använder spelets
   vanliga rader, skräplistan en egen sida. Öppnas från Options, `/tidypack`, addonmenyn vid
   minikartan och ★.
+- 2026-11-09: Etiketterna på inställningssidan är högst ungefär lika långa som "Show item
+  level and BoE on gear". Spelet kortar av längre etiketter med "..." (sett i spelet).
+  Förklaringen står i tooltipen, som på spelets egna sidor.
+- 2026-11-09: Väskfönstret behåller spelets egen bakgrund. Den är halvgenomskinlig
+  (`PANEL_BACKGROUND_COLOR`, samma som spelets andra fönster), så questlistan syns svagt
+  bakom ett stort väskfönster. Tidy Pack ändrar inte bakgrunden, eftersom fönstret då
+  skulle se annorlunda ut än resten av spelet.
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1

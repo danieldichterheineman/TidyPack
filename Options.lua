@@ -198,6 +198,8 @@ local function createJunkPage()
     view:SetElementExtent(ROW_HEIGHT)
     view:SetElementInitializer("Frame", initRow)
     ScrollUtil.InitScrollBoxListWithScrollBar(junkScrollBox, scrollBar, view)
+    -- Rullningslisten syns bara när listan inte får plats, som på spelets egna sidor.
+    ScrollUtil.AddManagedScrollBarVisibilityBehavior(junkScrollBox, scrollBar)
 
     junkEmptyText = page:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     junkEmptyText:SetPoint("TOPLEFT", junkScrollBox, "TOPLEFT", 4, -8)
@@ -240,13 +242,15 @@ ns.OnLoad(function()
     category, layout = Settings.RegisterVerticalLayoutCategory(L["Tidy Pack"])
     layout = layout or SettingsPanel:GetLayout(category)
 
+    -- Etiketterna hålls korta. Spelet kortar av en etikett som är längre än ungefär
+    -- "Show item level and BoE on gear" med "...", så förklaringen står i tooltipen.
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Junk"]))
-    addCheckbox("suggestOnLoot", L["Suggest deleting items on your junk list when you loot them"],
-        L["Tidy Pack asks right away. Nothing is deleted until you press Delete."])
-    addCheckbox("suggestWhenFull", L["Suggest an item to delete when your bags are full"],
-        L["Shown under the loot window when something doesn't fit: your junk list first, then your cheapest grey item if the new loot is worth more."])
-    addCheckbox("sellJunkButton", L["Show the Sell Junk button at merchants"],
-        L["Sells your grey items and your junk list, 12 at a time. Never starred or locked items."],
+    addCheckbox("suggestOnLoot", L["Ask to delete junk list loot"],
+        L["When you loot an item on your junk list, Tidy Pack asks right away whether to delete it. Nothing is deleted until you press Delete."])
+    addCheckbox("suggestWhenFull", L["Suggest a deletion when full"],
+        L["When your bags are full and something can't be looted, a panel under the loot window suggests an item to delete: your junk list first, then your cheapest grey item if the new loot is worth more. Nothing is deleted until you press Delete."])
+    addCheckbox("sellJunkButton", L["Show Sell Junk button"],
+        L["At merchants, a button above your bags sells your grey items and your junk list, 12 at a time. Never starred or locked items."],
         function()
             if ns.UpdateJunkButton then
                 ns.UpdateJunkButton()
@@ -260,7 +264,7 @@ ns.OnLoad(function()
     local hasQuestie = ns.HasQuestie ~= nil and ns.HasQuestie()
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
         hasQuestie and L["Quests – Questie is installed"] or L["Quests – Questie is not installed"]))
-    local questCheckbox = addCheckbox("questHints", L["Mark items that quests you haven't taken yet will need"],
+    local questCheckbox = addCheckbox("questHints", L["Mark items for later quests"],
         L["Requires the addon Questie. Items needed for quests you can take now or within 5 levels get a yellow exclamation mark and a line in their tooltip."],
         function()
             if ns.QuestHintsChanged then
@@ -272,8 +276,8 @@ ns.OnLoad(function()
     end)
 
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Bag window"]))
-    addCheckbox("itemLevelAndBoE", L["Show item level and BoE on gear"],
-        L["Only on uncommon or better weapons and armor."],
+    addCheckbox("itemLevelAndBoE", L["Show item level and BoE"],
+        L["On uncommon or better weapons and armor."],
         function()
             if ns.Refresh then
                 ns.Refresh()

@@ -24,6 +24,7 @@ local STAR_ATLAS = "auctionhouse-icon-favorite" -- spelets egen stjärna, från 
 local BUTTON_SIZE = 26
 
 local starButton
+local starHovered = false -- markören (mus eller handkontroll) står på ★
 local hookedButtons = setmetatable({}, { __mode = "k" })
 
 function ns.IsFavorite(itemID)
@@ -106,13 +107,15 @@ local function cursorItemID()
     return nil
 end
 
--- ★ är svag tills du håller en sak, och lyser upp när du kan släppa den där.
+-- ★ är svag tills du håller en sak, pekar på den eller har dess meny öppen. När du håller
+-- en sak lyser den också upp, eftersom du kan släppa saken där.
 local function updateStarButton()
     if not starButton then
         return
     end
     local holding = cursorItemID() ~= nil
-    starButton:SetAlpha(holding and 1 or 0.35)
+    local active = holding or starHovered or starButton:IsMenuOpen()
+    starButton:SetAlpha(active and 1 or 0.35)
     if holding then
         starButton:LockHighlight()
     else
@@ -185,8 +188,19 @@ ns.OnLoad(function()
     starButton:SetScript("OnReceiveDrag", function(self)
         self:OpenMenu()
     end)
-    starButton:SetScript("OnEnter", showTooltip)
-    starButton:SetScript("OnLeave", GameTooltip_Hide)
+    starButton:SetScript("OnEnter", function(self)
+        starHovered = true
+        updateStarButton()
+        showTooltip(self)
+    end)
+    starButton:SetScript("OnLeave", function()
+        starHovered = false
+        updateStarButton()
+        GameTooltip_Hide()
+    end)
+    -- Spelets menyknapp meddelar när menyn öppnas och stängs (DropdownButton.lua).
+    starButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuOpen, updateStarButton, starButton)
+    starButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuClose, updateStarButton, starButton)
 
     ns.RegisterEvent("CURSOR_CHANGED", updateStarButton)
     updateStarButton()
