@@ -5,10 +5,13 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 
 ## Fakta
 - Addonnamn och mapp: `TidyPack` (måste matcha `TidyPack.toc`)
-- Målklient: WoW Forever 1.60.1, Interface 16001 (källa: sidan "TOC format" på
+- Målklient: WoW Forever 1.60.1, Interface 16001. Källor: installationens `.build.info`
+  (version `1.60.1.70862`, produkt `wowf`, 2026-11-09), sidan "TOC format" på
   warcraft.wiki.gg och commit-meddelandet `1.60.1 (70862)` i GitHub-repot
-  `Gethe/wow-ui-source`, gren `forever`, 2026-11-08). Kontrollera i spelet med
-  `/dump select(4, GetBuildInfo())` när spelet är installerat.
+  `Gethe/wow-ui-source`, gren `forever`. I spelet: `/dump select(4, GetBuildInfo())`.
+- Spelet: `/Applications/World of Warcraft/_forever_/` (engelsk klient, EU). Projektmappen är
+  länkad in som `_forever_/Interface/AddOns/TidyPack` (symbolisk länk, 2026-11-09), så
+  ändringar syns efter `/reload`. En ny eller omdöpt TOC-fil kräver omstart av spelet.
 - WoW Forever bygger på samma klient som retail (TOC-familjen `_Mainline`, Blizzards kodnamn
   "Camelot"). Blizzards kod för Forever finns i grenen `forever` i `Gethe/wow-ui-source`.
   Mappar som heter `Camelot` där är Forevers egna ändringar. Verifiera API:er mot den grenen,
