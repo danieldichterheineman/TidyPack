@@ -74,6 +74,19 @@
   .starbutton.idle { opacity: .35; }
   .header { font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
   .header .star { color: var(--wow-gold); }
+  /* Förslag: flikar ovanför fönstret (spelets PanelTopTabButtonTemplate) och fliken Sets. */
+  .toptab { position: absolute; height: 26px; width: 84px; display: flex; align-items: center; justify-content: center;
+    font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; border: 2px solid #5a4a2a;
+    border-bottom: none; border-radius: 6px 6px 0 0; background: linear-gradient(#2a2620, #15130f); }
+  .toptab.active { height: 30px; color: #fff; background: linear-gradient(#3a342a, #1e1c18); border-color: #8a7440; }
+  .setrow { position: absolute; height: 44px; border-radius: 3px; }
+  .setrow:hover, .setrow.hover { background: rgba(255, 210, 0, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 210, 0, 0.25); }
+  .setrow .icon { position: absolute; left: 4px; top: 3px; width: 37px; height: 37px; box-shadow: 0 0 0 1px #000; }
+  .setrow .name { position: absolute; left: 50px; top: 6px; font: 13px var(--text-font); color: #fff; text-shadow: 1px 1px 0 #000; }
+  .setrow .info { position: absolute; left: 50px; top: 25px; font: 11px var(--text-font); color: #9a9a9a; }
+  .setrow .info.warn { color: #ff9a2a; }
+  .setrow .worn { position: absolute; right: 10px; top: 14px; font: 11px var(--text-font); color: #3ad13a; }
+  .setshint { position: absolute; font: 11px var(--text-font); color: #9a9a9a; }
   /* Förslag: specialväskorna längst ned, under en skiljelinje som i spelets egna fönster. */
   .divider { height: 1px; background: linear-gradient(90deg, transparent, #8a7440 15%, #8a7440 85%, transparent); }
   .header .bagicon { display: inline-block; width: 12px; height: 12px; margin-right: 4px; vertical-align: -2px;
@@ -257,6 +270,8 @@
       <label><input type="checkbox" id="optionsToggle"> Inställningssidan</label>
       <label><input type="checkbox" id="lootedToggle"> Lootat från skräplistan</label>
       <label><input type="checkbox" id="specialToggle"> Specialväskor i egna grupper</label>
+      <label><input type="checkbox" id="tabsToggle"> Flikar</label>
+      <label><input type="checkbox" id="setsToggle"> Fliken Sets</label>
     </fieldset>
   </div>
   <p class="note" id="tipNote"></p>
@@ -503,12 +518,21 @@
     const options = document.getElementById("optionsToggle").checked;
     const looted = document.getElementById("lootedToggle").checked;
     const special = document.getElementById("specialToggle").checked;
+    const setsTab = document.getElementById("setsToggle").checked;
+    const tabs = setsTab || document.getElementById("tabsToggle").checked;
     // Skräpmyntsknappen togs bort 2026-11-09: ★ har en meny i stället. Raden finns kvar för
     // att kunna jämföra.
     const junkButtonShown = false && junk && !menu;
     document.getElementById("merchant").style.display = merchant ? "flex" : "none";
     const result = layout(gamepad, { full, junk, special });
-    const height = result.bottom + BOTTOM;
+    // Fliken Sets: en lista med dina set i stället för sakerna.
+    const SETS = [
+      { name: "Fishing", c: ["#4a8ab0", "#10283a"], info: "3 items", worn: true },
+      { name: "Herbalism", c: ["#6a9a4a", "#1a2a10"], info: "2 items" },
+      { name: "Tanking", c: ["#8a8a9a", "#22222a"], info: "1 missing: Sturdy Buckler", warn: true },
+    ];
+    const ROW = 48;
+    const height = setsTab ? TOP + 22 + SETS.length * ROW + 30 + BOTTOM : result.bottom + BOTTOM;
     const left = 1366 + ANCHOR_X - FRAME_WIDTH, top = 768 - ANCHOR_Y - height;
 
     const win = document.getElementById("window");
@@ -526,7 +550,18 @@
     // Förslag: skräpknappen bredvid ★, svag tills du håller en sak.
     if (junkButtonShown) html += `<div class="abs trashbutton ${holding ? "" : "idle"}" style="right:39px; top:33px;" title="Drop an item here to mark it as junk"></div>`;
 
-    for (const p of result.placed) {
+    if (setsTab) {
+      html += `<div class="setshint" style="left:${LEFT + 2}px; top:${TOP}px;">Click a set to put it on.</div>`;
+      SETS.forEach((set, i) => {
+        html += `<div class="abs setrow ${i === 0 && gamepad ? "hover" : ""}" style="left:${LEFT}px; top:${TOP + 22 + i * ROW}px; width:${GRID_WIDTH}px;" title="${set.name}">` +
+          `<div class="icon" style="background: linear-gradient(135deg, ${set.c[0]}, ${set.c[1]});"></div>` +
+          `<div class="name">${set.name}</div>` +
+          `<div class="info ${set.warn ? "warn" : ""}">${set.warn ? "⚠ " : ""}${set.info}</div>` +
+          (set.worn ? `<div class="worn">✔ Equipped</div>` : "") + `</div>`;
+      });
+      html += `<div class="setshint" style="left:${LEFT + 2}px; top:${TOP + 22 + SETS.length * ROW + 8}px;">Drop an item on ★ to add it to a set.</div>`;
+    }
+    for (const p of setsTab ? [] : result.placed) {
       if (p.divider) {
         html += `<div class="abs divider" style="left:${LEFT - 4}px; top:${p.y}px; width:${GRID_WIDTH + 8}px;"></div>`;
       } else if (p.header) {
@@ -569,6 +604,14 @@
     document.getElementById("outside").innerHTML = merchant
       ? `<div class="redbutton" style="left:${left + 60}px; top:${top - SELL_HEIGHT - 6}px;">Sell Junk&nbsp; 2<span class="coin silver"></span>14<span class="coin copper"></span></div>`
       : "";
+    // Flikarna ovanför fönstret, till höger om porträttet. Hos en handlare flyttas Sell Junk
+    // till högerkanten, så att de inte krockar.
+    if (tabs) {
+      document.getElementById("outside").innerHTML =
+        `<div class="toptab ${setsTab ? "" : "active"}" style="left:${left + 56}px; top:${top - (setsTab ? 26 : 30) + 2}px;">Bags</div>` +
+        `<div class="toptab ${setsTab ? "active" : ""}" style="left:${left + 144}px; top:${top - (setsTab ? 30 : 26) + 2}px;">Sets</div>` +
+        (merchant ? `<div class="redbutton" style="left:${left + FRAME_WIDTH - 150}px; top:${top - SELL_HEIGHT - 6}px;">Sell Junk&nbsp; 2<span class="coin silver"></span>14<span class="coin copper"></span></div>` : "");
+    }
 
     // Förklaringar till vänster om fönstret.
     const find = pred => result.placed.find(p => p.item && pred(p.item));
@@ -594,7 +637,7 @@
       callouts[i][1] = Math.max(callouts[i][1], callouts[i - 1][1] + 24);
     }
     // Med ett tips eller ett förslag framme döljs förklaringarna, så att de inte hamnar under det.
-    const showingProposal = full || later || junk || menu || options || looted;
+    const showingProposal = full || later || junk || menu || options || looted || tabs;
     document.getElementById("callouts").innerHTML = (tip || showingProposal) ? "" : callouts
       .map(([text, y]) => `<div class="callout" style="right:${1366 - left + 14}px; top:${y}px;">${text}</div>`)
       .join("");
@@ -745,7 +788,7 @@
   // Läget kan anges i adressen, t.ex. sketch.html#gamepad&tip=3 (för skärmbilder).
   for (const part of location.hash.slice(1).split("&")) {
     const [key, value] = part.split("=");
-    if (["gamepad", "merchant", "holding", "full", "later", "junk", "menu", "options", "looted", "special"].includes(key)) document.getElementById(key + "Toggle").checked = true;
+    if (["gamepad", "merchant", "holding", "full", "later", "junk", "menu", "options", "looted", "special", "tabs", "sets"].includes(key)) document.getElementById(key + "Toggle").checked = true;
     if (key === "list") showListPage = true;
     if (key === "tip") document.getElementById("tipSelect").value = value;
   }

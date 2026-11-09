@@ -34,6 +34,11 @@ local PADDING_SIDE = 6       -- extra på var sida
 local PADDING_TOP = 4        -- extra mellan sökrutan och första rubriken
 local MONEY_GAP = 9          -- mellan sista raden rutor och raden med pengar
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
+local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
+local DIVIDER_GAP = 6      -- luft ovanför och under linjen före specialväskorna
+-- Väskplatser som kan ha en specialväska: de fyra vanliga och reagensväskan. Med mus visar
+-- spelet reagensväskan i ett eget fönster, och då finns den inte i det här.
+local LAST_BAG = Constants.InventoryConstants.NumBagSlots + Constants.InventoryConstants.NumReagentBagSlots
 
 -- Utrustning där nivån inte säger något visas utan nivå (skjortor och tabarder).
 local NO_LEVEL = { INVTYPE_BODY = true, INVTYPE_TABARD = true, INVTYPE_NON_EQUIP_IGNORE = true }
@@ -75,7 +80,10 @@ end
 local entries = {}         -- en tabell per sak, eller per sorts tomma platser
 local entryCount = 0
 local groupLists = {}      -- gruppens namn → sakerna i gruppen
-local emptyByFamily = {}   -- väsktyp → tomma platser av den typen (0 = vanlig väska)
+local emptyByFamily = {}   -- väsktyp → tomma platser av den typen (0 = vanlig väska), eller
+                           -- "bag3" → tomma platser i specialväskan i plats 3
+local specialBags = {}     -- bagID → true för specialväskor (koger, själsväska, yrkesväska …)
+local divider              -- linjen ovanför specialväskorna
 local shownButtons = {}    -- rutorna som syns efter senaste genomgången
 local lockedButtons = setmetatable({}, { __mode = "k" }) -- rutor som är låsta hos handlaren
 local disabledButtons = setmetatable({}, { __mode = "k" }) -- rutor som Tidy Pack stängt av
@@ -304,6 +312,60 @@ local function headerText(group, junkValue)
     return text
 end
 
+-- Rubriken för en specialväska: väskans egen ikon och namn.
+local function bagHeaderText(bagID)
+    local icon = GetInventoryItemTexture("player", C_Container.ContainerIDToInventoryID(bagID))
+    local name = C_Container.GetBagName(bagID) or ""
+    return icon and ("|T%s:13:13|t %s"):format(icon, name) or name
+end
+
+-- Sant om väskan i platsen är en specialväska: den tar bara vissa sorters saker
+-- (bagFamily är inte 0), eller är reagensväskan.
+local function isSpecialBag(bagID)
+    if C_Container.GetContainerNumSlots(bagID) == 0 then
+        return false
+    end
+    if bagID == Enum.BagIndex.ReagentBag then
+        return true
+    end
+    local _, family = C_Container.GetContainerNumFreeSlots(bagID)
+    return family ~= nil and family ~= 0
+end
+
+-- Listan med set i fliken Sets (SetsView.lua) i stället för sakerna.
+local function layoutSetsView(atMerchant)
+    releaseHeaders()
+    if divider then
+        divider:Hide()
+    end
+    for _, button in bagFrame:EnumerateValidItems() do
+        if lockedButtons[button] or disabledButtons[button] then
+            setLocked(button, false)
+        end
+        button:Hide()
+    end
+    wipe(shownButtons)
+    wipe(groupFirst)
+    wipe(groupOfButton)
+    newGroupIndex = nil
+    local rows
+    contentHeight, rows = ns.LayoutSetsView(function(region, x, y)
+        anchor(region, x, y)
+    end, GRID_WIDTH)
+    for index, row in ipairs(rows) do
+        shownButtons[row] = true
+        groupFirst[index] = row
+        groupOfButton[row] = index
+    end
+    applySize()
+    if ns.UpdateJunkButton then
+        ns.UpdateJunkButton()
+    end
+    if ns.OnLayoutChanged then
+        ns.OnLayoutChanged()
+    end
+end
+
 -- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
 -- storlek. Körs efter spelets egen utläggning och varje gång innehållet ändras.
 local function relayout()
@@ -311,6 +373,17 @@ local function relayout()
         return -- görs när fönstret öppnas
     end
     local atMerchant = ns.IsAtMerchant()
+    if ns.IsSetsView and ns.IsSetsView() then
+        layoutSetsView(atMerchant)
+        return
+    end
+
+    -- Vilka väskplatser har en specialväska? Deras saker och tomma platser får egna grupper
+    -- längst ned, med väskans namn.
+    wipe(specialBags)
+    for bagID = 1, LAST_BAG do
+        specialBags[bagID] = isSpecialBag(bagID) or nil
+    end
 
     -- 1. Sortera in varje sak i sin grupp. Tomma platser räknas per väsktyp.
     entryCount = 0
@@ -329,14 +402,19 @@ local function relayout()
             entry.button, entry.bagID, entry.slot = button, bagID, slot
             entry.isEmpty = false
             local isQuestItem = ns.IsQuestItem(bagID, slot, info)
-            entry.group, entry.subOrder = ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
+            if specialBags[bagID] then
+                -- Allt i en specialväska stannar i väskans egen grupp.
+                entry.group, entry.subOrder = "bag" .. bagID, 0
+            else
+                entry.group, entry.subOrder = ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
+            end
             entry.quality = info.quality or 0
             entry.name = ns.GetItemName(info.hyperlink)
             entry.count = info.stackCount or 1
             entry.itemID, entry.link, entry.isBound = info.itemID, info.hyperlink, info.isBound
             entry.isGear = classID == Enum.ItemClass.Weapon or classID == Enum.ItemClass.Armor
             entry.equipLocation = equipLocation
-            entry.locked = isQuestItem or ns.IsInEquipmentSet(info.itemID)
+            entry.locked = isQuestItem or ns.IsInEquipmentSet(info.itemID) or ns.IsInAnySet(info.itemID)
             entry.junkMarked = ns.IsJunkMarked(info.itemID)
             entry.noValue = info.hasNoValue
             entry.neededLater = ns.IsNeededLater ~= nil and ns.IsNeededLater(info.itemID)
@@ -348,16 +426,19 @@ local function relayout()
         elseif bagID ~= KEYRING_CONTAINER then -- tomma platser på nyckelringen visas inte
             local _, family = C_Container.GetContainerNumFreeSlots(bagID)
             family = family or 0
-            local empty = emptyByFamily[family]
+            -- En specialväskas tomma platser räknas för sig, i väskans egen grupp.
+            local key = specialBags[bagID] and ("bag" .. bagID) or family
+            local group = specialBags[bagID] and ("bag" .. bagID) or "Empty"
+            local empty = emptyByFamily[key]
             if not empty then
                 empty = newEntry()
                 empty.button, empty.bagID, empty.slot = button, bagID, slot
-                empty.isEmpty, empty.group, empty.family, empty.free = true, "Empty", family, 0
+                empty.isEmpty, empty.group, empty.family, empty.free = true, group, family, 0
                 -- Tabellen kan ha använts för en sak förut, så allt som märkena läser nollställs.
                 empty.locked, empty.isGear, empty.junkMarked, empty.neededLater = false, false, false, false
                 empty.quality, empty.noValue = 0, true
-                emptyByFamily[family] = empty
-                addToGroup("Empty", empty)
+                emptyByFamily[key] = empty
+                addToGroup(group, empty)
             elseif bagID < empty.bagID or (bagID == empty.bagID and slot < empty.slot) then
                 -- Rutan som syns är den första lediga platsen, där spelet lägger nya saker.
                 empty.button, empty.bagID, empty.slot = button, bagID, slot
@@ -376,7 +457,8 @@ local function relayout()
     wipe(groupOfButton)
     newGroupIndex = nil
     local x, y, shelfHeight = 0, 0, 0
-    for _, group in ipairs(ns.groupOrder) do
+    -- Lägger ut en grupp med rubriken text. Körs för vanliga grupper och specialväskor.
+    local function placeGroup(group, text)
         local list = groupLists[group]
         if list and #list > 0 then
             local groupIndex = #groupFirst + 1
@@ -385,7 +467,7 @@ local function relayout()
                 newGroupIndex = groupIndex
             end
             local header = acquireHeader()
-            header:SetText(headerText(group, junkValue))
+            header:SetText(text)
             local columns = math.min(#list, COLUMNS)
             local rows = math.ceil(#list / COLUMNS)
             -- Gruppen är minst lika bred som sin rubrik, så att rubrikerna inte krockar.
@@ -407,6 +489,30 @@ local function relayout()
             x = left + width
             shelfHeight = math.max(shelfHeight, height)
         end
+    end
+    for _, group in ipairs(ns.groupOrder) do
+        placeGroup(group, headerText(group, junkValue))
+    end
+
+    -- Specialväskorna längst ned, under spelets linje, i väskplatsernas ordning.
+    local dividerY
+    for bagID = 1, LAST_BAG do
+        local list = specialBags[bagID] and groupLists["bag" .. bagID]
+        if list and #list > 0 then
+            if not dividerY then
+                y = y + shelfHeight + DIVIDER_GAP
+                dividerY = y
+                y = y + divider:GetHeight() + DIVIDER_GAP
+                x, shelfHeight = 0, 0
+            end
+            placeGroup("bag" .. bagID, bagHeaderText(bagID))
+        end
+    end
+    if dividerY then
+        anchor(divider, -6, dividerY)
+        divider:Show()
+    else
+        divider:Hide()
     end
     contentHeight = y + shelfHeight
 
@@ -528,6 +634,15 @@ ns.OnLoad(function()
 
     overlay = CreateFrame("Frame", nil, bagFrame)
     overlay:SetAllPoints()
+
+    -- Linjen ovanför specialväskorna, lika bred som rutorna och lite till.
+    divider = overlay:CreateTexture(nil, "ARTWORK")
+    divider:SetAtlas(DIVIDER_ATLAS)
+    local atlasInfo = C_Texture.GetAtlasInfo(DIVIDER_ATLAS)
+    local dividerWidth = GRID_WIDTH + 12
+    divider:SetSize(dividerWidth, atlasInfo and atlasInfo.width > 0
+        and math.max(2, math.floor(atlasInfo.height * dividerWidth / atlasInfo.width + 0.5)) or 8)
+    divider:Hide()
 
     hooksecurefunc(bagFrame, "UpdateFrameSize", onFrameSizeUpdated)
     hooksecurefunc(bagFrame, "UpdateItemLayout", relayout)

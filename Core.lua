@@ -28,6 +28,12 @@ ns.defaults = {
     itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
 }
 
+-- Standardvärden för data som sparas per karaktär (TidyPackCharDB).
+ns.charDefaults = {
+    -- Egna set: { { name = "Fishing", items = { itemID, ... } }, ... } (se Sets.lua).
+    sets = {},
+}
+
 -- Skriver ett meddelande i användarens eget chattfönster, med addonets namn först.
 function ns.Print(message)
     print(("|cff33ff99%s|r: %s"):format("Tidy Pack", message))
@@ -120,6 +126,10 @@ ns.RegisterEvent("ADDON_LOADED", function(loadedName)
     migrate(TidyPackDB) -- före standardvärdena, så att gamla värden följer med
     applyDefaults(TidyPackDB, ns.defaults)
     ns.db = TidyPackDB
+    -- Per karaktär. Fanns inte i 0.1.0, så det finns inget att migrera.
+    TidyPackCharDB = TidyPackCharDB or {}
+    applyDefaults(TidyPackCharDB, ns.charDefaults)
+    ns.charDb = TidyPackCharDB
 
     for _, callback in ipairs(loadCallbacks) do
         callback(ns.db)

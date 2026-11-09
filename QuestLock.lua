@@ -100,9 +100,10 @@ function ns.IsInEquipmentSet(itemID)
     return setItems[itemID] == true
 end
 
--- Sant om saken är låst: den behövs för en quest eller ingår i ett utrustningsset.
+-- Sant om saken är låst: den behövs för en quest eller ingår i ett utrustningsset eller
+-- i ett av Tidy Packs egna set (Sets.lua).
 function ns.IsLocked(bagID, slot, info)
-    return ns.IsInEquipmentSet(info.itemID) or ns.IsQuestItem(bagID, slot, info)
+    return ns.IsInEquipmentSet(info.itemID) or ns.IsInAnySet(info.itemID) or ns.IsQuestItem(bagID, slot, info)
 end
 
 -- Sant medan handlarfönstret är öppet.

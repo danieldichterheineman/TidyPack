@@ -123,8 +123,8 @@ local function updateStarButton()
     end
 end
 
--- Menyn under ★, byggd av spelets eget menysystem. Med en sak på markören: favorit eller
--- skräplistan. Annars: skräplistan och inställningarna.
+-- Menyn under ★, byggd av spelets eget menysystem. Med en sak på markören: favorit,
+-- skräplistan eller ett set. Annars: byta flik, skräplistan, seten och inställningarna.
 local function buildMenu(_, rootDescription)
     local itemID = cursorItemID()
     if itemID then
@@ -137,10 +137,38 @@ local function buildMenu(_, rootDescription)
             ClearCursor()
             ns.ToggleJunk(itemID)
         end)
+        -- Egna set (Sets.lua): en bock för varje set som saken ingår i.
+        local setMenu = rootDescription:CreateButton(L["Add to Set"])
+        for index, set in ipairs(ns.GetSets()) do
+            setMenu:CreateCheckbox(set.name, function()
+                return ns.IsInSet(index, itemID)
+            end, function()
+                ClearCursor()
+                ns.SetInSet(index, itemID, not ns.IsInSet(index, itemID))
+                return MenuResponse.CloseAll
+            end)
+        end
+        setMenu:CreateButton(L["New Set..."], function()
+            ClearCursor()
+            ns.AskNewSet(itemID)
+        end)
     else
         rootDescription:CreateTitle(L["Tidy Pack"])
+        -- Samma val som flikarna ovanför fönstret, så att de också nås med handkontroll.
+        if ns.IsSetsView and ns.IsSetsView() then
+            rootDescription:CreateButton(L["Show Bags"], function()
+                ns.SetView("bags")
+            end)
+        else
+            rootDescription:CreateButton(L["Show Sets"], function()
+                ns.SetView("sets")
+            end)
+        end
         rootDescription:CreateButton(L["Junk List..."], function()
             ns.OpenSettings("junk")
+        end)
+        rootDescription:CreateButton(L["Sets..."], function()
+            ns.OpenSettings("sets")
         end)
         rootDescription:CreateButton(L["Settings..."], function()
             ns.OpenSettings()
@@ -155,12 +183,12 @@ local function showTooltip(self)
     GameTooltip_SetTitle(GameTooltip, L["Tidy Pack"])
     if InputUtil.IsGamepadUIEnabled() then
         local icon = ns.GamepadIcon and ns.GamepadIcon(GAMEPAD_FACE_BOTTOM) or ""
-        local text = L["Pick up an item, then drop it here to star it or put it on your junk list."]
+        local text = L["Pick up an item, then drop it here to star it, put it on your junk list or add it to a set."]
         GameTooltip_AddNormalLine(GameTooltip, icon ~= "" and (icon .. " " .. text) or text)
     else
-        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item here to star it or put it on your junk list."])
+        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item here to star it, put it on your junk list or add it to a set."])
     end
-    GameTooltip_AddNormalLine(GameTooltip, L["Click for your junk list and settings."])
+    GameTooltip_AddNormalLine(GameTooltip, L["Click for your sets, junk list and settings."])
     if not InputUtil.IsGamepadUIEnabled() then
         GameTooltip_AddBlankLineToTooltip(GameTooltip)
         GameTooltip_AddInstructionLine(GameTooltip, L["Alt-click an item to star it. Alt-right-click to put it on your junk list."])

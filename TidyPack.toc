@@ -6,6 +6,7 @@
 ## Version: 0.2.0
 ## IconTexture: Interface\Icons\INV_Misc_Bag_08
 ## SavedVariables: TidyPackDB
+## SavedVariablesPerCharacter: TidyPackCharDB
 ## OptionalDeps: QuestieDB
 ## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick
 
@@ -13,9 +14,11 @@ Locales.lua
 Core.lua
 Categories.lua
 QuestLock.lua
+Sets.lua
 QuestHints.lua
 BagSwap.lua
 Layout.lua
+SetsView.lua
 Marks.lua
 Junk.lua
 MakeRoom.lua

@@ -1,6 +1,6 @@
 -- TidyPack – Options.lua
--- Inställningarna i spelets eget fönster: Esc → Options → AddOns → Tidy Pack, med en egen
--- sida för skräplistan. Sidan öppnas också med /tidypack, från addonmenyn vid minikartan
+-- Inställningarna i spelets eget fönster: Esc → Options → AddOns → Tidy Pack, med egna
+-- sidor för skräplistan och seten. Sidan öppnas också med /tidypack, från addonmenyn vid minikartan
 -- (## AddonCompartmentFunc i TOC-filen) och från ★ i väskfönstret (Marks.lua).
 -- Huvudsidan använder spelets vanliga rader (vertical layout), så att den ser ut som spelets
 -- egna sidor. Skräplistans sida är en egen ram (canvas layout) byggd av spelets mallar.
@@ -12,8 +12,9 @@ local L = ns.L
 local ROW_HEIGHT = 30
 local HINT_TEXT -- sätts när L är klar, se createJunkPage
 
-local category, junkCategory
+local category, junkCategory, setsCategory
 local junkPage, junkScrollBox, junkEmptyText, junkInput, junkHint
+local setsPage, setsScrollBox, setsEmptyText
 
 -- Öppnar Tidy Packs sida, eller skräplistans sida med page = "junk".
 function ns.OpenSettings(page)
@@ -21,7 +22,7 @@ function ns.OpenSettings(page)
         ns.Print(L["The settings can't be opened in combat."])
         return
     end
-    local target = page == "junk" and junkCategory or category
+    local target = (page == "junk" and junkCategory) or (page == "sets" and setsCategory) or category
     if target then
         Settings.OpenToCategory(target:GetID())
     end
@@ -224,6 +225,170 @@ local function createJunkPage()
 end
 
 ---------------------------------------------------------------------------
+-- Setens sida
+---------------------------------------------------------------------------
+-- Varje set är en rubrikrad med Rename och Delete, följd av en rad per sak som visar var
+-- saken finns hos den här karaktären: på dig, i väskorna eller saknas.
+
+local SET_STATE = {
+    equipped = { L["Equipped"], GREEN_FONT_COLOR },
+    bags = { L["In your bags"], HIGHLIGHT_FONT_COLOR },
+    missing = { L["Missing"], RED_FONT_COLOR },
+}
+
+function ns.RefreshSetsPage()
+    if not setsPage or not setsPage:IsVisible() then
+        return
+    end
+    local data = {}
+    for index, set in ipairs(ns.GetSets()) do
+        data[#data + 1] = { kind = "set", index = index }
+        for _, itemID in ipairs(set.items) do
+            data[#data + 1] = { kind = "item", index = index, itemID = itemID }
+        end
+    end
+    setsScrollBox:SetDataProvider(CreateDataProvider(data), ScrollBoxConstants.RetainScrollPosition)
+    setsEmptyText:SetShown(#data == 0)
+end
+
+local function smallButton(parent, label, width, onClick)
+    local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    button:SetSize(width, 22)
+    button:SetText(label)
+    button:SetScript("OnClick", onClick)
+    return button
+end
+
+-- En rad, antingen ett set eller en sak i ett set. Delarna skapas första gången och
+-- visas efter vad raden är.
+local function initSetsRow(row, data)
+    if not row.icon then
+        row:EnableMouse(true)
+        row.title = row:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+        row.title:SetPoint("LEFT", 4, 0)
+        row.count = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+        row.count:SetPoint("LEFT", row.title, "RIGHT", 10, -1)
+        row.delete = smallButton(row, L["Delete"], 80, function(self)
+            ns.AskDeleteSet(self:GetParent().data.index)
+        end)
+        row.delete:SetPoint("RIGHT", -6, 0)
+        row.rename = smallButton(row, L["Rename"], 80, function(self)
+            ns.AskRenameSet(self:GetParent().data.index)
+        end)
+        row.rename:SetPoint("RIGHT", row.delete, "LEFT", -6, 0)
+
+        row.icon = row:CreateTexture(nil, "ARTWORK")
+        row.icon:SetSize(22, 22)
+        row.icon:SetPoint("LEFT", 24, 0)
+        row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+        row.name:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
+        row.name:SetPoint("RIGHT", -170, 0)
+        row.name:SetJustifyH("LEFT")
+        row.name:SetWordWrap(false)
+        row.state = row:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+        row.state:SetPoint("RIGHT", -40, 0)
+        row.remove = CreateFrame("Button", nil, row)
+        row.remove:SetSize(22, 22)
+        row.remove:SetPoint("RIGHT", -6, 0)
+        row.remove:SetNormalAtlas("RedButton-Exit")
+        row.remove:SetPushedAtlas("RedButton-exit-pressed")
+        row.remove:SetHighlightAtlas("RedButton-Exit", "ADD")
+        row.remove:SetScript("OnClick", function(self)
+            local rowData = self:GetParent().data
+            ns.SetInSet(rowData.index, rowData.itemID, false)
+        end)
+        row.remove:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip_SetTitle(GameTooltip, L["Remove from the set"])
+            GameTooltip:Show()
+        end)
+        row.remove:SetScript("OnLeave", GameTooltip_Hide)
+        row:SetScript("OnEnter", function(self)
+            if self.data and self.data.kind == "item" then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetItemByID(self.data.itemID)
+                GameTooltip:Show()
+            end
+        end)
+        row:SetScript("OnLeave", GameTooltip_Hide)
+    end
+    row.data = data
+    local isSet = data.kind == "set"
+    for _, part in ipairs({ row.title, row.count, row.rename, row.delete }) do
+        part:SetShown(isSet)
+    end
+    for _, part in ipairs({ row.icon, row.name, row.state, row.remove }) do
+        part:SetShown(not isSet)
+    end
+    local set = ns.GetSets()[data.index]
+    if not set then
+        return
+    end
+    if isSet then
+        row.title:SetText(set.name)
+        row.count:SetText(#set.items == 1 and L["1 item"] or L["%d items"]:format(#set.items))
+        return
+    end
+    local itemID = data.itemID
+    row.icon:SetTexture(C_Item.GetItemIconByID(itemID))
+    local name = C_Item.GetItemNameByID(itemID)
+    if name then
+        local r, g, b = C_Item.GetItemQualityColor(C_Item.GetItemQualityByID(itemID) or Enum.ItemQuality.Common)
+        row.name:SetText(name)
+        row.name:SetTextColor(r, g, b)
+    else
+        row.name:SetText(L["Item %d"]:format(itemID))
+        row.name:SetTextColor(GRAY_FONT_COLOR:GetRGB())
+        Item:CreateFromItemID(itemID):ContinueOnItemLoad(ns.RefreshSetsPage)
+    end
+    local state = SET_STATE[ns.GetItemState(itemID)]
+    row.state:SetText(state[1])
+    row.state:SetTextColor(state[2]:GetRGB())
+end
+
+local function createSetsPage()
+    local page = CreateFrame("Frame")
+
+    local title = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightHuge")
+    title:SetPoint("TOPLEFT", 10, -15)
+    title:SetText(L["Sets"])
+
+    local intro = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
+    intro:SetPoint("RIGHT", page, "RIGHT", -20, 0)
+    intro:SetJustifyH("LEFT")
+    intro:SetText(L["Your sets on this character. To add an item, drop it on the star in your bags and choose Add to Set. In the bag window's Sets tab, click a set to put it on."])
+
+    local newButton = smallButton(page, L["New Set"], 120, function()
+        ns.AskNewSet()
+    end)
+    newButton:SetPoint("TOPLEFT", intro, "BOTTOMLEFT", 0, -14)
+
+    setsScrollBox = CreateFrame("Frame", nil, page, "WowScrollBoxList")
+    setsScrollBox:SetPoint("TOPLEFT", newButton, "BOTTOMLEFT", 0, -12)
+    setsScrollBox:SetPoint("BOTTOMRIGHT", page, "BOTTOMRIGHT", -36, 16)
+    local scrollBar = CreateFrame("EventFrame", nil, page, "MinimalScrollBar")
+    scrollBar:SetPoint("TOPLEFT", setsScrollBox, "TOPRIGHT", 8, 0)
+    scrollBar:SetPoint("BOTTOMLEFT", setsScrollBox, "BOTTOMRIGHT", 8, 0)
+    local view = CreateScrollBoxListLinearView()
+    view:SetElementExtent(ROW_HEIGHT)
+    view:SetElementInitializer("Frame", initSetsRow)
+    ScrollUtil.InitScrollBoxListWithScrollBar(setsScrollBox, scrollBar, view)
+    ScrollUtil.AddManagedScrollBarVisibilityBehavior(setsScrollBox, scrollBar)
+
+    setsEmptyText = page:CreateFontString(nil, "ARTWORK", "GameFontDisable")
+    setsEmptyText:SetPoint("TOPLEFT", setsScrollBox, "TOPLEFT", 4, -8)
+    setsEmptyText:SetText(L["You have no sets yet."])
+
+    page:SetScript("OnShow", ns.RefreshSetsPage)
+    return page
+end
+
+-- Var sakerna finns ändras när du lootar, säljer eller byter utrustning.
+ns.RegisterEvent("BAG_UPDATE_DELAYED", ns.RefreshSetsPage)
+ns.RegisterEvent("PLAYER_EQUIPMENT_CHANGED", ns.RefreshSetsPage)
+
+---------------------------------------------------------------------------
 -- Huvudsidan
 ---------------------------------------------------------------------------
 
@@ -286,6 +451,8 @@ ns.OnLoad(function()
 
     junkPage = createJunkPage()
     junkCategory = Settings.RegisterCanvasLayoutSubcategory(category, junkPage, L["Junk List"])
+    setsPage = createSetsPage()
+    setsCategory = Settings.RegisterCanvasLayoutSubcategory(category, setsPage, L["Sets"])
     Settings.RegisterAddOnCategory(category)
 end)
 

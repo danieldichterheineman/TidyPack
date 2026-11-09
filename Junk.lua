@@ -59,16 +59,17 @@ local function findJunk()
     return table.concat(lines, "\n"), count, value
 end
 
--- Lägger knappen ovanför väskfönstrets vänstra del. Knappen hänger i UIParent, inte i
+-- Lägger knappen ovanför väskfönstrets högra del, så att den inte krockar med flikarna
+-- Bags och Sets till vänster (SetsView.lua). Knappen hänger i UIParent, inte i
 -- väskfönstret, så platsen räknas om till UIParents skala.
 local function place(bagFrame)
-    local left, top = bagFrame:GetLeft(), bagFrame:GetTop()
-    if not left or not top then
+    local right, top = bagFrame:GetRight(), bagFrame:GetTop()
+    if not right or not top then
         return false
     end
     local scale = bagFrame:GetEffectiveScale() / UIParent:GetEffectiveScale()
     button:ClearAllPoints()
-    button:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", left * scale + 60, top * scale + 6)
+    button:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMLEFT", right * scale - 8, top * scale + 6)
     return true
 end
 

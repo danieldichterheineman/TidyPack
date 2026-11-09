@@ -43,6 +43,15 @@
   above you) get a yellow exclamation mark and a line in their tooltip. Grey ones are never
   sold or suggested for deletion.
 - The free-slot count now sits exactly where the game shows its own item counts.
+- More room between the window's border and your items.
+- Special bags – quivers, ammo pouches, soul bags, profession bags and the reagent bag – get
+  their own groups at the bottom, under a line, with the bag's icon and name and their own
+  free slots. Empty only counts slots that fit anything.
+- Sets: drop an item on the star and choose "Add to Set" to collect items under a name you
+  pick, like "Fishing". The new Sets tab above your bags lists your sets; click one to put
+  it on (not in combat). A warning shows what's missing. Items in a set are locked at
+  merchants. Sets are saved per character and can be renamed or deleted in the settings.
+- Sell Junk now sits above the right side of your bags.
 
 ## 0.1.0 (not released)
 

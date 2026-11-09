@@ -27,15 +27,32 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 
 ## Funktioner
 - ✅ Elva grupper i fast ordning: Favorites, New, Consumables, Equipment, Trade Goods,
-  Quest Items, Keys, Bags, Miscellaneous, Junk, Empty. Inga sektioner eller linjer. Tomma
-  grupper visas inte. Indelningen står i `Categories.lua`.
+  Quest Items, Keys, Bags, Miscellaneous, Junk, Empty. Tomma grupper visas inte.
+  Indelningen står i `Categories.lua`. Mer luft mot ramen än spelets rutnät (6 enheter på
+  var sida, 4 under sökrutan, 9 ovanför pengarna).
+- ✅ Specialväskor (`Layout.lua`): koger, ammunitionspåsar, själsväskor, yrkesväskor
+  (`bagFamily` ≠ 0) och reagensväskan får varsin grupp längst ned, under spelets linje
+  `bank-divider` (från Forevers bankfönster), med väskans ikon och namn som rubrik. Allt i
+  väskan stannar i dess grupp, och dess tomma platser räknas där, inte i Empty. Visas bara
+  när en sådan väska sitter på plats. Med mus visar spelet reagensväskan i ett eget fönster.
+- ✅ Egna set (`Sets.lua`, `SetsView.lua`), per karaktär: släpp en sak på ★ → "Add to Set"
+  (bock per set, eller "New Set…" med eget namn). Flikarna Bags och Sets ovanför
+  fönstret (spelets `PanelTopTabButtonTemplate`) – Sets listar seten med "Equipped", antal
+  saker eller en orange varning med det som saknas. Klick tar på allt som går att ha på
+  sig (`C_Item.EquipItemByName`, ringar, smycken och enhandsvapen fördelas på båda
+  platserna); högerklick öppnar setens sida i inställningarna. Saker i set är låsta hos
+  handlaren och tooltipen visar "Tidy Pack set: …". Fönstret öppnas alltid på Bags.
+- ⚠️ Set tas bara på utanför strid (spelet låter ingen byta rustning i strid). Flikarna
+  och raderna med handkontroll är inte provade; ★-menyn har "Show Sets"/"Show Bags" som
+  reserv.
 - ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
   vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
   bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 12 rutor brett.
 - ✅ ★ (`Marks.lua`) är den enda knapp Tidy Pack lägger i väskfönstret, på
   sorteringsknappens plats. Den är spelets egen menyknapp (`DropdownButton`): med en sak på
-  markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List", annars
-  "Junk List…" / "Settings…". ★ är svag tills man håller en sak.
+  markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List" /
+  "Add to Set", annars "Show Sets" (eller "Show Bags") / "Junk List…" / "Sets…" /
+  "Settings…". ★ är svag tills man håller en sak, pekar på den eller har menyn öppen.
 - ✅ Favorites (`Marks.lua`): Alt-klick (mus) eller via ★. Sparas per itemID och konto.
 - ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-högerklick, via ★ eller på skräplistans
   sida i inställningarna (lägg till med länk, namn, nummer eller genom att släppa en sak;
@@ -192,6 +209,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   true), `questieNoticeShown` (sant när raden om Questie har visats), inställningarna
   `suggestOnLoot`, `suggestWhenFull`, `sellJunkButton`, `questHints` och `itemLevelAndBoE`
   (alla sanna från början) och `dataVersion`
+- `TidyPackCharDB` (per karaktär, ny 2026-11-09): `sets` = lista med
+  `{ name = "...", items = { itemID, ... } }` i den ordning seten skapades. Kräver omstart
+  av spelet första gången, eftersom TOC-filen fick en ny rad.
 - Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
   nya nycklar med standardvärden, så ingen migrering behövdes.
 
@@ -201,7 +221,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
 - Möjliga senare: slå ihop högar av samma sak till en ruta, fälla ihop grupper, visa
   antalet pilar och kulor i rubriken.
-- Valt bort för att hålla addonet avskalat: banken, andra karaktärers väskor, egna grupper,
+- Valt bort för att hålla addonet avskalat: banken, andra karaktärers väskor, egna grupper
+  (egna set finns i stället, i en egen flik),
   flera utseenden, val av ordning, flytt till post och handel, uppgraderingspilar på
   utrustning (nivån säger för lite i Forevers föremål).
 - Går inte: sälja eller öppna saker automatiskt (spelet kräver ett klick på en säker knapp).
@@ -211,17 +232,19 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `Locales.lua`: all text som visas i spelet (engelska)
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
-- `QuestLock.lua`: vilka saker som är låsta (quest och utrustningsset), handlarläget och
-  raden i tooltipen
+- `QuestLock.lua`: vilka saker som är låsta (quest, utrustningsset och egna set),
+  handlarläget och raden i tooltipen
+- `Sets.lua`: egna set – data, ta på ett set, rutan för namn och frågor, raden i tooltipen
 - `BagSwap.lua`: byter ut den minsta väskan, och avgör vilka väskor som får en grön pil
-- `Layout.lua`: ordnar om spelets väskfönster: grupper, rubriker, New, märken, lås, tomma
-  platser, varningen för fulla väskor och att städknappen och väskmenyn döljs
+- `Layout.lua`: ordnar om spelets väskfönster: grupper, specialväskor, rubriker, New,
+  märken, lås, tomma platser, listläget för fliken Sets, varningen för fulla väskor och att städknappen och väskmenyn döljs
+- `SetsView.lua`: flikarna Bags och Sets och listan med set i väskfönstret
 - `QuestHints.lua`: saker som quests man inte har tagit än behöver, via Questies databas
 - `Marks.lua`: favoriter och skräplistan, med Alt-klick och ★ med spelets meny (hette
   `Favorites.lua` före 2026-11-09)
 - `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`) och knappen Sell Junk
 - `MakeRoom.lua`: frågorna om radering, när skräp lootas och när väskorna är fulla
-- `Options.lua`: inställningssidan, skräplistans sida, `/tidypack` och addonmenyn
+- `Options.lua`: inställningssidan, skräplistans och setens sidor, `/tidypack` och addonmenyn
 - `Gamepad.lua`: handkontrollens markör (start, LB/RB, fri navigering, dolda rutor), låsen
   för markören och knappsymboler i text
 - `CHANGELOG.md`: ändringarna, på engelska, för spelare
@@ -306,6 +329,21 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     Svaret är den längsta tid Tidy Pack har tagit under en bildruta, i millisekunder (en
     bildruta är ungefär 16 ms vid 60 bilder per sekund). Addonlistan visar också hur mycket
     av datorns tid varje addon använder.
+24. Specialväskor: med ett koger eller en själsväska på plats ligger den längst ned under
+    en linje, med väskans ikon och namn, sina saker och sina lediga platser. Empty räknar
+    bara vanliga platser. Utan specialväska syns ingen linje.
+25. Mer luft: rutorna står längre från ramen än förut, och inget krockar (★, sökrutan,
+    pengarna). Skicka en skärmbild.
+26. Set: släpp en sak på ★ → "Add to Set" → "New Set…", skriv ett namn och tryck Enter.
+    Lägg till fler saker (bock i menyn), även utrustning. Fliken Sets visar setet; klick
+    tar på utrustningen och raden visar "Equipped". Sälj eller banka en sak – raden får en
+    orange varning. Hos en handlare är setets saker låsta. Tooltipen visar "Tidy Pack set".
+    I strid: ett meddelande i stället. Esc → Options → AddOns → Tidy Pack → Sets visar var
+    varje sak finns; Rename, Delete och det röda krysset fungerar. Med handkontroll: nå
+    flikarna och raderna med markören, och prova "Show Sets" i ★-menyn. Sell Junk står nu
+    till höger ovanför fönstret.
+27. Efter uppdateringen: starta om spelet helt (ny rad i TOC-filen), och kontrollera att
+    favoriter, skräplista och inställningar finns kvar.
 
 ### Provat i spelet
 - 2026-11-09, testversion `v0.2.0-alpha1` på en annan dator (skärmbilder): addonet laddas
@@ -404,6 +442,17 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - 2026-11-09: Etiketterna på inställningssidan är högst ungefär lika långa som "Show item
   level and BoE on gear". Spelet kortar av längre etiketter med "..." (sett i spelet).
   Förklaringen står i tooltipen, som på spelets egna sidor.
+- 2026-11-09: Mer luft mellan ramen och rutorna (användarens önskan): 6 enheter på var
+  sida, 4 under sökrutan och 9 ovanför pengarna. Pengarna står kvar där spelet lägger dem.
+- 2026-11-09: Specialväskor i egna grupper längst ned under en linje, med väskans ikon och
+  namn (användarens önskan: tydligt att de inte hör till de vanliga väskorna). Linjen ändrar
+  beslutet om "inga linjer" – den syns bara när en specialväska finns.
+- 2026-11-09: Egna set (användarens önskan): egna samlingar per karaktär, inte spelets
+  utrustningsset. Läggs till via ★-menyn (högerklick används av spelet). Flikarna Bags och
+  Sets ovanför fönstret; klick på ett set tar på det direkt, med varning när något saknas.
+  Setens sida i inställningarna visar var varje sak finns. Saker i set låses hos handlaren,
+  som spelets utrustningsset. Rutan för namn är en egen ram (inte StaticPopup). Sell Junk
+  flyttades till höger ovanför fönstret för att inte krocka med flikarna.
 - 2026-11-09: Väskfönstret behåller spelets egen bakgrund. Den är halvgenomskinlig
   (`PANEL_BACKGROUND_COLOR`, samma som spelets andra fönster), så questlistan syns svagt
   bakom ett stort väskfönster. Tidy Pack ändrar inte bakgrunden, eftersom fönstret då
