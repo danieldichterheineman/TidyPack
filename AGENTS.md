@@ -35,24 +35,27 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   `bank-divider` (från Forevers bankfönster), med väskans ikon och namn som rubrik. Allt i
   väskan stannar i dess grupp, och dess tomma platser räknas där, inte i Empty. Visas bara
   när en sådan väska sitter på plats. Med mus visar spelet reagensväskan i ett eget fönster.
-- ✅ Egna set (`Sets.lua`, `SetsView.lua`), per karaktär: släpp en sak på ★ → "Add to Set"
-  (bock per set, eller "New Set…" med eget namn). Flikarna Bags och Sets ovanför
-  fönstret (spelets `PanelTopTabButtonTemplate`) – Sets listar seten med "Equipped", antal
-  saker eller en orange varning med det som saknas. Klick tar på allt som går att ha på
-  sig (`C_Item.EquipItemByName`, ringar, smycken och enhandsvapen fördelas på båda
-  platserna); högerklick öppnar setens sida i inställningarna. Saker i set är låsta hos
-  handlaren och tooltipen visar "Tidy Pack set: …". Fönstret öppnas alltid på Bags.
+- ✅ Egna set (`Sets.lua`, `SetsView.lua`), per karaktär, sköts i fliken Sets ovanför
+  fönstret (spelets `PanelTopTabButtonTemplate`, flikarna Bags och Sets). En rad per set:
+  ikon, namn, sakerna som små rutor (grå = saknas) och till höger "Equipped", "⚠ N
+  missing", antal eller "Drop items here". Klick tar på allt som går att ha på sig
+  (`C_Item.EquipItemByName`, ringar, smycken och enhandsvapen på båda platserna). Släpp en
+  sak på en rad = lägg till. Högerklick = spelets meny med "Edit Name and Icon…", "Remove
+  Item ▸" och "Delete Set…". "New Set" under listan (en sak på markören hamnar i det nya
+  setet). Håller man en sak över fliken Sets byter fönstret dit. Kugghjulets "Add to Set"
+  finns kvar. Saker i set är låsta hos handlaren och tooltipen visar "Tidy Pack set: …".
+  Fönstret öppnas alltid på Bags.
 - ⚠️ Set tas bara på utanför strid (spelet låter ingen byta rustning i strid). Flikarna
-  och raderna med handkontroll är inte provade; ★-menyn har "Show Sets"/"Show Bags" som
-  reserv.
+  och raderna med handkontroll är inte provade; kugghjulets meny har "Show Sets"/"Show
+  Bags" som reserv, bara med handkontroll.
 - ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
   vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
   bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 12 rutor brett.
-- ✅ ★ (`Marks.lua`) är den enda knapp Tidy Pack lägger i väskfönstret, på
-  sorteringsknappens plats. Den är spelets egen menyknapp (`DropdownButton`): med en sak på
+- ✅ Kugghjulet (`Marks.lua`) är den enda knapp Tidy Pack lägger i väskfönstret, på
+  sorteringsknappens plats. Det är spelets egen menyknapp (`DropdownButton`): med en sak på
   markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List" /
-  "Add to Set", annars "Show Sets" (eller "Show Bags") / "Junk List…" / "Sets…" /
-  "Settings…". ★ är svag tills man håller en sak, pekar på den eller har menyn öppen.
+  "Add to Set ▸", annars "Junk List…" / "Settings…" (med handkontroll också "Show Sets"
+  eller "Show Bags"). Svagt tills man håller en sak, pekar på det eller har menyn öppen.
 - ✅ Favorites (`Marks.lua`): Alt-klick (mus) eller via ★. Sparas per itemID och konto.
 - ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-högerklick, via ★ eller på skräplistans
   sida i inställningarna (lägg till med länk, namn, nummer eller genom att släppa en sak;
@@ -244,7 +247,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   `Favorites.lua` före 2026-11-09)
 - `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`) och knappen Sell Junk
 - `MakeRoom.lua`: frågorna om radering, när skräp lootas och när väskorna är fulla
-- `Options.lua`: inställningssidan, skräplistans och setens sidor, `/tidypack` och addonmenyn
+- `Options.lua`: inställningssidan, skräplistans sida, `/tidypack` och addonmenyn
 - `Gamepad.lua`: handkontrollens markör (start, LB/RB, fri navigering, dolda rutor), låsen
   för markören och knappsymboler i text
 - `CHANGELOG.md`: ändringarna, på engelska, för spelare
@@ -334,14 +337,15 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     bara vanliga platser. Utan specialväska syns ingen linje.
 25. Mer luft: rutorna står längre från ramen än förut, och inget krockar (★, sökrutan,
     pengarna). Skicka en skärmbild.
-26. Set: släpp en sak på ★ → "Add to Set" → "New Set…", skriv ett namn och tryck Enter.
-    Lägg till fler saker (bock i menyn), även utrustning. Fliken Sets visar setet; klick
-    tar på utrustningen och raden visar "Equipped". Sälj eller banka en sak – raden får en
-    orange varning. Hos en handlare är setets saker låsta. Tooltipen visar "Tidy Pack set".
-    I strid: ett meddelande i stället. Esc → Options → AddOns → Tidy Pack → Sets visar var
-    varje sak finns; Rename, Delete och det röda krysset fungerar. Med handkontroll: nå
-    flikarna och raderna med markören, och prova "Show Sets" i ★-menyn. Sell Junk står nu
-    till höger ovanför fönstret.
+26. Set, i fliken Sets: "New Set" → namn och ikon i spelets ruta → Okay. Plocka upp en sak
+    och håll den över fliken Sets (fönstret byter flik), släpp den på setets rad – den syns
+    som en liten ruta. Klick på raden tar på utrustningen och visar "Equipped". Sälj eller
+    banka en sak – rutan blir grå och raden visar "⚠ 1 missing". Högerklick: byt namn och
+    ikon, ta bort en sak, ta bort setet. Hos en handlare är setets saker låsta. Tooltipen
+    visar "Tidy Pack set". I strid: ett meddelande i stället. Kugghjulets "Add to Set"
+    fungerar också. Med handkontroll: nå flikarna och raderna med markören, och prova "Show
+    Sets" i kugghjulets meny. Sell Junk står till höger ovanför fönstret. Grupperna heter
+    "Spare Bags" och "Free".
 27. Efter uppdateringen: starta om spelet helt (ny rad i TOC-filen), och kontrollera att
     favoriter, skräplista och inställningar finns kvar.
 
@@ -469,6 +473,11 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   fast bredd, 330) och döljs i fliken Sets. Questies databas frågas i bakgrunden, högst
   3 ms per bildruta, så att väskfönstret aldrig väntar på den (Sell Junk frågar direkt för
   grå saker).
+- 2026-11-09: Färre steg (användarens önskan, alla fem förslagen): allt om set sköts i
+  fliken Sets (rader med sakerna, släpp på en rad, högerklick för Edit/Remove/Delete, New
+  Set i fliken), fliken Sets öppnas när man håller en sak över den, kugghjulets meny utan
+  sak har bara Junk List och Settings, setens sida i inställningarna är borttagen, och
+  grupperna "Bags" och "Empty" heter "Spare Bags" och "Free".
 - 2026-11-09: Flikarna Bags och Sets är alltid lika stora (användarens önskan), till
   skillnad från spelets egna flikar där den valda är högre.
 - 2026-11-09: Egna set (användarens önskan): egna samlingar per karaktär, inte spelets

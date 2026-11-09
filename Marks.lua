@@ -158,21 +158,21 @@ local function buildMenu(_, rootDescription)
         end)
     else
         rootDescription:CreateTitle(L["Tidy Pack"])
-        -- Samma val som flikarna ovanför fönstret, så att de också nås med handkontroll.
-        if ns.IsSetsView and ns.IsSetsView() then
-            rootDescription:CreateButton(L["Show Bags"], function()
-                ns.SetView("bags")
-            end)
-        else
-            rootDescription:CreateButton(L["Show Sets"], function()
-                ns.SetView("sets")
-            end)
+        -- Med handkontroll är flikarna kanske inte nåbara, så där finns samma val här.
+        -- Med mus räcker flikarna, och menyn hålls kort.
+        if InputUtil.IsGamepadUIEnabled() then
+            if ns.IsSetsView and ns.IsSetsView() then
+                rootDescription:CreateButton(L["Show Bags"], function()
+                    ns.SetView("bags")
+                end)
+            else
+                rootDescription:CreateButton(L["Show Sets"], function()
+                    ns.SetView("sets")
+                end)
+            end
         end
         rootDescription:CreateButton(L["Junk List..."], function()
             ns.OpenSettings("junk")
-        end)
-        rootDescription:CreateButton(L["Sets..."], function()
-            ns.OpenSettings("sets")
         end)
         rootDescription:CreateButton(L["Settings..."], function()
             ns.OpenSettings()
@@ -192,7 +192,7 @@ local function showTooltip(self)
     else
         GameTooltip_AddNormalLine(GameTooltip, L["Drop an item here to star it, put it on your junk list or add it to a set."])
     end
-    GameTooltip_AddNormalLine(GameTooltip, L["Click for your sets, junk list and settings."])
+    GameTooltip_AddNormalLine(GameTooltip, L["Click for your junk list and settings."])
     if not InputUtil.IsGamepadUIEnabled() then
         GameTooltip_AddBlankLineToTooltip(GameTooltip)
         GameTooltip_AddInstructionLine(GameTooltip, L["Alt-click an item to star it. Alt-right-click to put it on your junk list."])

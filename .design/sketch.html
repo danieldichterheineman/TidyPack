@@ -87,6 +87,9 @@
   .setrow .info { position: absolute; left: 50px; top: 25px; font: 11px var(--text-font); color: #9a9a9a; }
   .setrow .info.warn { color: #ff9a2a; }
   .setrow .worn { position: absolute; right: 10px; top: 14px; font: 11px var(--text-font); color: #3ad13a; }
+  .setrow .mini { position: absolute; top: 24px; width: 18px; height: 18px; box-shadow: 0 0 0 1px #000; }
+  .setrow .mini.gone { background: #222; box-shadow: inset 0 0 0 1px #555; }
+  .setrow .worn.warnright { color: #ff9a2a; }
   .setshint { position: absolute; font: 11px var(--text-font); color: #9a9a9a; }
   /* Förslag: specialväskorna längst ned, under en skiljelinje som i spelets egna fönster. */
   .divider { height: 1px; background: linear-gradient(90deg, transparent, #8a7440 15%, #8a7440 85%, transparent); }
@@ -356,6 +359,8 @@
   // Grupperna i fast ordning.
   const GROUPS = ["Favorites", "New", "Consumables", "Equipment", "Trade Goods", "Quest Items",
     "Keys", "Bags", "Miscellaneous", "Junk", "Empty"];
+  // Förslag 5: rubrikerna "Bags" och "Empty" heter "Spare Bags" och "Free" i spelet.
+  const LABEL = { "Bags": "Spare Bags", "Empty": "Free" };
 
   // Exempel på vad en karaktär i nivå 30 kan bära. q = kvalitet: 0 grå, 1 vit, 2 grön, 3 blå.
   // sub = plats inom gruppen (drycker 1, mat 2, förband 3, skriftrullar 4; vapen 1, rustning 2; recept 4).
@@ -479,7 +484,7 @@
       }
       if (list.length === 0) continue;
       const label = name === "Favorites" ? "★ Favorites" : name === "Junk" ? "Junk  2s 14c"
-        : SPECIAL_BAGS.includes(name) ? "🎒" + name : name;
+        : SPECIAL_BAGS.includes(name) ? "🎒" + name : (LABEL[name] || name);
       const cols = Math.min(list.length, COLUMNS);
       const rows = Math.ceil(list.length / COLUMNS);
       const width = Math.max(cols * BUTTON + (cols - 1) * SPACING, label.length * 6);
@@ -527,13 +532,14 @@
     document.getElementById("merchant").style.display = merchant ? "flex" : "none";
     const result = layout(gamepad, { full, junk, special });
     // Fliken Sets: en lista med dina set i stället för sakerna.
+    // Förslag: setets saker som små rutor på raden; grå = saknas.
     const SETS = [
-      { name: "Fishing", c: ["#4a8ab0", "#10283a"], info: "3 items", worn: true },
-      { name: "Herbalism", c: ["#6a9a4a", "#1a2a10"], info: "2 items" },
-      { name: "Tanking", c: ["#8a8a9a", "#22222a"], info: "1 missing: Sturdy Buckler", warn: true },
+      { name: "Fishing", c: ["#4a8ab0", "#10283a"], items: ["#4a6a8a", "#8a7040", "#6a7a4a"], worn: true },
+      { name: "Herbalism", c: ["#6a9a4a", "#1a2a10"], items: ["#6a9a4a", "#7a6a5a"] },
+      { name: "Tanking", c: ["#8a8a9a", "#22222a"], items: ["#7a6a5a", "#8a8a9a", "#7a6a5a", "#a0384a", "#6a8ab0", null], missing: 1 },
     ];
     const ROW = 48;
-    const height = setsTab ? TOP + 22 + SETS.length * ROW + 30 + BOTTOM : result.bottom + BOTTOM;
+    const height = setsTab ? TOP + 4 + SETS.length * ROW + 40 + BOTTOM : result.bottom + BOTTOM;
     const left = 1366 + ANCHOR_X - FRAME_WIDTH, top = 768 - ANCHOR_Y - height;
 
     const win = document.getElementById("window");
@@ -552,15 +558,15 @@
     if (junkButtonShown) html += `<div class="abs trashbutton ${holding ? "" : "idle"}" style="right:39px; top:33px;" title="Drop an item here to mark it as junk"></div>`;
 
     if (setsTab) {
-      html += `<div class="setshint" style="left:${LEFT + 2}px; top:${TOP}px;">Click a set to put it on.</div>`;
       SETS.forEach((set, i) => {
-        html += `<div class="abs setrow ${i === 0 && gamepad ? "hover" : ""}" style="left:${LEFT}px; top:${TOP + 22 + i * ROW}px; width:${GRID_WIDTH}px;" title="${set.name}">` +
+        const minis = set.items.map((c, k) => `<div class="mini ${c ? "" : "gone"}" style="left:${50 + k * 21}px; ${c ? `background: linear-gradient(135deg, ${c}, #111);` : ""}"></div>`).join("");
+        html += `<div class="abs setrow ${i === 0 && gamepad ? "hover" : ""}" style="left:${LEFT}px; top:${TOP + 4 + i * ROW}px; width:${GRID_WIDTH}px;" title="Click: put it on. Right-click: Edit, Delete, Remove item. Drop an item here to add it.">` +
           `<div class="icon" style="background: linear-gradient(135deg, ${set.c[0]}, ${set.c[1]});"></div>` +
-          `<div class="name">${set.name}</div>` +
-          `<div class="info ${set.warn ? "warn" : ""}">${set.warn ? "⚠ " : ""}${set.info}</div>` +
-          (set.worn ? `<div class="worn">✔ Equipped</div>` : "") + `</div>`;
+          `<div class="name">${set.name}</div>` + minis +
+          (set.worn ? `<div class="worn">✔ Equipped</div>` : "") +
+          (set.missing ? `<div class="worn warnright">⚠ ${set.missing} missing</div>` : "") + `</div>`;
       });
-      html += `<div class="setshint" style="left:${LEFT + 2}px; top:${TOP + 22 + SETS.length * ROW + 8}px;">Drop an item on ★ to add it to a set.</div>`;
+      html += `<div class="abs redbutton" style="left:${LEFT}px; top:${TOP + 4 + SETS.length * ROW + 6}px;">+ New Set</div>`;
     }
     for (const p of setsTab ? [] : result.placed) {
       if (p.divider) {

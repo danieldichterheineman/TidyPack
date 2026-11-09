@@ -12,13 +12,13 @@ local L = ns.L
 
 local ROW_HEIGHT = 44
 local ROW_GAP = 4
-local HINT_HEIGHT = 22
+local EMPTY_HEIGHT = 24
 local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
 local TAB_WIDTH = 80    -- båda flikarna är alltid lika breda
 local WARNING_ICON = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
 local view = "bags"
-local tabHost, topHint, bottomHint
+local tabHost, emptyText, newSetButton
 local rows = {}
 
 function ns.IsSetsView()
@@ -59,9 +59,9 @@ function ns.SetView(newView)
     for _, row in ipairs(rows) do
         row:Hide()
     end
-    if topHint then
-        topHint:SetShown(view == "sets")
-        bottomHint:SetShown(view == "sets")
+    if newSetButton then
+        newSetButton:SetShown(view == "sets")
+        emptyText:SetShown(view == "sets" and #ns.GetSets() == 0)
     end
     -- Sökrutan söker bara bland sakerna, så den visas inte i fliken Sets.
     if BagItemSearchBox and ns.bagFrame and BagItemSearchBox:GetParent() == ns.bagFrame then
@@ -75,12 +75,26 @@ end
 ---------------------------------------------------------------------------
 -- Raderna
 ---------------------------------------------------------------------------
+-- En rad per set: setets ikon och namn, dess saker som små rutor (grå = saknas) och till
+-- höger "Equipped", en varning eller antalet saker. Allt om set görs här:
+--   klick                = ta på setet
+--   släpp en sak på raden = lägg saken i setet
+--   högerklick           = Edit, Delete och Remove item (spelets egen meny)
+
+local MINI_SIZE = 18
+local MINI_GAP = 3
+local MAX_MINI = 14     -- fler än så visas som "+3"
 
 local STATE_TEXT = {
     equipped = { L["Equipped"], GREEN_FONT_COLOR },
     bags = { L["In your bags"], HIGHLIGHT_FONT_COLOR },
     missing = { L["Missing"], RED_FONT_COLOR },
 }
+
+local function cursorItemID()
+    local kind, itemID = GetCursorInfo()
+    return kind == "item" and itemID or nil
+end
 
 -- Tooltipen för ett set: varje sak och var den finns.
 local function showRowTooltip(row)
@@ -96,19 +110,57 @@ local function showRowTooltip(row)
         local r, g, b = state[2]:GetRGB()
         GameTooltip:AddDoubleLine(name, state[1], 1, 1, 1, r, g, b)
     end
-    if #set.items == 0 then
-        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item on the gear button to add it to a set."])
-    end
     GameTooltip_AddBlankLineToTooltip(GameTooltip)
-    GameTooltip_AddInstructionLine(GameTooltip, L["Click to put it on. Right-click to edit your sets."])
+    GameTooltip_AddInstructionLine(GameTooltip, L["Click to put it on. Drop an item here to add it."])
+    GameTooltip_AddInstructionLine(GameTooltip, L["Right-click to edit or delete the set."])
     GameTooltip:Show()
 end
 
-local function onRowClick(row, mouseButton)
-    if mouseButton == "RightButton" then
-        if ns.OpenSettings then
-            ns.OpenSettings("sets")
+-- En sak som släpps på raden hamnar i setet.
+local function dropOnRow(row)
+    local itemID = cursorItemID()
+    if itemID then
+        ClearCursor() -- saken går tillbaka till sin plats
+        ns.SetInSet(row.setIndex, itemID, true)
+        return true
+    end
+    return false
+end
+
+-- Högerklick: spelets egen meny med det man kan göra med setet.
+local function showRowMenu(row)
+    local index = row.setIndex
+    local set = ns.GetSets()[index]
+    if not set then
+        return
+    end
+    MenuUtil.CreateContextMenu(row, function(_, rootDescription)
+        rootDescription:CreateTitle(set.name)
+        rootDescription:CreateButton(L["Edit Name and Icon..."], function()
+            ns.AskEditSet(index)
+        end)
+        if #set.items > 0 then
+            local removeMenu = rootDescription:CreateButton(L["Remove Item"])
+            for _, itemID in ipairs(set.items) do
+                local name = C_Item.GetItemNameByID(itemID) or L["Item %d"]:format(itemID)
+                local icon = C_Item.GetItemIconByID(itemID)
+                removeMenu:CreateButton((icon and ("|T%s:14:14|t "):format(icon) or "") .. name, function()
+                    ns.SetInSet(index, itemID, false)
+                end)
+            end
         end
+        rootDescription:CreateButton(L["Delete Set..."], function()
+            ns.AskDeleteSet(index)
+        end)
+    end)
+end
+
+local function onRowClick(row, mouseButton)
+    if dropOnRow(row) then
+        return
+    end
+    if mouseButton == "RightButton" then
+        showRowMenu(row)
         return
     end
     ns.EquipSet(row.setIndex)
@@ -124,6 +176,7 @@ local function acquireRow(index, parent)
     row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     row:SetHighlightAtlas("Options_List_Hover", "ADD")
     row:SetScript("OnClick", onRowClick)
+    row:SetScript("OnReceiveDrag", dropOnRow)
     row:SetScript("OnEnter", showRowTooltip)
     row:SetScript("OnLeave", GameTooltip_Hide)
 
@@ -131,48 +184,83 @@ local function acquireRow(index, parent)
     row.icon:SetSize(37, 37)
     row.icon:SetPoint("LEFT", 4, 0)
     row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 9, -4)
-    row.info = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-    row.info:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -5)
-    row.worn = row:CreateFontString(nil, "ARTWORK", "GameFontGreenSmall")
-    row.worn:SetPoint("RIGHT", -10, 0)
-    row.worn:SetText(CreateAtlasMarkup("common-icon-checkmark", 12, 12) .. " " .. L["Equipped"])
+    row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 9, -1)
+    row.minis = {}
+    row.more = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    row.status = row:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    row.status:SetPoint("RIGHT", -10, 0)
     rows[index] = row
     return row
 end
 
--- Fyller en rad med setets namn, ikon och läge.
+-- Fyller en rad med setets ikon, namn, saker och läge.
 local function fillRow(row, index, set)
     row.setIndex = index
     row.name:SetText(set.name)
     row.icon:SetTexture(ns.GetSetIcon(index))
+
+    -- Sakerna som små rutor under namnet. Saker som saknas är grå och svaga.
+    local shownCount = math.min(#set.items, MAX_MINI)
+    for k = 1, shownCount do
+        local mini = row.minis[k]
+        if not mini then
+            mini = row:CreateTexture(nil, "ARTWORK")
+            mini:SetSize(MINI_SIZE, MINI_SIZE)
+            mini:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", 9 + (k - 1) * (MINI_SIZE + MINI_GAP), 0)
+            row.minis[k] = mini
+        end
+        local itemID = set.items[k]
+        local missing = ns.GetItemState(itemID) == "missing"
+        mini:SetTexture(C_Item.GetItemIconByID(itemID))
+        mini:SetDesaturated(missing)
+        mini:SetAlpha(missing and 0.4 or 1)
+        mini:Show()
+    end
+    for k = shownCount + 1, #row.minis do
+        row.minis[k]:Hide()
+    end
+    if #set.items > MAX_MINI then
+        row.more:SetText("+" .. (#set.items - MAX_MINI))
+        row.more:SetPoint("LEFT", row.minis[MAX_MINI], "RIGHT", 4, 0)
+        row.more:Show()
+    else
+        row.more:Hide()
+    end
+
+    -- Till höger: på dig, varning för det som saknas, eller hur många saker setet har.
     local count, missing, worn = ns.GetSetStatus(index)
     if #missing > 0 then
-        local first = C_Item.GetItemNameByID(missing[1]) or L["Item %d"]:format(missing[1])
-        local text = #missing == 1 and L["1 missing: %s"]:format(first) or L["%d missing, e.g. %s"]:format(#missing, first)
         -- Spelets egen varningsikon, samma som i spelets frågerutor.
-        row.info:SetText(CreateTextureMarkup(WARNING_ICON, 64, 64, 12, 12, 0, 1, 0, 1) .. " " .. text)
-        row.info:SetTextColor(ORANGE_FONT_COLOR:GetRGB())
+        row.status:SetText(CreateTextureMarkup(WARNING_ICON, 64, 64, 12, 12, 0, 1, 0, 1) .. " "
+            .. L["%d missing"]:format(#missing))
+        row.status:SetTextColor(ORANGE_FONT_COLOR:GetRGB())
+    elseif worn then
+        row.status:SetText(CreateAtlasMarkup("common-icon-checkmark", 12, 12) .. " " .. L["Equipped"])
+        row.status:SetTextColor(GREEN_FONT_COLOR:GetRGB())
+    elseif count == 0 then
+        row.status:SetText(L["Drop items here"])
+        row.status:SetTextColor(GRAY_FONT_COLOR:GetRGB())
     else
-        row.info:SetText(count == 1 and L["1 item"] or L["%d items"]:format(count))
-        row.info:SetTextColor(GRAY_FONT_COLOR:GetRGB())
+        row.status:SetText(count == 1 and L["1 item"] or L["%d items"]:format(count))
+        row.status:SetTextColor(GRAY_FONT_COLOR:GetRGB())
     end
-    row.worn:SetShown(worn and #missing == 0)
 end
 
 -- Lägger ut listan. place(region, x, y) placerar en del i väskfönstret, width är
--- rutornas bredd. Returnerar höjden och raderna (för handkontrollen).
+-- rutornas bredd. Returnerar höjden och knapparna (för handkontrollen).
 function ns.LayoutSetsView(place, width)
     local shown = {}
     local sets = ns.GetSets()
-    local y = 0
-    topHint:SetText(#sets > 0 and L["Click a set to put it on."]
-        or L["You have no sets yet. Drop an item on the gear button and choose Add to Set."])
-    place(topHint, 2, y)
-    topHint:Show()
-    y = y + HINT_HEIGHT
+    local y = 4
+    if #sets == 0 then
+        place(emptyText, 2, y)
+        emptyText:Show()
+        y = y + EMPTY_HEIGHT
+    else
+        emptyText:Hide()
+    end
     for index, set in ipairs(sets) do
-        local row = acquireRow(index, topHint:GetParent())
+        local row = acquireRow(index, newSetButton:GetParent())
         fillRow(row, index, set)
         row:SetWidth(width)
         place(row, 0, y)
@@ -183,14 +271,11 @@ function ns.LayoutSetsView(place, width)
     for index = #sets + 1, #rows do
         rows[index]:Hide()
     end
-    if #sets > 0 then
-        y = y + 4
-        place(bottomHint, 2, y)
-        bottomHint:Show()
-        y = y + HINT_HEIGHT - 6
-    else
-        bottomHint:Hide()
-    end
+    y = y + 6
+    place(newSetButton, 2, y)
+    newSetButton:Show()
+    shown[#shown + 1] = newSetButton
+    y = y + newSetButton:GetHeight() + 4
     return math.max(y, MIN_HEIGHT), shown
 end
 
@@ -226,13 +311,33 @@ ns.OnLoad(function()
     PanelTemplates_SetNumTabs(tabHost, #labels)
     selectTab(1)
 
-    topHint = tabHost:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-    topHint:SetJustifyH("LEFT")
-    topHint:Hide()
-    bottomHint = tabHost:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-    bottomHint:SetJustifyH("LEFT")
-    bottomHint:SetText(L["Drop an item on the gear button to add it to a set. Right-click a set to edit."])
-    bottomHint:Hide()
+    emptyText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontDisable")
+    emptyText:SetJustifyH("LEFT")
+    emptyText:SetText(L["You have no sets yet."])
+    emptyText:Hide()
+
+    -- "New Set" under listan. Håller du en sak hamnar den i det nya setet.
+    newSetButton = CreateFrame("Button", nil, tabHost, "UIPanelButtonTemplate")
+    newSetButton:SetSize(120, 22)
+    newSetButton:SetText(L["New Set"])
+    newSetButton:Hide()
+    local function newSet()
+        local itemID = cursorItemID()
+        if itemID then
+            ClearCursor()
+        end
+        ns.AskNewSet(itemID)
+    end
+    newSetButton:SetScript("OnClick", newSet)
+    newSetButton:SetScript("OnReceiveDrag", newSet)
+
+    -- Håller du en sak över fliken Sets byter fönstret till den, så att du kan släppa
+    -- saken på ett set – som spelets egna flikar när man drar något över dem.
+    tabHost.Tabs[2]:HookScript("OnEnter", function()
+        if view ~= "sets" and cursorItemID() then
+            ns.SetView("sets")
+        end
+    end)
 
     -- Väskfönstret öppnas alltid på fliken Bags.
     bagFrame:HookScript("OnHide", function()

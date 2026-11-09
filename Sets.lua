@@ -6,7 +6,8 @@
 --   - Släpp en sak på ★ i väskfönstret och välj "Add to Set" (Marks.lua).
 --   - Fliken Sets ovanför väskfönstret listar seten. Klick tar på allt i setet som går att
 --     ha på sig (SetsView.lua).
---   - Seten skapas, döps om och tas bort på en egen sida i inställningarna (Options.lua).
+--   - I fliken Sets skapas set (New Set), saker släpps på ett set, och högerklick ändrar
+--     namn och ikon, tar bort saker eller tar bort setet.
 -- Saker i ett set är låsta hos en handlare, precis som saker i spelets utrustningsset, så
 -- att de inte säljs av misstag (QuestLock.lua).
 -- ⚠️ Spelet låter ingen byta rustning i strid, så ett set tas bara på utanför strid.
@@ -52,13 +53,10 @@ local function cleanName(name)
     return name
 end
 
--- Ändringar i seten ritar om väskfönstret, fliken och inställningssidan.
+-- Ändringar i seten ritar om väskfönstret och fliken Sets.
 local function changed()
     if ns.Refresh then
         ns.Refresh()
-    end
-    if ns.RefreshSetsPage then
-        ns.RefreshSetsPage()
     end
 end
 

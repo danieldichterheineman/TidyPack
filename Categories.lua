@@ -20,10 +20,10 @@ ns.groupNames = {
     TradeGoods = L["Trade Goods"],
     QuestItems = L["Quest Items"],
     Keys = L["Keys"],
-    Bags = L["Bags"],
+    Bags = L["Spare Bags"], -- inte "Bags", som fliken ovanför fönstret heter
     Miscellaneous = L["Miscellaneous"],
     Junk = L["Junk"],
-    Empty = L["Empty"],
+    Empty = L["Free"],
 }
 
 local ItemClass = Enum.ItemClass

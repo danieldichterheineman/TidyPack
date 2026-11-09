@@ -46,14 +46,15 @@
 - More room between the window's border and your items.
 - Special bags – quivers, ammo pouches, soul bags, profession bags and the reagent bag – get
   their own groups at the bottom, under a line, with the bag's icon and name and their own
-  free slots. Empty only counts slots that fit anything.
-- Sets: drop an item on the gear button and choose "Add to Set" to collect items under a name you
-  pick, like "Fishing". The new Sets tab above your bags lists your sets; click one to put
-  it on (not in combat). A warning shows what's missing. Items in a set are locked at
-  merchants. Sets are saved per character and can be renamed or deleted in the settings.
+  free slots. Free only counts slots that fit anything.
+- Sets: collect items under a name and icon you pick, like "Fishing", in the new Sets tab
+  above your bags. Click "New Set", then drop items on the set (hold an item over the Sets
+  tab to open it). Each set shows its items – greyed out if missing – and whether you wear
+  it. Click a set to put it on (not in combat); right-click to edit, remove an item or
+  delete it. Items in a set are locked at merchants. Sets are saved per character.
 - Sell Junk now sits above the right side of your bags.
-- New sets get a name and an icon in the game's own icon picker, like equipment sets. Edit
-  a set's name and icon in the settings.
+- The gear button's menu is shorter: your junk list and settings.
+- The groups "Bags" and "Empty" are now called "Spare Bags" and "Free".
 - The search box reaches all the way to the gear button, and is hidden in the Sets tab.
 - Quest hints from Questie are worked out in the background, so your bags open instantly.
 
