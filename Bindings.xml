@@ -1,0 +1,12 @@
+<!-- TidyPack – Bindings.xml
+     Snabbtangenter under Esc → Options → Keybindings → AddOns → Tidy Pack. Spelet läser
+     filen själv (den står inte i TOC-filen). Koden anropar den namngivna ramen TidyPackKeys
+     (SetsView.lua), så att inga globala funktioner behövs. -->
+<Bindings>
+	<Binding name="TIDYPACK_OPEN_SETS" header="TIDYPACK" category="ADDONS">TidyPackKeys:OpenSets()</Binding>
+	<Binding name="TIDYPACK_EQUIP_SET_1" category="ADDONS">TidyPackKeys:EquipSet(1)</Binding>
+	<Binding name="TIDYPACK_EQUIP_SET_2" category="ADDONS">TidyPackKeys:EquipSet(2)</Binding>
+	<Binding name="TIDYPACK_EQUIP_SET_3" category="ADDONS">TidyPackKeys:EquipSet(3)</Binding>
+	<Binding name="TIDYPACK_EQUIP_SET_4" category="ADDONS">TidyPackKeys:EquipSet(4)</Binding>
+	<Binding name="TIDYPACK_EQUIP_SET_5" category="ADDONS">TidyPackKeys:EquipSet(5)</Binding>
+</Bindings>

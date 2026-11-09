@@ -56,6 +56,11 @@
 - The gear button's menu is shorter: your junk list and settings.
 - The groups "Bags" and "Empty" are now called "Spare Bags" and "Free".
 - The bag window is titled "Backpack".
+- Sets tab: "New Set" at the top, an Equip button on every set, bigger item icons and a "+"
+  slot showing where to drop new items. A dot on the Sets tab tells you a set is missing
+  something.
+- Key bindings (Options → Keybindings → AddOns → Tidy Pack): open the Sets tab and equip
+  sets 1–5.
 - The search box reaches all the way to the gear button, and is hidden in the Sets tab.
 - Quest hints from Questie are worked out in the background, so your bags open instantly.
 

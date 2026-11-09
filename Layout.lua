@@ -367,6 +367,9 @@ local function layoutSetsView(atMerchant)
         groupFirst[index] = row
         groupOfButton[row] = index
     end
+    if ns.UpdateSetsNotice then
+        ns.UpdateSetsNotice()
+    end
     applySize()
     if ns.UpdateJunkButton then
         ns.UpdateJunkButton()
@@ -554,6 +557,9 @@ local function relayout()
     end
 
     applySize()
+    if ns.UpdateSetsNotice then
+        ns.UpdateSetsNotice()
+    end
 
     -- Knappen Sell Junk ligger ovanför fönstret och följer med när höjden ändras.
     if ns.UpdateJunkButton then

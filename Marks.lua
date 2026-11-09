@@ -119,7 +119,7 @@ local function updateStarButton()
     end
     local holding = cursorItemID() ~= nil
     local active = holding or starHovered or starButton:IsMenuOpen()
-    starButton:SetAlpha(active and 1 or 0.35)
+    starButton:SetAlpha(active and 1 or 0.6) -- 0.35 såg avstängt ut i spelet
     if holding then
         starButton:LockHighlight()
     else

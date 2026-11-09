@@ -12,7 +12,7 @@
 local addonName, ns = ...
 local L = ns.L
 
-local ROW_HEIGHT = 44
+local ROW_HEIGHT = 50
 local ROW_GAP = 4
 local EMPTY_HEIGHT = 24
 local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
@@ -30,6 +30,23 @@ local rows = {}
 
 function ns.IsSetsView()
     return view == "sets"
+end
+
+-- Pricken på fliken Sets (spelets egen, TabSystemButtonMixin:SetTabNotification) lyser
+-- när ett set saknar en sak. Layout.lua anropar den efter varje genomgång.
+function ns.UpdateSetsNotice()
+    if not tabSystem then
+        return
+    end
+    local anyMissing = false
+    for index in ipairs(ns.GetSets()) do
+        local _, missing = ns.GetSetStatus(index)
+        if #missing > 0 then
+            anyMissing = true
+            break
+        end
+    end
+    tabSystem:SetTabNotification(2, anyMissing)
 end
 
 -- Byter mellan "bags" och "sets".
@@ -63,9 +80,10 @@ end
 --   släpp en sak på raden = lägg saken i setet
 --   högerklick           = Edit, Delete och Remove item (spelets egen meny)
 
-local MINI_SIZE = 18
+local MINI_SIZE = 22
 local MINI_GAP = 3
-local MAX_MINI = 14     -- fler än så visas som "+3"
+local MAX_MINI = 12     -- fler än så visas som "+3"
+local EMPTY_SLOT = "Interface\\Buttons\\UI-EmptySlot" -- spelets tomma ruta
 
 local STATE_TEXT = {
     equipped = { L["Equipped"], GREEN_FONT_COLOR },
@@ -167,10 +185,28 @@ local function acquireRow(index, parent)
     row.icon:SetPoint("LEFT", 4, 0)
     row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 9, -1)
+    -- Läget direkt efter namnet: "· 1 item", "✔ Equipped" eller "⚠ 1 missing".
+    row.status = row:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    row.status:SetPoint("LEFT", row.name, "RIGHT", 8, 0)
     row.minis = {}
     row.more = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-    row.status = row:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    row.status:SetPoint("RIGHT", -10, 0)
+    -- En tom ruta med "+" sist bland sakerna: här släpper man en ny sak (hela raden tar
+    -- emot den, rutan visar bara var).
+    row.plus = row:CreateTexture(nil, "ARTWORK")
+    row.plus:SetTexture(EMPTY_SLOT)
+    row.plus:SetTexCoord(0.140625, 0.84375, 0.140625, 0.84375)
+    row.plus:SetSize(MINI_SIZE, MINI_SIZE)
+    row.plusText = row:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+    row.plusText:SetPoint("CENTER", row.plus, "CENTER", 0, 1)
+    row.plusText:SetText("+")
+    -- Equip till höger, så att det syns hur man tar på setet. Klick på raden gör samma sak.
+    row.equip = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+    row.equip:SetSize(80, 22)
+    row.equip:SetPoint("RIGHT", -8, 0)
+    row.equip:SetText(L["Equip"])
+    row.equip:SetScript("OnClick", function(self)
+        ns.EquipSet(self:GetParent().setIndex)
+    end)
     rows[index] = row
     return row
 end
@@ -188,7 +224,7 @@ local function fillRow(row, index, set)
         if not mini then
             mini = row:CreateTexture(nil, "ARTWORK")
             mini:SetSize(MINI_SIZE, MINI_SIZE)
-            mini:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", 9 + (k - 1) * (MINI_SIZE + MINI_GAP), 0)
+            mini:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", 9 + (k - 1) * (MINI_SIZE + MINI_GAP), -2)
             row.minis[k] = mini
         end
         local itemID = set.items[k]
@@ -201,39 +237,48 @@ local function fillRow(row, index, set)
     for k = shownCount + 1, #row.minis do
         row.minis[k]:Hide()
     end
+    local after = 9 + shownCount * (MINI_SIZE + MINI_GAP)
     if #set.items > MAX_MINI then
         row.more:SetText("+" .. (#set.items - MAX_MINI))
-        row.more:SetPoint("LEFT", row.minis[MAX_MINI], "RIGHT", 4, 0)
+        row.more:ClearAllPoints()
+        row.more:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", after, 3)
         row.more:Show()
+        after = after + row.more:GetStringWidth() + 6
     else
         row.more:Hide()
     end
+    row.plus:ClearAllPoints()
+    row.plus:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", after, -2)
 
-    -- Till höger: på dig, varning för det som saknas, eller hur många saker setet har.
+    -- Efter namnet: på dig, varning för det som saknas, eller hur många saker setet har.
     local count, missing, worn = ns.GetSetStatus(index)
     if #missing > 0 then
         -- Spelets egen varningsikon, samma som i spelets frågerutor.
-        row.status:SetText(CreateTextureMarkup(WARNING_ICON, 64, 64, 12, 12, 0, 1, 0, 1) .. " "
+        row.status:SetText("· " .. CreateTextureMarkup(WARNING_ICON, 64, 64, 12, 12, 0, 1, 0, 1) .. " "
             .. L["%d missing"]:format(#missing))
         row.status:SetTextColor(ORANGE_FONT_COLOR:GetRGB())
     elseif worn then
-        row.status:SetText(CreateAtlasMarkup("common-icon-checkmark", 12, 12) .. " " .. L["Equipped"])
+        row.status:SetText("· " .. CreateAtlasMarkup("common-icon-checkmark", 12, 12) .. " " .. L["Equipped"])
         row.status:SetTextColor(GREEN_FONT_COLOR:GetRGB())
     elseif count == 0 then
-        row.status:SetText(L["Drop items here"])
+        row.status:SetText("· " .. L["drop items on this row"])
         row.status:SetTextColor(GRAY_FONT_COLOR:GetRGB())
     else
-        row.status:SetText(count == 1 and L["1 item"] or L["%d items"]:format(count))
+        row.status:SetText("· " .. (count == 1 and L["1 item"] or L["%d items"]:format(count)))
         row.status:SetTextColor(GRAY_FONT_COLOR:GetRGB())
     end
+    -- Equip går inte att trycka på när allt redan sitter på.
+    row.equip:SetEnabled(not (worn and #missing == 0))
 end
 
 -- Lägger ut listan. place(region, x, y) placerar en del i väskfönstret, width är
 -- rutornas bredd. Returnerar höjden och knapparna (för handkontrollen).
 function ns.LayoutSetsView(place, width)
-    local shown = {}
+    -- New Set står överst, där sökrutan står i fliken Bags, och nås först med handkontroll.
+    newSetButton:Show()
+    local shown = { newSetButton }
     local sets = ns.GetSets()
-    local y = 4
+    local y = 0
     if #sets == 0 then
         place(emptyText, 2, y)
         emptyText:Show()
@@ -253,11 +298,6 @@ function ns.LayoutSetsView(place, width)
     for index = #sets + 1, #rows do
         rows[index]:Hide()
     end
-    y = y + 6
-    place(newSetButton, 2, y)
-    newSetButton:Show()
-    shown[#shown + 1] = newSetButton
-    y = y + newSetButton:GetHeight() + 4
     return math.max(y, MIN_HEIGHT), shown
 end
 
@@ -293,6 +333,9 @@ ns.OnLoad(function()
         -- Lite större text än spelets standard, som i trollboken.
         local tab = tabSystem:GetTabButton(tabID)
         tab.selectedFontObject, tab.unselectedFontObject = GameFontHighlight, GameFontNormal
+        -- Den valda fliken är avstängd (går inte att klicka på igen), och spelet visar då
+        -- knappens text i "disabled"-stilen. Den får samma storlek som de andra.
+        tab:SetDisabledFontObject(GameFontHighlight)
         tab:UpdateTabWidth()
     end
     tabSystem:SetTabVisuallySelected(1)
@@ -306,6 +349,7 @@ ns.OnLoad(function()
     newSetButton = CreateFrame("Button", nil, tabHost, "UIPanelButtonTemplate")
     newSetButton:SetSize(120, 22)
     newSetButton:SetText(L["New Set"])
+    newSetButton:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", 62, -36) -- sökrutans plats
     newSetButton:Hide()
     local function newSet()
         local itemID = cursorItemID()
@@ -339,3 +383,37 @@ ns.OnLoad(function()
         end
     end)
 end)
+
+---------------------------------------------------------------------------
+-- Snabbtangenter (Bindings.xml)
+---------------------------------------------------------------------------
+-- Raderna i spelets lista över snabbtangenter. Spelet hittar texterna i globala variabler
+-- med de här namnen.
+BINDING_HEADER_TIDYPACK = L["Tidy Pack"]
+BINDING_NAME_TIDYPACK_OPEN_SETS = L["Open the Sets tab"]
+for number = 1, 5 do
+    _G["BINDING_NAME_TIDYPACK_EQUIP_SET_" .. number] = L["Equip set %d"]:format(number)
+end
+
+-- Den namngivna ramen som Bindings.xml anropar.
+local keys = CreateFrame("Frame", "TidyPackKeys")
+
+function keys:OpenSets()
+    if not ns.bagFrame then
+        return
+    end
+    if not ns.bagFrame:IsShown() then
+        OpenAllBags()
+    end
+    ns.SetView("sets")
+end
+
+-- Set nummer n i listan (uppifrån). Bara utanför strid, som när du klickar (Sets.lua).
+function keys:EquipSet(number)
+    local set = ns.GetSets()[number]
+    if set then
+        ns.EquipSet(number)
+    else
+        ns.Print(L["You have no set number %d."]:format(number))
+    end
+end

@@ -232,6 +232,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 
 ## Filer
 - `TidyPack.toc`: namn och laddordning
+- `Bindings.xml`: snabbtangenterna (spelet läser den själv)
 - `Locales.lua`: all text som visas i spelet (engelska)
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
@@ -348,6 +349,10 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     "Spare Bags" och "Free".
 27. Efter uppdateringen: starta om spelet helt (ny rad i TOC-filen), och kontrollera att
     favoriter, skräplista och inställningar finns kvar.
+28. Fliken Sets: New Set överst, Equip på varje rad (grå när setet redan sitter på), "+"
+    sist bland sakerna. Pricken på fliken Sets lyser när ett set saknar en sak. Båda
+    flikarnas text är lika stor. Esc → Options → Keybindings → AddOns → Tidy Pack: lägg en
+    tangent på "Open the Sets tab" och "Equip set 1" och prova (i strid: ett meddelande).
 
 ### Provat i spelet
 - 2026-11-09, testversion `v0.2.0-alpha1` på en annan dator (skärmbilder): addonet laddas
@@ -488,6 +493,14 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   TOPLEFT 62, -2) – mallen är gjord för flikar som hänger ovanpå en ram. Sökrutan har
   spelets plats. Mallen läser `tabTemplate` när den skapas, så Tidy Pack sätter mallen och
   poolen efteråt.
+- 2026-11-09 (efter skärmbilder av `v0.2.0-alpha4`): den valda flikens text var mindre
+  (knappen är avstängd och spelet använde dess "disabled"-stil) – rättat med
+  `SetDisabledFontObject`. Kugghjulet såg avstängt ut vid 0.35 – nu 0.6. Fliken Sets:
+  New Set står på sökrutans plats, läget efter namnet, en Equip-knapp till höger (avstängd
+  när allt sitter på), större saker (22) och en tom ruta med "+" sist. Spelets prick på
+  fliken Sets (`SetTabNotification`) när ett set saknar något. Snabbtangenter i
+  `Bindings.xml` (öppna Sets, Equip set 1–5) via den namngivna ramen `TidyPackKeys`, så
+  att inga globala funktioner behövs.
 - 2026-11-09: Färre steg (användarens önskan, alla fem förslagen): allt om set sköts i
   fliken Sets (rader med sakerna, släpp på en rad, högerklick för Edit/Remove/Delete, New
   Set i fliken), fliken Sets öppnas när man håller en sak över den, kugghjulets meny utan

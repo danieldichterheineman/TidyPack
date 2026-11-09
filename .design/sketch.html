@@ -88,7 +88,8 @@
   .setrow .info { position: absolute; left: 50px; top: 25px; font: 11px var(--text-font); color: #9a9a9a; }
   .setrow .info.warn { color: #ff9a2a; }
   .setrow .worn { position: absolute; right: 10px; top: 14px; font: 11px var(--text-font); color: #3ad13a; }
-  .setrow .mini { position: absolute; top: 24px; width: 18px; height: 18px; box-shadow: 0 0 0 1px #000; }
+  .setrow .mini { position: absolute; top: 25px; width: 22px; height: 22px; box-shadow: 0 0 0 1px #000; }
+  .setrow .mini.plus { color: #777; font: 16px/22px Arial, sans-serif; text-align: center; }
   .setrow .mini.gone { background: #222; box-shadow: inset 0 0 0 1px #555; }
   .setrow .worn.warnright { color: #ff9a2a; }
   .setshint { position: absolute; font: 11px var(--text-font); color: #9a9a9a; }
@@ -540,7 +541,7 @@
       { name: "Tanking", c: ["#8a8a9a", "#22222a"], items: ["#7a6a5a", "#8a8a9a", "#7a6a5a", "#a0384a", "#6a8ab0", null], missing: 1 },
     ];
     const ROW = 48;
-    const height = setsTab ? TOP + 4 + SETS.length * ROW + 40 + BOTTOM : result.bottom + BOTTOM;
+    const height = setsTab ? TOP + SETS.length * 54 + BOTTOM : result.bottom + BOTTOM;
     const left = 1366 + ANCHOR_X - FRAME_WIDTH, top = 768 - ANCHOR_Y - height;
 
     const win = document.getElementById("window");
@@ -559,15 +560,18 @@
     if (junkButtonShown) html += `<div class="abs trashbutton ${holding ? "" : "idle"}" style="right:39px; top:33px;" title="Drop an item here to mark it as junk"></div>`;
 
     if (setsTab) {
+      // New Set där sökrutan står; läget efter namnet; Equip till höger; "+" sist bland sakerna.
+      html += `<div class="abs redbutton" style="left:62px; top:35px;">New Set</div>`;
       SETS.forEach((set, i) => {
-        const minis = set.items.map((c, k) => `<div class="mini ${c ? "" : "gone"}" style="left:${50 + k * 21}px; ${c ? `background: linear-gradient(135deg, ${c}, #111);` : ""}"></div>`).join("");
-        html += `<div class="abs setrow ${i === 0 && gamepad ? "hover" : ""}" style="left:${LEFT}px; top:${TOP + 4 + i * ROW}px; width:${GRID_WIDTH}px;" title="Click: put it on. Right-click: Edit, Delete, Remove item. Drop an item here to add it.">` +
-          `<div class="icon" style="background: linear-gradient(135deg, ${set.c[0]}, ${set.c[1]});"></div>` +
-          `<div class="name">${set.name}</div>` + minis +
-          (set.worn ? `<div class="worn">✔ Equipped</div>` : "") +
-          (set.missing ? `<div class="worn warnright">⚠ ${set.missing} missing</div>` : "") + `</div>`;
+        const minis = set.items.map((c, k) => `<div class="mini ${c ? "" : "gone"}" style="left:${50 + k * 25}px; ${c ? `background: linear-gradient(135deg, ${c}, #111);` : ""}"></div>`).join("")
+          + `<div class="mini gone plus" style="left:${50 + set.items.length * 25}px;">+</div>`;
+        const status = set.missing ? `<span style="color:#ff9a2a">· ⚠ ${set.missing} missing</span>`
+          : set.worn ? `<span style="color:#3ad13a">· ✔ Equipped</span>` : `<span style="color:#9a9a9a">· ${set.items.length} items</span>`;
+        html += `<div class="abs setrow" style="left:${LEFT}px; top:${TOP + i * 54}px; width:${GRID_WIDTH}px; height:50px;">` +
+          `<div class="icon" style="background: linear-gradient(135deg, ${set.c[0]}, ${set.c[1]}); top:6px;"></div>` +
+          `<div class="name">${set.name} <span style="font-size:11px">${status}</span></div>` + minis +
+          `<div class="redbutton" style="right:8px; top:14px; ${set.worn ? "filter: grayscale(1) brightness(.6);" : ""}">Equip</div></div>`;
       });
-      html += `<div class="abs redbutton" style="left:${LEFT}px; top:${TOP + 4 + SETS.length * ROW + 6}px;">+ New Set</div>`;
     }
     for (const p of setsTab ? [] : result.placed) {
       if (p.divider) {
