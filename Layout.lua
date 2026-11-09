@@ -562,10 +562,27 @@ local function relayout()
     end
 end
 
--- Andra filer (t.ex. Favorites.lua och QuestLock.lua) ber om en ny genomgång här.
+-- Stoppar ett fel genomgången visar spelet sitt eget rutnät. Då skrivs felet en gång i
+-- chatten, så att testare utan spelets felrutor (scriptErrors) kan skicka det vidare.
+-- Felet skickas också till spelets vanliga felhantering.
+local errorReported = false
+
+local function safeRelayout()
+    local ok, problem = pcall(relayout)
+    if not ok then
+        if not errorReported then
+            errorReported = true
+            ns.Print(L["Couldn't sort your bags because of an error. Please send this line to the author: %s"]
+                :format(tostring(problem)))
+        end
+        geterrorhandler()(problem)
+    end
+end
+
+-- Andra filer (t.ex. Marks.lua och QuestLock.lua) ber om en ny genomgång här.
 function ns.Refresh()
     if bagFrame and bagFrame:IsShown() then
-        relayout()
+        safeRelayout()
     end
 end
 
@@ -651,8 +668,8 @@ ns.OnLoad(function()
     divider:Hide()
 
     hooksecurefunc(bagFrame, "UpdateFrameSize", onFrameSizeUpdated)
-    hooksecurefunc(bagFrame, "UpdateItemLayout", relayout)
-    hooksecurefunc(bagFrame, "UpdateItems", relayout)
+    hooksecurefunc(bagFrame, "UpdateItemLayout", safeRelayout)
+    hooksecurefunc(bagFrame, "UpdateItems", safeRelayout)
 
     -- När fönstret stängs glöms gruppen New, och Sell Junk döljs.
     bagFrame:HookScript("OnHide", function()

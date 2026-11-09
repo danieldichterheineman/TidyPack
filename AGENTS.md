@@ -357,6 +357,12 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   kapades av ramen), och tom flik Sets lade texten långt ovanför fönstret och krympte
   fönstret. Rättat: båda flikarna använder den valda flikens bilder, 80 enheter breda, den
   andra lite mörkare; listan placeras när höjden är känd och är minst 120 hög.
+- 2026-11-09, `v0.2.0-alpha2` hos en kollega (hunter, koger med pilar, reagensväska
+  "Shipwright's Satchel" i eget fönster): inga grupper alls, spelets eget rutnät med alla
+  tomma platser. Flikarna och ★ fanns, så uppstarten gick bra; troligen stoppade ett fel i
+  genomgången (`relayout`), sannolikt i delen för specialväskor. Felet är inte hittat
+  genom att läsa koden. Därför skriver Tidy Pack nu felet en gång i chatten
+  (`safeRelayout`). Väntar på felraden.
 
 ## Arbetssätt
 - Kärnreglerna i pluginet wow-addon-skills gäller.
