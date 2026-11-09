@@ -479,8 +479,13 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   sitter under fönstret (`PanelTabButtonTemplate`, t.ex. handlarens Merchant/Buyback och
   karaktärsfönstret). Flikar ovanpå (`PanelTopTabButtonTemplate`) används bara inuti ett
   fönster (samlingarnas Items/Sets). Forevers bank har ikonflikar på sidan
-  (`LargeSideTabButtonTemplate`). Tidy Packs flikar ovanför titelraden följer inget av dem –
-  fråga användaren om placeringen.
+  (`LargeSideTabButtonTemplate`). Forevers nya trollbok har flikar under titelraden,
+  inuti fönstret (`TabSystemTemplate` + `TabSystemTopButtonTemplate`, TOPLEFT 70, -26).
+- 2026-11-09: Flikarna Bags och Sets byggs som trollbokens (användaren visade den som
+  förebild): `TabSystemTemplate` med `TabSystemTopButtonTemplate`, TOPLEFT 62, -26 i
+  väskfönstret, 90 breda, text i `GameFontNormal`/`GameFontHighlight`. Den valda är högre,
+  som i spelet. Sökrutan börjar till höger om flikarna (`ns.SEARCH_BOX_LEFT`). Mallen
+  läser `tabTemplate` när den skapas, så Tidy Pack sätter mallen och poolen efteråt.
 - 2026-11-09: Färre steg (användarens önskan, alla fem förslagen): allt om set sköts i
   fliken Sets (rader med sakerna, släpp på en rad, högerklick för Edit/Remove/Delete, New
   Set i fliken), fliken Sets öppnas när man håller en sak över den, kugghjulets meny utan

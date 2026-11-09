@@ -78,8 +78,9 @@
   .toptab { position: absolute; height: 26px; width: 84px; display: flex; align-items: center; justify-content: center;
     font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; border: 2px solid #5a4a2a;
     border-bottom: none; border-radius: 6px 6px 0 0; background: linear-gradient(#2a2620, #15130f); }
-  .toptab { height: 28px; width: 80px; filter: brightness(0.6); }
-  .toptab.active { color: #fff; background: linear-gradient(#3a342a, #1e1c18); border-color: #8a7440; filter: none; }
+  /* Flikarna som i Forevers trollbok: under titelraden, den valda högre och ljusare. */
+  .toptab { height: 27px; width: 88px; font-size: 13px; filter: brightness(0.75); z-index: 3; }
+  .toptab.active { height: 31px; color: #fff; background: linear-gradient(#3a342a, #1e1c18); border-color: #c8a040; filter: none; }
   .setrow { position: absolute; height: 44px; border-radius: 3px; }
   .setrow:hover, .setrow.hover { background: rgba(255, 210, 0, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 210, 0, 0.25); }
   .setrow .icon { position: absolute; left: 4px; top: 3px; width: 37px; height: 37px; box-shadow: 0 0 0 1px #000; }
@@ -552,7 +553,7 @@
     html += `<div class="portrait"></div>`;
     if (!gamepad) html += `<div class="close">×</div>`;
     // Spelets sökruta: med handkontroll kortas den av så att ★-knappen får plats.
-    if (!setsTab) html += `<div class="abs search" style="left:62px; top:35px; width:${FRAME_WIDTH - 62 - 44}px;">Search</div>`;
+    if (!setsTab) html += `<div class="abs search" style="left:${tabs ? 256 : 62}px; top:35px; width:${FRAME_WIDTH - (tabs ? 256 : 62) - 44}px;">Search</div>`;
     html += `<div class="abs starbutton ${holding ? "" : "idle"}" style="right:9px; top:33px;" title="Drop an item here: Favorites, Junk List or a set. Click for the menu.">⚙</div>`;
     // Förslag: skräpknappen bredvid ★, svag tills du håller en sak.
     if (junkButtonShown) html += `<div class="abs trashbutton ${holding ? "" : "idle"}" style="right:39px; top:33px;" title="Drop an item here to mark it as junk"></div>`;
@@ -615,8 +616,8 @@
     // till högerkanten, så att de inte krockar.
     if (tabs) {
       document.getElementById("outside").innerHTML =
-        `<div class="toptab ${setsTab ? "" : "active"}" style="left:${left + 56}px; top:${top - 26}px;">Bags</div>` +
-        `<div class="toptab ${setsTab ? "active" : ""}" style="left:${left + 143}px; top:${top - 26}px;">Sets</div>` +
+        `<div class="toptab ${setsTab ? "" : "active"}" style="left:${left + 62}px; top:${top + 58 - (setsTab ? 27 : 31)}px;">Bags</div>` +
+        `<div class="toptab ${setsTab ? "active" : ""}" style="left:${left + 154}px; top:${top + 58 - (setsTab ? 31 : 27)}px;">Sets</div>` +
         (merchant ? `<div class="redbutton" style="left:${left + FRAME_WIDTH - 150}px; top:${top - SELL_HEIGHT - 6}px;">Sell Junk&nbsp; 2<span class="coin silver"></span>14<span class="coin copper"></span></div>` : "");
     }
 

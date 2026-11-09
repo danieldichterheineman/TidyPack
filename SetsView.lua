@@ -1,7 +1,9 @@
 -- TidyPack – SetsView.lua
--- Flikarna Bags och Sets ovanför väskfönstret, och listan med set som fliken Sets visar i
--- fönstret i stället för sakerna. Flikarna är spelets egna (PanelTopTabButtonTemplate, samma
--- som i Forevers samlingsfönster). Klick på ett set tar på det (Sets.lua).
+-- Flikarna Bags och Sets i väskfönstret, och listan med set som fliken Sets visar i
+-- fönstret i stället för sakerna. Flikarna är spelets egna flikar (TabSystemTemplate med
+-- TabSystemTopButtonTemplate), samma som i Forevers trollbok: under titelraden, till
+-- höger om väskans ikon, med sökrutan till höger om dem. Klick på ett set tar på det
+-- (Sets.lua).
 -- Layout.lua lägger ut listan: den anropar ns.LayoutSetsView när fliken Sets är vald.
 -- Väskfönstret öppnas alltid på fliken Bags.
 -- ⚠️ Med handkontroll: raderna är vanliga knappar i väskfönstret och ska nås med markören,
@@ -14,11 +16,16 @@ local ROW_HEIGHT = 44
 local ROW_GAP = 4
 local EMPTY_HEIGHT = 24
 local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
-local TAB_WIDTH = 80    -- båda flikarna är alltid lika breda
+local TAB_WIDTH = 90    -- båda flikarna är lika breda
+local TAB_LEFT = 62     -- där spelets sökruta började, till höger om väskans ikon
+local TAB_TOP = -26     -- som trollbokens flikar (Camelot/SpellBook/Blizzard_SpellBookTemplates.xml)
+local TAB_GAP = 2
+-- Sökrutan börjar till höger om flikarna (Marks.lua flyttar den hit).
+ns.SEARCH_BOX_LEFT = TAB_LEFT + 2 * TAB_WIDTH + TAB_GAP + 12
 local WARNING_ICON = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
 local view = "bags"
-local tabHost, emptyText, newSetButton
+local tabSystem, tabHost, emptyText, newSetButton
 local rows = {}
 
 function ns.IsSetsView()
@@ -26,35 +33,10 @@ function ns.IsSetsView()
 end
 
 -- Byter mellan "bags" och "sets".
--- Spelets flikar gör den valda fliken högre än de andra och flyttar ned texten på de
--- andra. Tidy Packs två flikar ska alltid vara lika stora (användarens önskan), så båda
--- använder den valda flikens bilder; den flik som inte är vald är bara lite mörkare.
-local function styleTabs()
-    for _, tab in ipairs(tabHost.Tabs) do
-        local selected = tab:GetID() == tabHost.selectedTab
-        for _, part in ipairs({ tab.Left, tab.Middle, tab.Right }) do
-            part:Hide()
-        end
-        for _, part in ipairs({ tab.LeftActive, tab.MiddleActive, tab.RightActive }) do
-            part:Show()
-            local shade = selected and 1 or 0.6
-            part:SetVertexColor(shade, shade, shade)
-        end
-        tab.Text:SetPoint("CENTER", tab, "CENTER", 0, -4)
-        tab:SetNormalFontObject(selected and GameFontHighlightSmall or GameFontNormalSmall)
-        PanelTemplates_TabResize(tab, 0, TAB_WIDTH)
-    end
-end
-
-local function selectTab(id)
-    PanelTemplates_SetTab(tabHost, id)
-    styleTabs()
-end
-
 function ns.SetView(newView)
     view = newView == "sets" and "sets" or "bags"
-    if tabHost then
-        selectTab(view == "sets" and 2 or 1)
+    if tabSystem then
+        tabSystem:SetTabVisuallySelected(view == "sets" and 2 or 1)
     end
     for _, row in ipairs(rows) do
         row:Hide()
@@ -289,27 +271,31 @@ ns.OnLoad(function()
         return
     end
 
-    -- En egen ram håller flikarna, så att spelets fönster inte får några nya fält.
+    -- En egen ram håller listans delar, så att spelets fönster inte får några nya fält.
     tabHost = CreateFrame("Frame", nil, bagFrame)
     tabHost:SetAllPoints()
-    -- Spelets flikar läser bredden härifrån när de visas (PanelTabButtonMixin:OnShow).
-    tabHost.minTabWidth, tabHost.maxTabWidth = TAB_WIDTH, TAB_WIDTH
 
-    local function onTabClick(tab)
-        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
-        ns.SetView(tab:GetID() == 2 and "sets" or "bags")
+    -- Spelets flikar (TabSystem), som i trollboken. Mallen läser tabTemplate när den
+    -- skapas; en ram som skapas i Lua får därför sin knappmall och sin pool efteråt.
+    tabSystem = CreateFrame("Frame", nil, bagFrame, "TabSystemTemplate")
+    tabSystem.tabTemplate = "TabSystemTopButtonTemplate"
+    tabSystem.tabPool = CreateFramePool("BUTTON", tabSystem, tabSystem.tabTemplate)
+    tabSystem.minTabWidth, tabSystem.maxTabWidth = TAB_WIDTH, TAB_WIDTH
+    tabSystem.spacing = TAB_GAP
+    tabSystem.tabSelectSound = SOUNDKIT.IG_CHARACTER_INFO_TAB
+    tabSystem:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", TAB_LEFT, TAB_TOP)
+    tabSystem:SetTabSelectedCallback(function(tabID)
+        ns.SetView(tabID == 2 and "sets" or "bags")
+        return true -- ns.SetView har redan markerat fliken
+    end)
+    for _, label in ipairs({ L["Bags"], L["Sets"] }) do
+        local tabID = tabSystem:AddTab(label)
+        -- Lite större text än spelets standard, som i trollboken.
+        local tab = tabSystem:GetTabButton(tabID)
+        tab.selectedFontObject, tab.unselectedFontObject = GameFontHighlight, GameFontNormal
+        tab:UpdateTabWidth()
     end
-    local labels = { L["Bags"], L["Sets"] }
-    for id, label in ipairs(labels) do
-        local tab = CreateFrame("Button", nil, tabHost, "PanelTopTabButtonTemplate")
-        tab:SetID(id)
-        tab:SetText(label)
-        tab:SetScript("OnClick", onTabClick)
-    end
-    -- Till höger om väskans ikon uppe till vänster, så att flikarna inte täcker den.
-    tabHost.Tabs[1]:SetPoint("BOTTOMLEFT", bagFrame, "TOPLEFT", 60, -3)
-    PanelTemplates_SetNumTabs(tabHost, #labels)
-    selectTab(1)
+    tabSystem:SetTabVisuallySelected(1)
 
     emptyText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     emptyText:SetJustifyH("LEFT")
@@ -333,7 +319,7 @@ ns.OnLoad(function()
 
     -- Håller du en sak över fliken Sets byter fönstret till den, så att du kan släppa
     -- saken på ett set – som spelets egna flikar när man drar något över dem.
-    tabHost.Tabs[2]:HookScript("OnEnter", function()
+    tabSystem:GetTabButton(2):HookScript("OnEnter", function()
         if view ~= "sets" and cursorItemID() then
             ns.SetView("sets")
         end
