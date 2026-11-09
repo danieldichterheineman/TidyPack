@@ -1,7 +1,7 @@
 -- TidyPack – QuestLock.lua
 -- Låser saker som du behöver: quest-saker, vanliga saker som en pågående quest kräver, och
 -- saker i dina utrustningsset. Hos en handlare går låsta saker inte att klicka på
--- (Layout.lua), och Sell Junk säljer dem aldrig (Junk.lua).
+-- (Layout.lua och Gamepad.lua), och Sell Junk säljer dem aldrig (Junk.lua).
 -- ⚠️ Vanliga saker som en quest kräver känns igen på namnet i questloggens text, t.ex.
 -- "Linen Cloth: 3/10", alltså på spelets språk.
 -- ⚠️ Spelets egen knapp "Sell All Junk" i handlarfönstret känner inte till låsen.
@@ -10,6 +10,7 @@ local addonName, ns = ...
 local L = ns.L
 
 local neededBy = {}   -- sakens namn → questens namn, för saker som en pågående quest kräver
+local scanned = {}    -- nästa genomgång av questloggen, jämförs med neededBy
 local setItems = {}   -- itemID → true, för saker i ett utrustningsset
 
 -- Sakens namn i ett mål i questloggen, t.ex. "Linen Cloth: 3/10" eller "3/10 Linen Cloth".
@@ -17,9 +18,25 @@ local function objectiveItemName(text)
     return text:match("^(.-):%s*%d+%s*/%s*%d+") or text:match("^%d+%s*/%s*%d+%s+(.+)$")
 end
 
--- Går igenom questloggen och noterar vilka saker varje pågående quest kräver.
+-- Sant om två tabeller har samma nycklar och värden.
+local function sameContents(a, b)
+    for key, value in pairs(a) do
+        if b[key] ~= value then
+            return false
+        end
+    end
+    for key in pairs(b) do
+        if a[key] == nil then
+            return false
+        end
+    end
+    return true
+end
+
+-- Går igenom questloggen och noterar vilka saker varje pågående quest kräver. Returnerar
+-- sant om något ändrades sedan förra gången.
 local function scanQuests()
-    wipe(neededBy)
+    wipe(scanned)
     local numEntries = C_QuestLog.GetNumQuestLogEntries()
     for index = 1, numEntries do
         local info = C_QuestLog.GetInfo(index)
@@ -30,12 +47,17 @@ local function scanQuests()
                     -- Även mål som redan är klara: sakerna ska ju lämnas in.
                     local name = objective.type == "item" and objective.text and objectiveItemName(objective.text)
                     if name then
-                        neededBy[name] = info.title
+                        scanned[name] = info.title
                     end
                 end
             end
         end
     end
+    if sameContents(scanned, neededBy) then
+        return false
+    end
+    neededBy, scanned = scanned, neededBy
+    return true
 end
 
 -- Går igenom dina utrustningsset och noterar vilka saker de består av.
@@ -63,18 +85,24 @@ local function refresh()
     end
 end
 
--- Questens namn om saken behövs för en pågående quest, annars nil.
-function ns.GetQuestNeed(bagID, slot, info)
+-- Sant om saken behövs för en quest: en quest-sak, eller en vanlig sak som en pågående
+-- quest kräver.
+function ns.IsQuestItem(bagID, slot, info)
     local questInfo = C_Container.GetContainerItemQuestInfo(bagID, slot)
     if questInfo and (questInfo.isQuestItem or questInfo.questID) then
-        return questInfo.questID and C_QuestLog.GetTitleForQuestID(questInfo.questID) or L["Quest item"]
+        return true
     end
-    return neededBy[ns.GetItemName(info.hyperlink)]
+    return neededBy[ns.GetItemName(info.hyperlink)] ~= nil
+end
+
+-- Sant om saken ingår i ett av dina utrustningsset.
+function ns.IsInEquipmentSet(itemID)
+    return setItems[itemID] == true
 end
 
 -- Sant om saken är låst: den behövs för en quest eller ingår i ett utrustningsset.
 function ns.IsLocked(bagID, slot, info)
-    return setItems[info.itemID] == true or ns.GetQuestNeed(bagID, slot, info) ~= nil
+    return ns.IsInEquipmentSet(info.itemID) or ns.IsQuestItem(bagID, slot, info)
 end
 
 -- Sant medan handlarfönstret är öppet.
@@ -87,9 +115,22 @@ ns.RegisterEvent("PLAYER_LOGIN", function()
     scanEquipmentSets()
 end)
 
+-- QUEST_LOG_UPDATE kommer ofta, flera gånger i rad, t.ex. för varje framsteg i en quest.
+-- Questloggen gås därför igenom högst en gång per bildruta, och väskfönstret uppdateras bara
+-- när någon quest kräver något nytt.
+local scanScheduled = false
+
 ns.RegisterEvent("QUEST_LOG_UPDATE", function()
-    scanQuests()
-    refresh()
+    if scanScheduled then
+        return
+    end
+    scanScheduled = true
+    C_Timer.After(0, function()
+        scanScheduled = false
+        if scanQuests() then
+            refresh()
+        end
+    end)
 end)
 
 ns.RegisterEvent("EQUIPMENT_SETS_CHANGED", function()
@@ -101,7 +142,8 @@ end)
 ns.RegisterEvent("MERCHANT_SHOW", refresh)
 ns.RegisterEvent("MERCHANT_CLOSED", refresh)
 
--- En rad i sakens tooltip, t.ex. "Needed for: The Cloth Collector".
+-- Rader i sakens tooltip: "Needed for: The Cloth Collector", och hos en handlare en röd rad
+-- på saker som Tidy Pack har låst.
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
     if not data or type(data.id) ~= "number" then
         return
@@ -109,6 +151,9 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tool
     local name = C_Item.GetItemNameByID(data.id)
     local quest = name and neededBy[name]
     if quest then
-        tooltip:AddLine(L["Needed for: %s"]:format(quest), 1, 0.82, 0)
+        tooltip:AddLine(L["Needed for: %s"]:format(quest), NORMAL_FONT_COLOR:GetRGB())
+    end
+    if ns.IsLockedButton and ns.IsLockedButton(tooltip:GetOwner()) then
+        tooltip:AddLine(L["Locked by Tidy Pack: can't be sold."], RED_FONT_COLOR:GetRGB())
     end
 end)

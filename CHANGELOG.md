@@ -18,6 +18,31 @@
   your bags become full.
 - Cleaner window: 11 groups instead of 15, item level and "BoE" only on uncommon or better
   gear, locks only at merchants, and no bag menu or clean-up button.
+- Controller: the cursor starts on your newest loot (or at the top), LB and RB jump to the
+  previous or next group, and the D-pad moves to the nearest item in the direction you press.
+  The cursor never stops on a hidden square, not even after you sell something.
+- Locked items show their tooltip at merchants, with a red line saying that Tidy Pack keeps
+  them from being sold.
+- The star button's tooltip shows the controller button to use when you play with a
+  controller.
+- Tidy Pack does less work when your quest log changes.
+- Junk list: Alt-right-click an item, or drop it on the star and choose "Add to Junk List".
+  Whenever you loot an item on the list, Tidy Pack asks right away whether to delete it.
+  Listed items go to Junk with the game's junk coin, are sold by Sell Junk and are suggested
+  first when your bags are full. Items you don't have can be added from the settings by
+  Shift-clicking their link.
+- Bags full: when something can't be looted, a small panel under the loot window suggests an
+  item to delete – something on your junk list, or your cheapest grey item if the new loot is
+  worth more. Nothing is deleted until you press Delete.
+- The star is now the only button Tidy Pack adds to the bag window. It opens the game's own
+  menu: drop an item on it to star it or put it on your junk list, or click it for your junk
+  list and settings.
+- Settings: Esc → Options → AddOns → Tidy Pack, /tidypack, or the minimap's addon menu. You
+  can turn off the questions, the Sell Junk button, the quest hints, and item level and BoE.
+- With Questie installed, items that quests you haven't taken yet will need (up to 5 levels
+  above you) get a yellow exclamation mark and a line in their tooltip. Grey ones are never
+  sold or suggested for deletion.
+- The free-slot count now sits exactly where the game shows its own item counts.
 
 ## 0.1.0 (not released)
 

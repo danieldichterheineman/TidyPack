@@ -1,7 +1,7 @@
 -- TidyPack – Junk.lua
--- Knappen Sell Junk. Den syns ovanför väskfönstret när du handlar och det finns skräp:
--- gråa saker som går att sälja, utom stjärnmärkta och låsta. Ett klick säljer högst 12, så
--- att allt går att köpa tillbaka i handlarens Buyback-flik. Klicka igen för fler.
+-- Vad som räknas som skräp, och knappen Sell Junk. Knappen syns ovanför väskfönstret när du
+-- handlar och det finns skräp som går att sälja (se ns.GetJunkKind). Ett klick säljer högst
+-- 12, så att allt går att köpa tillbaka i handlarens Buyback-flik. Klicka igen för fler.
 --
 -- Spelet låter inte addons sälja saker på egen hand (att använda en sak är skyddat).
 -- Knappen är därför en säker knapp (SecureActionButtonTemplate) som kör spelets eget
@@ -20,6 +20,24 @@ local NUM_BAGS = Constants.InventoryConstants.NumBagSlots
 local button
 local lines = {} -- återanvänds för knappens kommandon
 
+-- Vad för sorts skräp en sak är: "marked" (du har markerat den som skräp i Marks.lua),
+-- "grey" (grå) eller nil (inte skräp). Stjärnmärkta och låsta saker, quest-saker och saker
+-- som spelet håller på med är aldrig skräp, och inte heller grå saker som en quest behöver
+-- senare (QuestHints.lua). Det du själv markerat räknas även om en quest behöver det senare:
+-- där har du bestämt dig. Används av Sell Junk och av förslagen vid fulla väskor (MakeRoom.lua).
+function ns.GetJunkKind(bagID, slot, info)
+    if not info or info.isLocked or ns.IsFavorite(info.itemID) or ns.IsLocked(bagID, slot, info) then
+        return nil
+    end
+    if ns.IsJunkMarked(info.itemID) then
+        return "marked"
+    end
+    if info.quality == Enum.ItemQuality.Poor and not (ns.IsNeededLater and ns.IsNeededLater(info.itemID)) then
+        return "grey"
+    end
+    return nil
+end
+
 -- Hittar skräpet som Sell Junk får sälja. Returnerar kommandona för de första 12, hur många
 -- saker det finns och vad de är värda tillsammans (i koppar).
 local function findJunk()
@@ -28,8 +46,7 @@ local function findJunk()
     for bagID = 0, NUM_BAGS do
         for slot = 1, C_Container.GetContainerNumSlots(bagID) do
             local info = C_Container.GetContainerItemInfo(bagID, slot)
-            if info and info.quality == Enum.ItemQuality.Poor and not info.hasNoValue and not info.isLocked
-                and not ns.IsFavorite(info.itemID) and not ns.IsLocked(bagID, slot, info) then
+            if info and not info.hasNoValue and ns.GetJunkKind(bagID, slot, info) then
                 local sellPrice = select(11, C_Item.GetItemInfo(info.hyperlink)) or 0
                 count = count + 1
                 value = value + sellPrice * (info.stackCount or 1)
@@ -55,14 +72,14 @@ local function place(bagFrame)
     return true
 end
 
--- Visar, uppdaterar eller döljer knappen. Körs när handeln börjar och slutar, när väskorna
--- ändras och när väskfönstret flyttas eller stängs.
-function ns.UpdateJunkButton()
-    if not button or InCombatLockdown() then
+-- Visar, uppdaterar eller döljer knappen.
+local function update()
+    if InCombatLockdown() then
         return -- säkra knappar kan inte ändras i strid; görs när striden är slut
     end
     local bagFrame = ns.bagFrame
-    local show = ns.IsAtMerchant() and bagFrame:IsShown()
+    -- Knappen går att stänga av i inställningarna (Options.lua).
+    local show = ns.db.sellJunkButton and ns.IsAtMerchant() and bagFrame:IsShown()
     if show then
         local text, count, value = findJunk()
         show = count > 0 and place(bagFrame)
@@ -73,6 +90,22 @@ function ns.UpdateJunkButton()
         end
     end
     button:SetShown(show)
+end
+
+-- Ber om en uppdatering. Den görs en bildruta senare och bara en gång, även om flera saker
+-- ber om den samtidigt: när handeln börjar och slutar, när väskorna ändras, efter varje
+-- utläggning i Layout.lua och när väskfönstret stängs.
+local updateScheduled = false
+
+function ns.UpdateJunkButton()
+    if not button or updateScheduled then
+        return
+    end
+    updateScheduled = true
+    C_Timer.After(0, function()
+        updateScheduled = false
+        update()
+    end)
 end
 
 ns.OnLoad(function()

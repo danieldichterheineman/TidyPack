@@ -1,6 +1,7 @@
 # Tidy Pack
 
-Ordnar sakerna i spelets väskfönster i fasta grupper, som Baganator men utan inställningar.
+Ordnar sakerna i spelets väskfönster i fasta grupper, som Baganator men med bara några få
+inställningar.
 Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 
 ## Fakta
@@ -17,7 +18,9 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   Mappar som heter `Camelot` där är Forevers egna ändringar. Verifiera API:er mot den grenen,
   inte mot `live`.
 - SavedVariables: `TidyPackDB` (per konto)
-- Inga slash-kommandon, ingen inställningssida och ingen rad i addonfacket (se Beslut).
+- Inställningssida i spelets Options → AddOns → Tidy Pack, med en egen sida för
+  skräplistan (`Options.lua`). Öppnas också med `/tidypack`, från addonmenyn vid minikartan
+  (`## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick`) och från ★ (se Beslut).
 - Projektmapp: `/Users/danhei1104/TidyPack`, med git (gren `main`).
 - GitHub: https://github.com/danieldichterheineman/TidyPack (privat, skapat 2026-11-09).
   Pusha bara efter ett ja från användaren.
@@ -29,17 +32,49 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
   vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
   bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 12 rutor brett.
-- ✅ Favorites (`Favorites.lua`): Alt-klick (mus) eller släpp saken på ★-knappen uppe
-  till höger (mus och handkontroll). ★ är svag tills man håller en sak. Sparas per itemID
-  och konto.
+- ✅ ★ (`Marks.lua`) är den enda knapp Tidy Pack lägger i väskfönstret, på
+  sorteringsknappens plats. Den är spelets egen menyknapp (`DropdownButton`): med en sak på
+  markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List", annars
+  "Junk List…" / "Settings…". ★ är svag tills man håller en sak.
+- ✅ Favorites (`Marks.lua`): Alt-klick (mus) eller via ★. Sparas per itemID och konto.
+- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-högerklick, via ★ eller på skräplistans
+  sida i inställningarna (lägg till med länk, namn, nummer eller genom att släppa en sak;
+  ta bort med det röda krysset). Saker på listan hamnar sist i Junk, får spelets eget
+  skräpmynt (`JunkIcon` på rutan), säljs av Sell Junk och föreslås först när väskorna är
+  fulla. En sak kan inte vara både favorit och på listan. Sparas per itemID och konto.
+- ⚠️ Frågor om radering (`MakeRoom.lua`), i en panel med samma mall som lootfönstret
+  (`DefaultPanelFlatTemplate`): (1) när en sak från skräplistan lootas (antalet ökar,
+  `C_Item.GetItemCount` vid `BAG_UPDATE_DELAYED`) frågar Tidy Pack direkt, (2) när loot
+  misslyckas med `ERR_INV_FULL` föreslås skräplistan först, annars den billigaste grå saken
+  om det nya är värt mer. Panelen hänger under lootfönstret (220 bred) eller syns uppe i
+  mitten (260 bred, `TOP -135`). Raderas bara när spelaren trycker Delete
+  (`DeleteCursorItem` kräver en hårdvaruhändelse och tar en sak per tryck). I strid väntar
+  frågorna om skräplistan. Med handkontroll: under lootfönstret kopplas knapparna in i
+  lootfönstrets markör, uppe i mitten blir panelen en fråga
+  (`GamepadMode.FrameControlsManager:HandlePopupShown`), bara utanför strid. Måste provas i
+  spelet, särskilt med handkontroll.
+- ✅ Inställningar (`Options.lua`), allt påslaget från början: fråga när skräp lootas,
+  förslag vid fulla väskor, Sell Junk-knappen, quests i förväg (går inte att ändra utan
+  Questie, och rubriken säger om Questie finns), nivå och BoE.
+- ⚠️ Quests i förväg (`QuestHints.lua`): kräver Questie (QuestieDB, `## OptionalDeps`).
+  Saker som behövs för quests man inte har gjort, för ens ras och klass, som man kan ta nu
+  eller inom 5 nivåer (och som inte är mer än 5 nivåer under en), får kartans gula
+  utropstecken (atlas `QuestNormal`) uppe till höger och raden "Needed later for: <quest>
+  (<zon>, level N)" i tooltipen (högst 3, sedan "...and N more quests"). Grå sådana saker
+  säljs och föreslås aldrig. Utan Questie skrivs en rad i chatten, en gång per konto.
+  QuestieDB:s data för Forevers nya quests är inte komplett.
 - ✅ New: saker som spelet markerar som nya hamnar överst tills fönstret stängs. Tidy Pack
   kommer ihåg dem själv, eftersom spelet tar bort markeringen när musen hålls över saken.
 - ✅ Lås (`QuestLock.lua`): quest-saker, vanliga saker som en pågående quest kräver
   (namnet i målet, t.ex. "Linen Cloth: 3/10") och saker i utrustningsset. Låsikonen syns
-  bara hos en handlare, och då är rutan avstängd (`Disable`), så att den inte kan säljas
-  med mus eller handkontroll. Tooltipen får raden "Needed for: <quest>".
+  bara hos en handlare. Med mus är rutan då avstängd (`Disable`). Med handkontroll får
+  markören inte klicka på den (`SmartNavigation_MarkFrameBlockingSmartNavClick`), så att
+  varken A eller X gör något (se Beslut 2026-11-09 om handkontrollen). Tooltipen visas ändå
+  (`SetMotionScriptsWhileDisabled`) och får raden "Needed for: <quest>" och hos handlaren
+  en röd rad "Locked by Tidy Pack: can't be sold."
 - ⚠️ Låsen: namnmatchningen följer spelets språk (engelska). Spelets egen knapp
-  "Sell All Junk" i handlarfönstret känner inte till låsen.
+  "Sell All Junk" i handlarfönstret känner inte till låsen. Med handkontroll kan låset inte
+  sättas eller släppas i strid; det görs när striden är över.
 - ⚠️ Sell Junk (`Junk.lua`): säker knapp ovanför väskfönstret när man handlar och det
   finns skräp. Säljer gråa saker utom låsta och stjärnmärkta, högst 12 per klick (Buyback
   rymmer 12), med spelets `/use väska plats`. Kan inte ändras i strid. Ligger utanför
@@ -51,6 +86,13 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ✅ Nivå och "BoE" bara på gröna och bättre vapen och rustningar.
 - ✅ Handkontroll: fönstret och rutorna är spelets egna, så spelets markör och knappar
   (använd, utrusta, sälj, dela, förstör, länka) fungerar som vanligt. Måste provas i spelet.
+- ⚠️ Handkontrollens markör (`Gamepad.lua`): börjar på första saken i New (annars första
+  rutan), LB/RB hoppar till förra/nästa grupp, styrkorset går till närmaste ruta åt det
+  hållet (spelets fria navigering i stället för rutnätet), och står markören på en ruta som
+  döljs flyttas den till närmaste synliga. Begränsningar: inget av det kan göras i strid
+  (görs när striden är över), och LB/RB bygger på spelets väskräkning – med nyckelringen
+  påslagen gör LB inget på saker i ryggsäcken och RB inget på nycklar, som i spelets fönster.
+- ✅ ★-knappens tooltip visar handkontrollens knapp A med handkontroll, och Alt-klick med mus.
 - ✅ Sökruta, pengar och markering av nya saker är spelets egna.
 - ✅ Väskorna man har på sig syns inte bland sakerna (`GamepadBagBar` döljs med
   handkontroll).
@@ -80,27 +122,83 @@ Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
 - Rutornas `OnClick` (HookScript, en gång per ruta): Alt-klick stjärnmärker.
 - `EventRegistry`-eventet `ContainerFrameItemButton.OnItemClicked` (sist i spelets klick på
   en ruta): väskbytet.
-- `TooltipDataProcessor.AddTooltipPostCall` (typ Item): raden "Needed for".
+- `TooltipDataProcessor.AddTooltipPostCall` (typ Item): raden "Needed for" och den röda
+  raden på låsta saker hos en handlare (tooltipens ägare är en låst ruta).
 - Sell Junk är en `SecureActionButtonTemplate` med typ `macro`, hängd i `UIParent` (en säker
   knapp i spelets väskfönster skulle skydda hela fönstret i strid). Den placeras utifrån
-  väskfönstrets läge, bara utanför strid.
+  väskfönstrets läge, bara utanför strid. Uppdateringen samlas till en per bildruta.
+- Handkontrollens markör (`Gamepad.lua`), som är spelets `SmartNavigation`:
+  - `hooksecurefunc(SmartNavigation, "SetUseGridNavigation")`: spelet slår på sitt rutnät
+    för väskfönstret (i `SmartNavPanelInfoAdded`). Tidy Pack slår av det en bildruta senare
+    med `SmartNavigation:SetUseGridNavigation(bagFrame, false)`.
+  - `hooksecurefunc(SmartNavigation, "SelectButton")`: hamnar markören på en dold ruta i
+    väskfönstret flyttar Tidy Pack den en bildruta senare med
+    `SmartNavigation:SetTargetButtonForFrame(bagFrame, ruta)`. En dold väskknapp efter en
+    synlig sak betyder LB/RB (`Gamepad_SetCursorToBag` väljer väskan före eller efter).
+  - Efter varje utläggning kontrolleras om markören står på en ruta som just dolts.
+  - Spelet tillåter addons att anropa `SetUseGridNavigation`, `SetTargetButtonForFrame` och
+    `SmartNavigation_*` utanför strid (de går via `SecureHelper`). I strid väntar Tidy Pack
+    på `ADDON_RESTRICTION_STATE_CHANGED` eller `PLAYER_REGEN_ENABLED`.
+- Panelen för frågorna (`MakeRoom.lua`, namn `TidyPackMakeRoomPanel`) använder samma mall
+  som lootfönstret (`DefaultPanelFlatTemplate`, rubrik med `SetTitle`, knappar med
+  `UIPanelButtonTemplate`). Den flyttas mellan `LootFrame` (TOP mot lootfönstrets BOTTOM,
+  -2) och `UIParent` (TOP, -135, strata DIALOG). Den reagerar på `UI_ERROR_MESSAGE` med
+  `ERR_INV_FULL`, `BAG_UPDATE_DELAYED` (antalet av sakerna på skräplistan med
+  `C_Item.GetItemCount`), `LOOT_CLOSED`, `PLAYER_ENTERING_WORLD` och `PLAYER_REGEN_ENABLED`,
+  läser lootet med `GetNumLootItems`, `GetLootSlotType`, `GetLootSlotLink` och
+  `GetLootSlotInfo`, och raderar i knappens klick med `C_Container.PickupContainerItem` och
+  `DeleteCursorItem`. Med handkontroll: `SmartNavigation:RefreshButtonGroups(LootFrame)`
+  under lootfönstret, `GamepadMode.FrameControlsManager:HandlePopupShown/HandlePopupHide`
+  uppe i mitten.
+- ★ (`Marks.lua`) är `CreateFrame("DropdownButton")` med `SetupMenu`, `SetMenuAnchor`
+  (`CreateAnchor`) och `OpenMenu` vid `OnReceiveDrag`. Menyn byggs med
+  `rootDescription:CreateTitle` och `CreateButton`.
+- Inställningarna (`Options.lua`): `Settings.RegisterVerticalLayoutCategory`,
+  `Settings.RegisterAddOnSetting`, `Settings.CreateCheckbox` (med `SetValueChangedCallback`
+  och `AddModifyPredicate`), `CreateSettingsListSectionHeaderInitializer`,
+  `CreateSettingsButtonInitializer`, `Settings.RegisterCanvasLayoutSubcategory`,
+  `Settings.RegisterAddOnCategory` och `Settings.OpenToCategory`. Skräplistans sida:
+  `WowScrollBoxList`, `MinimalScrollBar`, `CreateScrollBoxListLinearView`,
+  `ScrollUtil.InitScrollBoxListWithScrollBar`, `CreateDataProvider`, `InputBoxTemplate`,
+  atlas `RedButton-Exit` och `hooksecurefunc(ChatFrameUtil, "InsertLink")` för
+  shift-klickade länkar.
+- Questie (`QuestHints.lua`): `LibQuestieDB.RequireContract(3)`,
+  `LibQuestieDB.Item.Get(id, "relatedQuests")`, `LibQuestieDB.Quest.GetAll` (målen i grupp 3,
+  `requiredSourceItems`, `requiredLevel`, `questLevel`, `requiredRaces`, `requiredClasses`,
+  `name`, `zoneOrSort`) och `LibQuestieDB.Enum.raceMaskById`. Klassens bit är 2^(klass − 1).
+  Zonens namn kommer från `C_Map.GetAreaInfo`. Anropen ligger i `pcall`, så att ett fel i
+  QuestieDB inte stoppar Tidy Pack.
+- Rutornas `JunkIcon` (spelets skräpmynt) visas även på markerat skräp. Villkoret innehåller
+  spelets eget (`UpdateJunkItem`: grått, säljbart och hos en handlare).
 - Spelets delar som används: `ContainerFrameCombinedBags`, `MoneyFrame`, `PortraitButton`,
-  rutornas `UpgradeIcon` (som spelet inte använder i väskorna), `GamepadBagBar`,
-  `BagItemAutoSortButton`, `MerchantFrame` och atlasbilderna `auctionhouse-icon-favorite`
-  och `LFG-lock`.
+  rutornas `UpgradeIcon` och `JunkIcon`, `GamepadBagBar`, `BagItemAutoSortButton`,
+  `MerchantFrame`, `LootFrame`, `SmartNavigation`, `STARTING_BAG_INDEX`, `ENDING_BAG_INDEX`,
+  `InputIconTextureSetUtility`, `ERR_INV_FULL`, mallarna `DefaultPanelFlatTemplate` och
+  `UIPanelButtonTemplate`, och atlasbilderna `auctionhouse-icon-favorite`, `bags-junkcoin`,
+  `QuestNormal` och `LFG-lock`.
 
 Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 (`Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua` och `.xml`,
-`Blizzard_MainMenuBarBagButtons/Camelot/`, `Blizzard_FrameXML/SecureTemplates.lua`), och att
-rutans storlek (37) och avstånd (5) är oförändrade.
+`Blizzard_MainMenuBarBagButtons/Camelot/`, `Blizzard_FrameXML/SecureTemplates.lua`,
+`Blizzard_GamepadSmartNavigation/SmartNavigation.lua`, `Utility.lua` och `SecureHelper.lua`,
+`Blizzard_UIPanels_Game/Mainline/LootFrame.lua` och `.xml`,
+`Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.xml`), att väskfönstrets
+`SmartNavPanelInfoAdded` och `Gamepad_SetCursorToBag` fungerar som förut, att rutans storlek
+(37) och avstånd (5) är oförändrade, och att QuestieDB fortfarande klarar kontrakt 3.
 
 ## Sparad data
 - `TidyPackDB` (per konto): `combinedBagsTurnedOn` (sant när Tidy Pack har slagit på
-  "Combined Bags" en gång), `favorites` (itemID → true) och `dataVersion`
-- Version 1: första versionen (2026-11-09). `favorites` lades till i 0.2.0 som en ny nyckel
-  med standardvärde, så ingen migrering behövdes.
+  "Combined Bags" en gång), `favorites` (itemID → true), `junk` (skräplistan, itemID →
+  true), `questieNoticeShown` (sant när raden om Questie har visats), inställningarna
+  `suggestOnLoot`, `suggestWhenFull`, `sellJunkButton`, `questHints` och `itemLevelAndBoE`
+  (alla sanna från början) och `dataVersion`
+- Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
+  nya nycklar med standardvärden, så ingen migrering behövdes.
 
 ## Idéer och önskemål
+- Nästa efter första testet: introduktion med sex korta tips i spelets tipsruta (välkommen,
+  stjärnan, LB/RB, Sell Junk, låsta saker, större väska), ett i taget och en gång per konto.
+  Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
 - Möjliga senare: slå ihop högar av samma sak till en ruta, fälla ihop grupper, visa
   antalet pilar och kulor i rubriken.
 - Valt bort för att hålla addonet avskalat: banken, andra karaktärers väskor, egna grupper,
@@ -118,10 +216,17 @@ rutans storlek (37) och avstånd (5) är oförändrade.
 - `BagSwap.lua`: byter ut den minsta väskan, och avgör vilka väskor som får en grön pil
 - `Layout.lua`: ordnar om spelets väskfönster: grupper, rubriker, New, märken, lås, tomma
   platser, varningen för fulla väskor och att städknappen och väskmenyn döljs
-- `Favorites.lua`: stjärnmärkning med Alt-klick och ★-knappen
-- `Junk.lua`: knappen Sell Junk
+- `QuestHints.lua`: saker som quests man inte har tagit än behöver, via Questies databas
+- `Marks.lua`: favoriter och skräplistan, med Alt-klick och ★ med spelets meny (hette
+  `Favorites.lua` före 2026-11-09)
+- `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`) och knappen Sell Junk
+- `MakeRoom.lua`: frågorna om radering, när skräp lootas och när väskorna är fulla
+- `Options.lua`: inställningssidan, skräplistans sida, `/tidypack` och addonmenyn
+- `Gamepad.lua`: handkontrollens markör (start, LB/RB, fri navigering, dolda rutor), låsen
+  för markören och knappsymboler i text
 - `CHANGELOG.md`: ändringarna, på engelska, för spelare
-- `.design/sketch.html`: skissen av hur addonet ser ut (följer inte med till spelarna)
+- `.design/sketch.html`: skissen av hur addonet ser ut, med förslaget på introduktion
+  (följer inte med till spelarna)
 
 ## Testlista
 <!-- Det användaren ska prova i spelet efter varje större ändring. -->
@@ -141,19 +246,64 @@ rutans storlek (37) och avstånd (5) är oförändrade.
    shift-dra delar en hög.
 9. Sökrutan tonar ner det som inte matchar.
 10. Hos en handlare: låsta saker har ett lås och går inte att klicka på (quest-sak, en vanlig
-    sak som en quest kräver, en sak i ett utrustningsset). Tooltipen visar "Needed for".
-    Sell Junk syns ovanför fönstret med skräpets värde, säljer högst 12 per klick och aldrig
-    låsta eller stjärnmärkta saker. Allt går att köpa tillbaka.
+    sak som en quest kräver, en sak i ett utrustningsset). Tooltipen visas ändå, med
+    "Needed for" och den röda raden "Locked by Tidy Pack: can't be sold." Sell Junk syns
+    ovanför fönstret med skräpets värde, säljer högst 12 per klick och aldrig låsta eller
+    stjärnmärkta saker. Allt går att köpa tillbaka.
 11. Väskbyte: med alla fyra väskplatser fulla och en större väska bland sakerna (grön pil):
     högerklick byter ut den minsta väskan och sakerna flyttas med. I strid kommer ett
     meddelande i stället.
 12. Nivå och BoE syns bara på gröna och bättre vapen och rustningar.
-13. Handkontroll: markören hoppar logiskt mellan grupperna och till ★, och Use, Equip,
-    Sell och Split fungerar. Plocka upp en sak och lägg den på ★. Hos en handlare går låsta
-    saker inte att sälja. Nycklarna syns i Keys.
+13. Handkontroll, utanför strid:
+    - Loota något och öppna väskan: markören står på saken i New. Utan nya saker står den
+      på första rutan – aldrig på en tom plats eller utanför rutorna.
+    - LB och RB hoppar till förra och nästa grupp. (Med nyckelringen påslagen gör LB inget
+      på saker i ryggsäcken, precis som utan Tidy Pack.)
+    - Styrkorset går till rutan närmast åt det håll du trycker, även mellan grupper som
+      delar rad. Uppåt från översta raden längst till höger når ★.
+    - Use, Equip, Sell och Split fungerar. Sälj en sak med X: markören hamnar på saken som
+      tar dess plats.
+    - Plocka upp en sak med A och lägg den på ★. ★:s tooltip visar knappen A.
+    - Hos en handlare gör A och X ingenting på låsta saker, och tooltipen har den röda
+      raden. Efter handeln går quest-saker att använda igen.
+    - Inget "Interface action failed because of an AddOn" i chatten eller som fel.
+    - Nycklarna syns i Keys.
 14. I strid (t.ex. mot en träningsdocka): använd en dryck ur väskan, och se att fönstret
-    uppdateras när du lootar.
+    uppdateras när du lootar. Med handkontroll fungerar markören som utan Tidy Pack tills
+    striden är över, och rättas sedan.
 15. Efter `/reload` ser allt likadant ut.
+16. Skräplistan: Alt-högerklicka på en vit sak – den hamnar sist i Junk med spelets
+    skräpmynt. Alt-högerklicka igen – den går tillbaka. Med handkontroll: plocka upp en sak
+    med A, gå till ★, tryck A och välj "Add to Junk List" i menyn. Sell Junk säljer saker
+    på listan, men aldrig stjärnmärkta eller låsta saker.
+17. Loota en sak som står på skräplistan: frågan "You looted ..., which is on your junk
+    list. Delete it?" kommer direkt – under lootfönstret, och uppe i mitten om lootfönstret
+    stängs. Delete raderar just den saken, "Not now" stänger. Inte i strid: då kommer frågan
+    när striden är över. Med handkontroll: frågan uppe i mitten ska få markören direkt.
+18. Fulla väskor: fyll väskorna och loota eller flå något. När "Inventory is full." visas
+    kommer en panel under lootfönstret, med samma ram och bredd, och föreslår skräplistan
+    eller den billigaste grå saken (bara om det nya är värt mer). Med handkontroll: gå ned
+    till knapparna med styrkorset och tryck A på Delete. Inget felmeddelande om blockerade
+    handlingar.
+19. ★: klicka utan sak – menyn visar "Junk List…" och "Settings…". Släpp en sak på ★ –
+    menyn visar "Add to Favorites" och "Add to Junk List". Menyn ser ut som spelets egna.
+20. Inställningar: Esc → Options → AddOns → Tidy Pack, `/tidypack` och addonmenyn vid
+    minikartan öppnar sidan. Varje kryssruta gör det den säger, även efter `/reload`.
+    Rubriken för quests säger om Questie finns, och utan Questie går kryssrutan inte att
+    ändra. Skräplistans sida: lägg till genom att shift-klicka på en länk (t.ex. i chatten)
+    medan rutan är aktiv, skriv ett namn eller nummer, eller släpp en sak på sidan; ta bort
+    med det röda krysset.
+21. Quests i förväg, med Questie installerat: saker som en quest du inte tagit än behöver
+    har ett gult utropstecken uppe till höger, och tooltipen visar "Needed later for: ...".
+    Utan Questie: en rad i chatten första gången, och aldrig mer.
+22. Utseende: panelen ser ut som lootfönstret, ★ står i höjd med sökrutan, och Tidy Packs
+    siffror och märken krockar inte med spelets egna (antal nere till höger, skräpmynt och
+    grön pil uppe till vänster).
+23. Prestanda: öppna väskan, loota och sälj något, och skriv sedan
+    `/dump C_AddOnProfiler.GetAddOnMetric("TidyPack", Enum.AddOnProfilerMetric.PeakTime)`.
+    Svaret är den längsta tid Tidy Pack har tagit under en bildruta, i millisekunder (en
+    bildruta är ungefär 16 ms vid 60 bilder per sekund). Addonlistan visar också hur mycket
+    av datorns tid varje addon använder.
 
 ## Arbetssätt
 - Kärnreglerna i pluginet wow-addon-skills gäller.
@@ -162,7 +312,12 @@ rutans storlek (37) och avstånd (5) är oförändrade.
 - Skriv ändringar i `CHANGELOG.md` under `## Unreleased` och committa med git.
 
 ## Publicering
-- Status: inte publicerat
+- Status: inte publicerat på CurseForge.
+- Testversioner för andra datorer läggs som förhandsversion (pre-release) under Releases på
+  GitHub, med zip-filen från `package-addon.mjs` (den hamnar i `.release/`, som git
+  ignorerar). Första: `v0.2.0-alpha1` (2026-11-09). Taggarna har `alpha` i namnet. När
+  arbetsflödet för automatisk publicering finns laddar varje tagg upp till CurseForge, så
+  fråga då först.
 
 ## Beslut
 - 2026-11-08: Addon för WoW Forever som hanterar väskorna man bär med sig, med fokus på
@@ -189,6 +344,53 @@ rutans storlek (37) och avstånd (5) är oförändrade.
 - 2026-11-09 (0.2.0): Så rent som möjligt: elva grupper utan sektioner och linjer, lås bara
   hos handlaren, nivå och BoE bara på gröna och bättre, Sell Junk bara när det finns skräp,
   svag ★-knapp, och spelets väskmeny borttagen.
+- 2026-11-09: Handkontrollen rättad efter genomläsning av Blizzards kod (inte provat i
+  spelet än). Spelets markör började på den dolda väskknappen, LB/RB gick till dolda
+  väskknappar, och rutnätet passade inte grupperna. Nu: start i New, LB/RB mellan grupper,
+  spelets fria navigering och flytt bort från dolda rutor. Ingen egen knappbindning för
+  LB/RB: spelets knappstack för handkontroll (`InputBindingManager`) är delad, och en
+  bindning från ett addon skulle smitta spelets egna knappar (taint).
+- 2026-11-09: Med handkontroll stängs låsta rutor inte av. Spelets markör lyssnar på när
+  rutan den står på stängs av eller på (`TrackButtonEnabledState`) och kör då knapptipsens
+  kod, som bygger om knappbindningarna. Gör Tidy Pack det, sker det i Tidy Packs namn, och
+  sedan kan spelet blockera Use och Sell. I stället används spelets egen spärr för markörens
+  klick, som addons får sätta utanför strid.
+- 2026-11-09: Spelets tips (HelpTip), hjälpskyltar (HelpPlate) och nybörjarguide är
+  avstängda med handkontroll i Forever. En introduktion i Tidy Pack ska därför använda
+  spelets mall `HelpTipTemplate` i egna ramar. Föreslagen och skissad
+  (`.design/sketch.html`), byggs efter första testet i spelet.
+- 2026-11-09: Städning: questloggen gås igenom högst en gång per bildruta och väskan läggs
+  bara om när något nytt krävs, Sell Junk uppdateras en gång per bildruta, och varje sak
+  frågas bara en gång om den behövs för en quest.
+- 2026-11-09: Blizzards addonpolicy har inga regler om utseende. Addons får använda spelets
+  mallar, typsnitt och bilder i spelet, men inte kopiera spelets bildfiler eller se ut att
+  komma från Blizzard. Därför: frågepanelen har lootfönstrets mall, skräpet spelets
+  skräpmynt, quest-märket kartans utropstecken och siffran för tomma platser samma plats
+  som spelets egen siffra för antal. Panelens rubrik är "Tidy Pack", så att det syns vem som
+  frågar.
+- 2026-11-09: Spelets egna frågerutor (StaticPopup) används inte. De är delade, och ett
+  addon som visar sin fråga i dem kan smitta spelets egna frågor (taint), t.ex. den när man
+  raderar en sak. Panelen är en egen ram byggd av spelets mallar.
+- 2026-11-09: Fulla väskor: automatiska förslag, men radering bara när spelaren trycker
+  Delete (användarens önskan, och spelets regel för `DeleteCursorItem`). Med handkontroll
+  flyttas markören inte till Delete, så att ett tryck på A för att loota aldrig raderar.
+- 2026-11-09: Quests i förväg använder QuestieDB som valfritt beroende. Ingen data kopieras,
+  eftersom QuestieDB:s licens är en blandning av GPLv3 och "all rights reserved". Användaren
+  godkände att Tidy Pack berättar en gång att Questie låser upp funktionen. På CurseForge
+  ska Questie anges som valfritt beroende. "Lär av dina karaktärer", som fyller luckorna för
+  Forevers nya quests, tas efter att detta är provat.
+- 2026-11-09: Skräplistan ska ge förslag automatiskt när en sak från listan lootas, t.ex.
+  vid flåning (användarens förtydligande). Saker ska kunna läggas till utan att man har dem,
+  därför en egen sida med länk, namn och nummer. Shift-klickade länkar fångas med
+  `hooksecurefunc(ChatFrameUtil, "InsertLink")`, eftersom spelet bara lägger länkar i
+  chatten och några egna fält.
+- 2026-11-09: En enda knapp i väskfönstret (★, spelets `DropdownButton` med spelets meny) i
+  stället för ★ och skräpmynt bredvid varandra. Användaren ville ha luft och ett
+  inbyggt intryck; spelets eget väskfönster har bara en knapp på den platsen.
+- 2026-11-09: Inställningssida (ändrar beslutet från 2026-11-09 om att inte ha någon):
+  användaren vill kunna välja vad som är på, t.ex. Questie. Huvudsidan använder spelets
+  vanliga rader, skräplistan en egen sida. Öppnas från Options, `/tidypack`, addonmenyn vid
+  minikartan och ★.
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1
@@ -197,3 +399,16 @@ rutans storlek (37) och avstånd (5) är oförändrade.
 - Byta väska som inte är tom: https://warcraft.wiki.gg/wiki/Bag
 - Att använda saker är skyddat: https://warcraft.wiki.gg/wiki/API_C_Container.UseContainerItem
 - Alt-klick räknas som modifierat klick: https://warcraft.wiki.gg/wiki/API_IsModifiedClick
+- Handkontrollens markör i Forever (grenen `forever`, 1.60.1): `SmartNavigation.lua`,
+  `Utility.lua` och `SecureHelper.lua` i `Blizzard_GamepadSmartNavigation`, och
+  `SetupGamepad`, `SmartNavPanelInfoAdded` och `Gamepad_SetCursorToBag` i
+  `Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua`
+- Radera saker: https://warcraft.wiki.gg/wiki/API_DeleteCursorItem (hårdvaruhändelse sedan
+  9.0.2, en sak per händelse sedan 9.1.5)
+- Blizzards addonpolicy: https://us.forums.blizzard.com/en/wow/t/ui-add-on-development-policy/24534
+- QuestieDB för andra addons: https://github.com/Questie/QuestieDB (`docs/api.md`,
+  `docs/forever.md`, `LICENSE.md`), Questie med stöd för Forever:
+  https://github.com/Questie/Questie
+- Spelets tips och handkontroll: `HelpTip:AreHelpTipsEnabled` i
+  `Blizzard_SharedXML/HelpTip.lua`, `Blizzard_HelpPlate/Camelot/HelpPlateOverrides.lua` och
+  `TutorialLogic:IsNPEAllowed` i `Blizzard_NewPlayerExperience/Camelot/`

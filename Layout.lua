@@ -71,6 +71,14 @@ local entryCount = 0
 local groupLists = {}      -- gruppens namn → sakerna i gruppen
 local emptyByFamily = {}   -- väsktyp → tomma platser av den typen (0 = vanlig väska)
 local shownButtons = {}    -- rutorna som syns efter senaste genomgången
+local lockedButtons = setmetatable({}, { __mode = "k" }) -- rutor som är låsta hos handlaren
+local disabledButtons = setmetatable({}, { __mode = "k" }) -- rutor som Tidy Pack stängt av
+
+-- För handkontrollen (Gamepad.lua): första rutan i varje grupp, i den ordning grupperna
+-- visas, och vilken grupp varje ruta hör till.
+local groupFirst = {}                                    -- 1, 2, 3 … → gruppens första ruta
+local groupOfButton = setmetatable({}, { __mode = "k" }) -- ruta → plats i groupFirst
+local newGroupIndex                                      -- gruppen New, om den visas
 
 local function newEntry()
     entryCount = entryCount + 1
@@ -133,17 +141,46 @@ local function getExtras(button)
             bind = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall"),
             free = button:CreateFontString(nil, "ARTWORK", "NumberFontNormal"),
             lock = button:CreateTexture(nil, "OVERLAY", nil, 6),
+            later = button:CreateTexture(nil, "OVERLAY", nil, 6),
         }
         extra.level:SetPoint("TOPLEFT", 2, -2)
         extra.bind:SetPoint("BOTTOMLEFT", 2, 2)
         extra.bind:SetText(L["BoE"])
-        extra.free:SetPoint("BOTTOMRIGHT", -3, 2)
+        -- Samma plats och typsnitt som spelets egen siffra för antal (Count i ItemButtonTemplate).
+        extra.free:SetPoint("BOTTOMRIGHT", -5, 2)
         extra.lock:SetAtlas("LFG-lock")
         extra.lock:SetSize(12, 14)
         extra.lock:SetPoint("TOPRIGHT", -1, -1)
+        -- Kartans gula utropstecken för quests du kan ta (QuestNormal), på samma plats som låset.
+        extra.later:SetAtlas("QuestNormal")
+        extra.later:SetSize(10, 14)
+        extra.later:SetPoint("TOPRIGHT", -1, -1)
         extras[button] = extra
+        -- En avstängd ruta visar annars ingen tooltip. Låsta saker hos en handlare ska visa
+        -- sin, med raden om varför de är låsta.
+        button:SetMotionScriptsWhileDisabled(true)
     end
     return extra
+end
+
+-- Låser eller släpper en ruta hos en handlare, så att saken inte kan säljas av misstag.
+-- Med mus stängs rutan av. Med handkontroll får markören i stället inte klicka på den, för
+-- när spelets markör står på en ruta som stängs av körs spelets kod för knapptipsen i Tidy
+-- Packs namn, och sedan kan spelet blockera Use och Sell (se Gamepad.lua).
+local function setLocked(button, locked)
+    lockedButtons[button] = locked or nil
+    local gamepad = InputUtil.IsGamepadUIEnabled() and ns.SetGamepadClickBlocked ~= nil
+    if gamepad then
+        ns.SetGamepadClickBlocked(button, locked)
+    end
+    local disable = locked and not gamepad
+    if disable then
+        button:Disable()
+        disabledButtons[button] = true
+    elseif disabledButtons[button] then
+        button:Enable()
+        disabledButtons[button] = nil
+    end
 end
 
 local function updateExtras(entry, atMerchant)
@@ -162,8 +199,11 @@ local function updateExtras(entry, atMerchant)
 
     -- Nivå uppe till vänster och BoE nere till vänster, bara på gröna och bättre vapen och
     -- rustningar – på enklare saker säger de sällan något.
+    -- Markerat skräp får ingen nivå: där sitter skräpmyntet. Nivå och BoE går att stänga av i
+    -- inställningarna (Options.lua).
     local level, boe
-    if entry.isGear and entry.quality >= Enum.ItemQuality.Uncommon then
+    if ns.db.itemLevelAndBoE and entry.isGear and entry.quality >= Enum.ItemQuality.Uncommon
+        and not entry.junkMarked then
         if entry.equipLocation and entry.equipLocation ~= "" and not NO_LEVEL[entry.equipLocation] then
             location:SetBagAndSlot(entry.bagID, entry.slot)
             level = C_Item.GetCurrentItemLevel(location)
@@ -183,12 +223,20 @@ local function updateExtras(entry, atMerchant)
 
     -- Låset syns bara hos en handlare, och då går låsta saker inte att klicka på – varken
     -- med mus eller handkontroll – så de kan inte säljas av misstag (se QuestLock.lua).
-    local locked = atMerchant and entry.locked
+    local locked = atMerchant and entry.locked == true
     extra.lock:SetShown(locked)
-    if locked then
-        button:Disable()
-    else
-        button:Enable()
+    setLocked(button, locked)
+
+    -- Utropstecknet: en quest som du inte har tagit än behöver saken (QuestHints.lua).
+    -- Låset går före, eftersom det sitter på samma plats.
+    extra.later:SetShown(entry.neededLater == true and not locked)
+
+    -- Spelets skräpmynt. Spelet visar det själv på grå saker hos en handlare
+    -- (UpdateJunkItem), och Tidy Pack visar det också på saker som du har markerat som skräp.
+    -- Villkoret innehåller spelets eget, så att spelets mynt står kvar.
+    if button.JunkIcon then
+        local gameShowsCoin = entry.quality == Enum.ItemQuality.Poor and not entry.noValue and atMerchant
+        button.JunkIcon:SetShown(entry.junkMarked == true or gameShowsCoin)
     end
 
     -- Grön pil på väskor som är större än någon av dina väskor (se BagSwap.lua). Pilen
@@ -199,7 +247,7 @@ local function updateExtras(entry, atMerchant)
         button.UpgradeIcon:SetShown(isUpgrade == true)
     end
 
-    -- Alt-klick för att stjärnmärka (se Favorites.lua).
+    -- Alt-klick för favoriter och skräp (se Marks.lua).
     if ns.HookItemButton then
         ns.HookItemButton(button)
     end
@@ -273,14 +321,18 @@ local function relayout()
             local entry = newEntry()
             entry.button, entry.bagID, entry.slot = button, bagID, slot
             entry.isEmpty = false
-            entry.group, entry.subOrder = ns.GetGroup(bagID, slot, info, classID, subClassID)
+            local isQuestItem = ns.IsQuestItem(bagID, slot, info)
+            entry.group, entry.subOrder = ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
             entry.quality = info.quality or 0
             entry.name = ns.GetItemName(info.hyperlink)
             entry.count = info.stackCount or 1
             entry.itemID, entry.link, entry.isBound = info.itemID, info.hyperlink, info.isBound
             entry.isGear = classID == Enum.ItemClass.Weapon or classID == Enum.ItemClass.Armor
             entry.equipLocation = equipLocation
-            entry.locked = ns.IsLocked(bagID, slot, info)
+            entry.locked = isQuestItem or ns.IsInEquipmentSet(info.itemID)
+            entry.junkMarked = ns.IsJunkMarked(info.itemID)
+            entry.noValue = info.hasNoValue
+            entry.neededLater = ns.IsNeededLater ~= nil and ns.IsNeededLater(info.itemID)
             if entry.group == "Junk" and not info.hasNoValue then
                 local sellPrice = select(11, C_Item.GetItemInfo(info.hyperlink))
                 junkValue = junkValue + (sellPrice or 0) * entry.count
@@ -294,7 +346,9 @@ local function relayout()
                 empty = newEntry()
                 empty.button, empty.bagID, empty.slot = button, bagID, slot
                 empty.isEmpty, empty.group, empty.family, empty.free = true, "Empty", family, 0
-                empty.locked, empty.isGear = false, false
+                -- Tabellen kan ha använts för en sak förut, så allt som märkena läser nollställs.
+                empty.locked, empty.isGear, empty.junkMarked, empty.neededLater = false, false, false, false
+                empty.quality, empty.noValue = 0, true
                 emptyByFamily[family] = empty
                 addToGroup("Empty", empty)
             elseif bagID < empty.bagID or (bagID == empty.bagID and slot < empty.slot) then
@@ -311,10 +365,18 @@ local function relayout()
     -- 2. Lägg ut grupperna rad för rad: en grupp delar rad med föregående om den får
     --    plats, annars börjar en ny rad.
     releaseHeaders()
+    wipe(groupFirst)
+    wipe(groupOfButton)
+    newGroupIndex = nil
     local x, y, shelfHeight = 0, 0, 0
     for _, group in ipairs(ns.groupOrder) do
         local list = groupLists[group]
         if list and #list > 0 then
+            local groupIndex = #groupFirst + 1
+            groupFirst[groupIndex] = list[1].button
+            if group == "New" then
+                newGroupIndex = groupIndex
+            end
             local header = acquireHeader()
             header:SetText(headerText(group, junkValue))
             local columns = math.min(#list, COLUMNS)
@@ -333,6 +395,7 @@ local function relayout()
                 entry.x = left + ((index - 1) % COLUMNS) * CELL
                 entry.y = y + HEADER + math.floor((index - 1) / COLUMNS) * CELL
                 entry.placed = true
+                groupOfButton[entry.button] = groupIndex
             end
             x = left + width
             shelfHeight = math.max(shelfHeight, height)
@@ -373,6 +436,11 @@ local function relayout()
     if ns.UpdateJunkButton then
         ns.UpdateJunkButton()
     end
+
+    -- Handkontrollens markör kan stå på en ruta som just dolts (se Gamepad.lua).
+    if ns.OnLayoutChanged then
+        ns.OnLayoutChanged()
+    end
 end
 
 -- Andra filer (t.ex. Favorites.lua och QuestLock.lua) ber om en ny genomgång här.
@@ -380,6 +448,43 @@ function ns.Refresh()
     if bagFrame and bagFrame:IsShown() then
         relayout()
     end
+end
+
+-- Sant om rutan är låst just nu, hos en handlare. QuestLock.lua ger den en röd rad i
+-- tooltipen.
+function ns.IsLockedButton(button)
+    return button ~= nil and lockedButtons[button] == true and ns.IsAtMerchant()
+end
+
+-- Rutan som handkontrollens markör börjar på: första saken i New, annars första rutan.
+function ns.GetStartButton()
+    return groupFirst[newGroupIndex or 1]
+end
+
+-- Första rutan i gruppen före (step = -1) eller efter (step = 1) rutans egen grupp. Efter
+-- den sista gruppen kommer den första igen.
+function ns.GetGroupJumpTarget(button, step)
+    local count = #groupFirst
+    local index = groupOfButton[button]
+    if count == 0 or not index then
+        return ns.GetStartButton()
+    end
+    return groupFirst[(index - 1 + step) % count + 1]
+end
+
+-- Den synliga ruta som ligger närmast en punkt i väskfönstret.
+function ns.GetNearestShownButton(x, y)
+    local nearest, nearestDistance
+    for button in pairs(shownButtons) do
+        local buttonX, buttonY = button:GetCenter()
+        if buttonX then
+            local distance = (buttonX - x) ^ 2 + (buttonY - y) ^ 2
+            if not nearestDistance or distance < nearestDistance then
+                nearest, nearestDistance = button, distance
+            end
+        end
+    end
+    return nearest
 end
 
 ---------------------------------------------------------------------------

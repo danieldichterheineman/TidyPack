@@ -11,8 +11,21 @@ local L = ns.L
 ns.defaults = {
     -- Blir sant när Tidy Pack har slagit på spelets inställning "Combined Bags" en gång.
     combinedBagsTurnedOn = false,
-    -- Stjärnmärkta saker: itemID → true (se Favorites.lua).
+    -- Stjärnmärkta saker: itemID → true (se Marks.lua).
     favorites = {},
+    -- Skräplistan: itemID → true (se Marks.lua).
+    junk = {},
+    -- Blir sant när Tidy Pack en gång har berättat att Questie låser upp "Needed later"
+    -- (se QuestHints.lua).
+    questieNoticeShown = false,
+
+    -- Inställningarna på Tidy Packs sida i spelets Options (Options.lua). Allt är påslaget
+    -- från början.
+    suggestOnLoot = true,     -- fråga när en sak från skräplistan lootas (MakeRoom.lua)
+    suggestWhenFull = true,   -- föreslå en sak att radera när väskorna är fulla (MakeRoom.lua)
+    sellJunkButton = true,    -- knappen Sell Junk hos en handlare (Junk.lua)
+    questHints = true,        -- saker som kommande quests behöver (QuestHints.lua)
+    itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
 }
 
 -- Skriver ett meddelande i användarens eget chattfönster, med addonets namn först.
