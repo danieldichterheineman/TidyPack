@@ -47,7 +47,7 @@
 - Special bags – quivers, ammo pouches, soul bags, profession bags and the reagent bag – get
   their own groups at the bottom, under a line, with the bag's icon and name and their own
   free slots. Empty only counts slots that fit anything.
-- Sets: drop an item on the star and choose "Add to Set" to collect items under a name you
+- Sets: drop an item on the gear button and choose "Add to Set" to collect items under a name you
   pick, like "Fishing". The new Sets tab above your bags lists your sets; click one to put
   it on (not in combat). A warning shows what's missing. Items in a set are locked at
   merchants. Sets are saved per character and can be renamed or deleted in the settings.
