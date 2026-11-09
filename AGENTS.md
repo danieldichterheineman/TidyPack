@@ -377,10 +377,15 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - Kärnreglerna i pluginet wow-addon-skills gäller.
 - Kör skillen `wow-check` efter varje större ändring.
 - Testa i spelet med `/reload` efter varje ändring och `/console scriptErrors 1` påslaget.
-- Skriv ändringar i `CHANGELOG.md` under `## Unreleased` och committa med git.
+- Skriv ändringar i `CHANGELOG.md` under `## Unreleased` (skapa rubriken överst igen efter en
+  släppt version) och committa med git.
 
 ## Publicering
-- Status: inte publicerat på CurseForge.
+- Status: inte publicerat på CurseForge. Version 1.0.0 är förberedd (2026-11-09): LICENSE (MIT),
+  README.md (projektbeskrivningen), CHANGELOG.md med `## 1.0.0`, zip-filen i `.release/` och
+  texterna till projektsidan i `.design/curseforge-page.md`. Kategori Bags & Inventory,
+  spelversion WoW Forever 1.60.1, Questie som valfritt beroende. Loggan är `.design/logo.png` (egen teckning, källa `logo.svg`). Väntar på test i
+  spelet och att användaren skapar projektet.
 - Testversioner för andra datorer läggs som förhandsversion (pre-release) under Releases på
   GitHub, med zip-filen från `package-addon.mjs` (den hamnar i `.release/`, som git
   ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Taggarna har `alpha` i namnet. När
