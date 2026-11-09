@@ -18,7 +18,6 @@
     --wow-gold: #ffd100;       /* NORMAL_FONT_COLOR: rubriker och vanlig text */
     --wow-white: #ffffff;      /* HIGHLIGHT_FONT_COLOR: framhävd text */
     --wow-gray: #808080;       /* GRAY_FONT_COLOR: avstängt */
-    --wow-green: #1aff1a;      /* GREEN_FONT_COLOR */
     --title-font: "Friz Quadrata", "Friz Quadrata TT", Georgia, "Times New Roman", serif;
     --text-font: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   }
@@ -69,9 +68,12 @@
     border: 2px solid #9a9a9a; border-radius: 50%; }
   .search::after { content: ""; position: absolute; left: 15px; top: 13px; width: 5px; height: 2px;
     background: #9a9a9a; transform: rotate(45deg); }
-  .section { font: 15px var(--title-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
-  .divider { height: 1px; background: linear-gradient(90deg, rgba(150,130,90,0), rgba(150,130,90,.7) 15%, rgba(150,130,90,.7) 85%, rgba(150,130,90,0)); }
+  /* ★-knappen: svag tills du håller en sak. */
+  .starbutton { width: 26px; height: 26px; color: var(--wow-gold); font: 22px/26px Arial, sans-serif;
+    text-align: center; text-shadow: 0 0 4px #ffb000, 1px 1px 0 #000; }
+  .starbutton.idle { opacity: .35; }
   .header { font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
+  .header .star { color: var(--wow-gold); }
   .slot { width: 37px; height: 37px; border-radius: 3px; border: 1px solid #000;
     box-shadow: inset 0 0 0 1px #3a3a3a; }
   .slot .count, .slot .ilvl, .slot .boe { position: absolute; font: bold 11px var(--text-font); color: #fff;
@@ -91,12 +93,23 @@
   .slot.new { box-shadow: inset 0 0 0 2px #fff6a0, 0 0 8px 2px rgba(255,240,140,.8); }
   .slot.empty { background: #141414; box-shadow: inset 0 0 0 1px #2a2a2a; }
   .slot.cursor { outline: 3px solid #4fc3ff; outline-offset: 2px; }
+  .slot.disabled { filter: grayscale(.8) brightness(.55); }
+  /* Låset: en liten bygel och kropp uppe till höger. Syns bara hos en handlare. */
+  .lock { position: absolute; right: 1px; top: 1px; width: 11px; height: 13px; }
+  .lock::before { content: ""; position: absolute; left: 2px; top: 0; width: 7px; height: 7px;
+    border: 2px solid #e8d070; border-bottom: none; border-radius: 4px 4px 0 0; }
+  .lock::after { content: ""; position: absolute; left: 0; top: 6px; width: 11px; height: 7px;
+    background: #e8c050; border-radius: 1px; box-shadow: 0 0 0 1px #000; }
   .money { font: 12px var(--text-font); color: var(--wow-white); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
   .coin { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 1px;
     vertical-align: -1px; box-shadow: 0 0 0 1px #000; }
   .coin.gold { background: radial-gradient(#fff2a0, #c9a227); }
   .coin.silver { background: radial-gradient(#ffffff, #9a9a9a); }
   .coin.copper { background: radial-gradient(#ffc090, #a0522d); }
+  /* Spelets röda knapp (UIPanelButtonTemplate). */
+  .redbutton { position: absolute; height: 22px; padding: 0 12px; border-radius: 3px; border: 1px solid #000;
+    background: linear-gradient(#a8261a, #5a0c06); box-shadow: inset 0 0 0 1px #d4af37;
+    font: 12px/20px var(--title-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
 
   /* Förklaringar till skissen. */
   .callout { position: absolute; font: 12px -apple-system, "Segoe UI", sans-serif; color: #fff;
@@ -115,6 +128,8 @@
     <fieldset>
       <legend>Prova</legend>
       <label><input type="checkbox" id="gamepadToggle"> Med handkontroll</label>
+      <label><input type="checkbox" id="merchantToggle"> Hos en handlare</label>
+      <label><input type="checkbox" id="holdingToggle"> Håller en sak</label>
     </fieldset>
   </div>
 
@@ -127,33 +142,38 @@
       <div class="blizz" style="left:16px; bottom:16px; width:430px; height:180px;">Chatt</div>
       <div class="blizz" style="left:458px; bottom:16px; width:450px; height:90px;">Aktionsfält</div>
       <div class="blizz" style="right:16px; bottom:16px; width:240px; height:40px;">Väskknappar och menyer</div>
+      <div class="blizz" id="merchant" style="left:20px; top:120px; width:340px; height:440px; display:none;">Spelets handlarfönster<br>(med spelets egen knapp "Sell All Junk")</div>
 
       <!-- Spelets väskfönster. Spelet lägger det nere till höger, ovanför väskknapparna. -->
       <div class="bagframe" id="window"></div>
+      <div id="outside"></div>
       <div id="callouts"></div>
     </div>
   </div>
 
   <ul>
     <li><b>Fönstret är spelets eget</b> väskfönster (alla väskor i ett). Spelet bestämmer var det ligger: nere
-      till höger, ovanför väskknapparna. Det är 12 rutor brett (514 enheter) och höjden följer innehållet.</li>
-    <li><b>Grupperna</b> kommer alltid i samma ordning: Potions, Food &amp; Drink, Consumables, sedan
-      <i>Equipment</i> (Weapons, Armor, Ammo), <i>Crafting</i> (Trade Goods, Recipes) och sist Quest Items,
-      Keys, Bags, Miscellaneous, Junk och Empty. Grupper som är tomma visas inte. Inom en grupp: bäst kvalitet
-      först, sedan namn och sist storleken på högen. Små grupper delar rad.</li>
-    <li><b>På rutorna</b>: nivån på vapen och rustning uppe till vänster, <b>BoE</b> nere till vänster på saker
-      som binds när du tar på dem, och antalet nere till höger. Gråa saker får spelets eget skräpmynt när du
-      står hos en handlare.</li>
-    <li><b>Lediga platser</b> visas som en enda ruta med antalet (19). Släpp en sak där, så hamnar den på
-      första lediga plats.</li>
-    <li><b>Väskor</b>: de väskor du har på dig syns inte bland sakerna. Lösa väskor ligger i gruppen Bags. Den
-      gröna pilen betyder att väskan är större än din minsta väska: högerklicka (eller tryck på spelets
-      knapp för att använda med handkontrollen), så byts din minsta väska ut och sakerna i den flyttas med.</li>
-    <li><b>Med handkontroll</b> (kryssa i rutan ovanför) fungerar allt som i spelets vanliga väskor: markören
-      hoppar mellan rutorna, och spelets egna knappar för att använda, utrusta, sälja, dela och förstöra finns
-      kvar. Nycklarna från nyckelringen hamnar då i gruppen Keys.</li>
-    <li><b>Spelets egen sökruta, pengar och markering av nya saker</b> används som de är. Spelets knapp för att
-      städa väskorna döljs, eftersom sakerna ändå alltid visas grupperade.</li>
+      till höger, ovanför väskknapparna. Det är 12 rutor brett (514 enheter) och höjden följer innehållet.
+      Väskikonen uppe till vänster öppnar inte längre spelets väskmeny.</li>
+    <li><b>Elva grupper</b> i fast ordning, utan sektioner och linjer: Favorites, New, Consumables, Equipment,
+      Trade Goods, Quest Items, Keys, Bags, Miscellaneous, Junk och Empty. Tomma grupper visas inte. Inom en grupp
+      ligger lika saker bredvid varandra (drycker före mat, vapen före rustning, recept sist i Trade Goods), och
+      sedan efter kvalitet, namn och storlek på högen. Små grupper delar rad.</li>
+    <li><b>New</b> samlar det du har fått sedan du senast öppnade väskan (här Emberglow Ring och Gnoll Paw).
+      De ligger kvar där tills du stänger fönstret.</li>
+    <li><b>Stjärnmärkt</b> (här Hearthstone) hamnar i Favorites överst. Med mus: Alt-klicka på saken. Med
+      handkontroll: plocka upp saken och lägg den på ★ uppe till höger. ★ är svag tills du håller en sak – kryssa
+      i "Håller en sak". Stjärnorna gäller alla dina karaktärer.</li>
+    <li><b>Lås</b>: quest-saker, vanliga saker som en quest kräver (här Linen Cloth) och saker i dina
+      utrustningsset. Låset syns bara hos en handlare, och då går sakerna inte att klicka på.</li>
+    <li><b>Sell Junk</b> syns ovanför väskfönstret när du handlar och det finns skräp. Den säljer gråa saker utom
+      låsta och stjärnmärkta, högst 12 per klick. Rubriken Junk visar vad skräpet är värt.</li>
+    <li><b>På rutorna</b>: nivå och <b>BoE</b> bara på gröna och bättre vapen och rustningar, och antalet nere
+      till höger. Gråa saker får spelets skräpmynt hos en handlare.</li>
+    <li><b>Lediga platser</b> visas som en ruta med antalet. Siffran blir röd vid 5 eller färre, och när väskorna
+      blir helt fulla visas "Your bags are full." mitt på skärmen.</li>
+    <li><b>Väskor</b>: de du har på dig syns inte bland sakerna. Grön pil i Bags = större än din minsta väska;
+      högerklicka (eller Equip med handkontrollen) för att byta.</li>
   </ul>
 
 <script>
@@ -168,122 +188,108 @@
   const HEADER = 18;            // gruppens rubrik, inklusive luft under den
   const GROUP_GAP = 12;         // avstånd mellan grupper som delar rad
   const SHELF_GAP = 6;          // avstånd mellan rader av grupper
-  const SECTION_GAP = 16;       // avstånd före en ny sektion (med en tunn linje i mitten)
-  const SECTION_TITLE = 22;     // sektionens rubrik, t.ex. Equipment
   const BOTTOM = 34;            // spelets rad med pengar längst ned
   const ANCHOR_X = -4, ANCHOR_Y = 85;   // spelet lägger fönstret så här från nedre högra hörnet
+  const SELL_HEIGHT = 22;       // Sell Junk, ovanför fönstret när du handlar
 
-  // Sektioner och grupper i fast ordning.
-  const SECTIONS = [
-    { title: null, groups: ["Potions", "Food & Drink", "Consumables"] },
-    { title: "Equipment", groups: ["Weapons", "Armor", "Ammo"] },
-    { title: "Crafting", groups: ["Trade Goods", "Recipes"] },
-    { title: null, groups: ["Quest Items", "Keys", "Bags", "Miscellaneous", "Junk", "Empty"] },
-  ];
+  // Grupperna i fast ordning.
+  const GROUPS = ["Favorites", "New", "Consumables", "Equipment", "Trade Goods", "Quest Items",
+    "Keys", "Bags", "Miscellaneous", "Junk", "Empty"];
 
   // Exempel på vad en karaktär i nivå 30 kan bära. q = kvalitet: 0 grå, 1 vit, 2 grön, 3 blå.
+  // sub = plats inom gruppen (drycker 1, mat 2, förband 3, skriftrullar 4; vapen 1, rustning 2; recept 4).
   const items = [
-    ["Potions", "Healing Potion", 1, 5, { cursor: true }],
-    ["Potions", "Minor Mana Potion", 1, 3],
-    ["Potions", "Elixir of Lion's Strength", 1, 2],
-    ["Food & Drink", "Roasted Boar Meat", 1, 20],
-    ["Food & Drink", "Refreshing Spring Water", 1, 15],
-    ["Consumables", "Heavy Wool Bandage", 1, 12],
-    ["Consumables", "Scroll of Stamina", 1, 1],
-    ["Weapons", "Gnarled Staff", 2, 1, { ilvl: 22, boe: true }],
-    ["Weapons", "Bronze Shortsword", 1, 1, { ilvl: 18 }],
-    ["Armor", "Emberglow Ring", 3, 1, { ilvl: 30, isNew: true }],
-    ["Armor", "Fisherman's Hat", 2, 1, { ilvl: 20, boe: true }],
-    ["Armor", "Ranger's Cloak", 2, 1, { ilvl: 24, boe: true }],
-    ["Armor", "Sturdy Leather Belt", 1, 1, { ilvl: 12 }],
-    ["Armor", "Tarnished Chain Gloves", 1, 1, { ilvl: 14 }],
-    ["Trade Goods", "Moss Agate", 2, 1],
-    ["Trade Goods", "Bronze Bar", 1, 3],
-    ["Trade Goods", "Coarse Thread", 1, 5],
-    ["Trade Goods", "Copper Ore", 1, 10],
-    ["Trade Goods", "Light Leather", 1, 10],
-    ["Trade Goods", "Linen Cloth", 1, 20],
-    ["Trade Goods", "Linen Cloth", 1, 13],
-    ["Trade Goods", "Peacebloom", 1, 6],
-    ["Trade Goods", "Rough Stone", 1, 12],
-    ["Trade Goods", "Silverleaf", 1, 9],
-    ["Trade Goods", "Tin Ore", 1, 4],
-    ["Trade Goods", "Wool Cloth", 1, 8],
-    ["Recipes", "Pattern: Fine Leather Boots", 2, 1],
-    ["Quest Items", "Gnoll Paw", 1, 6, { quest: true, isNew: true }],
-    ["Quest Items", "Murloc Fin", 1, 4, { quest: true }],
-    ["Quest Items", "Sealed Letter", 1, 1, { quest: true }],
+    ["Favorites", "Hearthstone", 1, 1],
+    ["New", "Emberglow Ring", 3, 1, { ilvl: 30, isNew: true }],
+    ["New", "Gnoll Paw", 1, 6, { quest: true, isNew: true, locked: true }],
+    ["Consumables", "Healing Potion", 1, 5, { sub: 1, cursor: true }],
+    ["Consumables", "Minor Mana Potion", 1, 3, { sub: 1 }],
+    ["Consumables", "Elixir of Lion's Strength", 1, 2, { sub: 1 }],
+    ["Consumables", "Roasted Boar Meat", 1, 20, { sub: 2 }],
+    ["Consumables", "Refreshing Spring Water", 1, 15, { sub: 2 }],
+    ["Consumables", "Heavy Wool Bandage", 1, 12, { sub: 3 }],
+    ["Consumables", "Scroll of Stamina", 1, 1, { sub: 4 }],
+    ["Equipment", "Gnarled Staff", 2, 1, { sub: 1, ilvl: 22, boe: true }],
+    ["Equipment", "Bronze Shortsword", 1, 1, { sub: 1 }],
+    ["Equipment", "Fisherman's Hat", 2, 1, { sub: 2, ilvl: 20, boe: true }],
+    ["Equipment", "Ranger's Cloak", 2, 1, { sub: 2, ilvl: 24, boe: true }],
+    ["Equipment", "Sturdy Leather Belt", 1, 1, { sub: 2 }],
+    ["Equipment", "Tarnished Chain Gloves", 1, 1, { sub: 2 }],
+    ["Trade Goods", "Moss Agate", 2, 1, { sub: 1 }],
+    ["Trade Goods", "Bronze Bar", 1, 3, { sub: 1 }],
+    ["Trade Goods", "Coarse Thread", 1, 5, { sub: 1 }],
+    ["Trade Goods", "Copper Ore", 1, 10, { sub: 1 }],
+    ["Trade Goods", "Light Leather", 1, 10, { sub: 1 }],
+    ["Trade Goods", "Peacebloom", 1, 6, { sub: 1 }],
+    ["Trade Goods", "Rough Stone", 1, 12, { sub: 1 }],
+    ["Trade Goods", "Silverleaf", 1, 9, { sub: 1 }],
+    ["Trade Goods", "Tin Ore", 1, 4, { sub: 1 }],
+    ["Trade Goods", "Wool Cloth", 1, 8, { sub: 1 }],
+    ["Trade Goods", "Pattern: Fine Leather Boots", 2, 1, { sub: 4 }],
+    ["Quest Items", "Murloc Fin", 1, 4, { quest: true, locked: true }],
+    ["Quest Items", "Sealed Letter", 1, 1, { quest: true, locked: true }],
+    ["Quest Items", "Linen Cloth (Needed for: The Cloth Collector)", 1, 20, { locked: true }],
+    ["Quest Items", "Linen Cloth (Needed for: The Cloth Collector)", 1, 13, { locked: true }],
     ["Keys", "Cellar Key", 1, 1, { gamepadOnly: true }],
     ["Keys", "Skeleton Key", 1, 1, { gamepadOnly: true }],
     ["Bags", "Heavy Brown Bag (14 slots)", 1, 1, { upgrade: true }],
     ["Bags", "Small Brown Pouch (6 slots)", 1, 1],
     ["Miscellaneous", "Box of Spare Parts", 1, 1],
-    ["Miscellaneous", "Hearthstone", 1, 1],
     ["Junk", "Broken Fang", 0, 3, { junk: true }],
     ["Junk", "Cracked Pottery", 0, 1, { junk: true }],
     ["Junk", "Ruined Pelt", 0, 2, { junk: true }],
     ["Junk", "Tattered Cloth Vest", 0, 1, { junk: true }],
     ["Junk", "Torn Wing", 0, 4, { junk: true }],
     ["Empty", "19 free slots", -1, 19, { empty: true }],
-  ].map(([group, name, quality, count, extra]) => ({ group, name, quality, count, ...(extra || {}) }));
+  ].map(([group, name, quality, count, extra]) => ({ group, name, quality, count, sub: 0, ...(extra || {}) }));
 
   // Färger för "ikonerna" – bara för att rutorna ska gå att skilja åt i skissen.
   const ICON = {
-    "Potions": ["#b0304a", "#3a0c18"], "Food & Drink": ["#a07040", "#3a2410"], "Consumables": ["#a0384a", "#3a1018"],
-    "Weapons": ["#8a8a9a", "#2a2a34"], "Armor": ["#7a6a5a", "#2e2620"], "Trade Goods": ["#6a7a4a", "#222a14"],
-    "Recipes": ["#b09a6a", "#3a3020"], "Quest Items": ["#8a7040", "#2a2010"], "Keys": ["#9a8a50", "#3a3018"],
-    "Bags": ["#8a5a3a", "#2a1a10"], "Miscellaneous": ["#4a6a8a", "#141e2a"], "Junk": ["#5a5a5a", "#222"],
+    "Favorites": ["#6a8ab0", "#1a2a3a"], "New": ["#7a6a5a", "#2e2620"], "Consumables": ["#a0384a", "#3a1018"],
+    "Equipment": ["#7a6a5a", "#2e2620"], "Trade Goods": ["#6a7a4a", "#222a14"], "Quest Items": ["#8a7040", "#2a2010"],
+    "Keys": ["#9a8a50", "#3a3018"], "Bags": ["#8a5a3a", "#2a1a10"], "Miscellaneous": ["#4a6a8a", "#141e2a"],
+    "Junk": ["#5a5a5a", "#222"],
   };
 
-  // Ordningen inom en grupp: kvalitet (bäst först), namn, storlek på högen (störst först).
+  // Ordningen inom en grupp: plats inom gruppen, kvalitet (bäst först), namn, storlek på högen.
   function compareItems(a, b) {
+    if (a.sub !== b.sub) return a.sub - b.sub;
     if (a.quality !== b.quality) return b.quality - a.quality;
     if (a.name !== b.name) return a.name < b.name ? -1 : 1;
     return b.count - a.count;
   }
 
-  // Lägger ut sektionerna uppifrån och ned. Inom en sektion läggs grupperna rad för rad
-  // ("hyllor"): en grupp delar rad med föregående om den får plats, annars börjar en ny rad.
+  // Lägger ut grupperna rad för rad: en grupp delar rad med föregående om den får plats,
+  // annars börjar en ny rad. En grupp är minst lika bred som sin rubrik.
   function layout(gamepad) {
     const placed = [];
-    let y = TOP, firstSection = true;
-    for (const section of SECTIONS) {
-      const groups = section.groups
-        .map(name => ({ name, list: items.filter(i => i.group === name && (gamepad || !i.gamepadOnly)).sort(compareItems) }))
-        .filter(g => g.list.length > 0);
-      if (groups.length === 0) continue;
-      if (!firstSection) {
-        placed.push({ divider: true, y: y + SECTION_GAP / 2 });
-        y += SECTION_GAP;
+    let x = 0, y = TOP, shelfHeight = 0;
+    for (const name of GROUPS) {
+      const list = items.filter(i => i.group === name && (gamepad || !i.gamepadOnly)).sort(compareItems);
+      if (list.length === 0) continue;
+      const label = name === "Favorites" ? "★ Favorites" : name === "Junk" ? "Junk  2s 14c" : name;
+      const cols = Math.min(list.length, COLUMNS);
+      const rows = Math.ceil(list.length / COLUMNS);
+      const width = Math.max(cols * BUTTON + (cols - 1) * SPACING, label.length * 6);
+      const height = HEADER + rows * BUTTON + (rows - 1) * SPACING;
+      let left = x === 0 ? 0 : x + GROUP_GAP;
+      if (x > 0 && left + width > GRID_WIDTH) {          // får inte plats: ny rad
+        y += shelfHeight + SHELF_GAP;
+        left = 0; shelfHeight = 0;
       }
-      if (section.title) {
-        placed.push({ section: section.title, y });
-        y += SECTION_TITLE;
-      }
-      firstSection = false;
-      let x = 0, shelfHeight = 0;
-      for (const g of groups) {
-        const cols = Math.min(g.list.length, COLUMNS);
-        const rows = Math.ceil(g.list.length / COLUMNS);
-        const width = cols * BUTTON + (cols - 1) * SPACING;
-        const height = HEADER + rows * BUTTON + (rows - 1) * SPACING;
-        let left = x === 0 ? 0 : x + GROUP_GAP;
-        if (x > 0 && left + width > GRID_WIDTH) {          // får inte plats: ny rad
-          y += shelfHeight + SHELF_GAP;
-          left = 0; shelfHeight = 0;
-        }
-        placed.push({ header: g.name, x: left, y });
-        g.list.forEach((item, i) => placed.push({ item, x: left + (i % COLUMNS) * CELL, y: y + HEADER + Math.floor(i / COLUMNS) * CELL }));
-        x = left + width;
-        shelfHeight = Math.max(shelfHeight, height);
-      }
-      y += shelfHeight;
+      placed.push({ header: label, x: left, y });
+      list.forEach((item, i) => placed.push({ item, x: left + (i % COLUMNS) * CELL, y: y + HEADER + Math.floor(i / COLUMNS) * CELL }));
+      x = left + width;
+      shelfHeight = Math.max(shelfHeight, height);
     }
-    return { placed, bottom: y };
+    return { placed, bottom: y + shelfHeight };
   }
 
   function render() {
     const gamepad = document.getElementById("gamepadToggle").checked;
+    const merchant = document.getElementById("merchantToggle").checked;
+    const holding = document.getElementById("holdingToggle").checked;
+    document.getElementById("merchant").style.display = merchant ? "flex" : "none";
     const result = layout(gamepad);
     const height = result.bottom + BOTTOM;
     const left = 1366 + ANCHOR_X - FRAME_WIDTH, top = 768 - ANCHOR_Y - height;
@@ -297,31 +303,33 @@
     let html = `<div class="titlebar">Combined Backpack${gamepad ? '<span class="free">(19)</span>' : ""}</div>`;
     html += `<div class="portrait"></div>`;
     if (!gamepad) html += `<div class="close">×</div>`;
-    // Spelets sökruta: smalare med mus, hela bredden med handkontroll.
-    html += `<div class="abs search" style="left:62px; top:35px; width:${gamepad ? FRAME_WIDTH - 62 - 12 : 330}px;">Search</div>`;
+    // Spelets sökruta: med handkontroll kortas den av så att ★-knappen får plats.
+    html += `<div class="abs search" style="left:62px; top:35px; width:${gamepad ? FRAME_WIDTH - 62 - 44 : 330}px;">Search</div>`;
+    html += `<div class="abs starbutton ${holding ? "" : "idle"}" style="right:9px; top:33px;" title="Drop an item here to star or unstar it">★</div>`;
 
     for (const p of result.placed) {
-      if (p.divider) {
-        html += `<div class="abs divider" style="left:${LEFT}px; top:${p.y}px; width:${GRID_WIDTH}px;"></div>`;
-      } else if (p.section) {
-        html += `<div class="abs section" style="left:${LEFT}px; top:${p.y}px;">${p.section}</div>`;
-      } else if (p.header) {
-        html += `<div class="abs header" style="left:${LEFT + p.x}px; top:${p.y}px;">${p.header}</div>`;
+      if (p.header) {
+        const label = p.header.startsWith("★") ? `<span class="star">★</span>${p.header.slice(1)}`
+          : p.header.startsWith("Junk  ") ? `Junk&nbsp; 2<span class="coin silver"></span>14<span class="coin copper"></span>` : p.header;
+        html += `<div class="abs header" style="left:${LEFT + p.x}px; top:${p.y}px;">${label}</div>`;
       } else {
         const it = p.item;
         const [c1, c2] = ICON[it.group] || ["#333", "#111"];
         const classes = ["abs", "slot"];
         if (it.empty) classes.push("empty");
         if (it.quality >= 2) classes.push("q" + it.quality);
+        if (it.junk && merchant) classes.push("junk");
         if (it.quest) classes.push("quest");
         if (it.upgrade) classes.push("upgrade");
         if (it.isNew) classes.push("new");
         if (gamepad && it.cursor) classes.push("cursor");
+        if (merchant && it.locked) classes.push("disabled");
         const bg = it.empty ? "" : `background: linear-gradient(135deg, ${c1}, ${c2});`;
         let inner = "";
         if (it.count > 1) inner += `<span class="count">${it.count}</span>`;
         if (it.ilvl) inner += `<span class="ilvl">${it.ilvl}</span>`;
         if (it.boe) inner += `<span class="boe">BoE</span>`;
+        if (it.locked && merchant) inner += `<span class="lock"></span>`;
         html += `<div class="${classes.join(" ")}" style="left:${LEFT + p.x}px; top:${p.y}px; ${bg}" title="${it.name}">${inner}</div>`;
       }
     }
@@ -331,17 +339,26 @@
       `123<span class="coin gold"></span> 45<span class="coin silver"></span> 67<span class="coin copper"></span></div>`;
     win.innerHTML = html;
 
+    // Sell Junk ligger utanför spelets fönster (en säker knapp får inte ligga i det), ovanför
+    // fönstrets vänstra del, och syns bara när du handlar och det finns skräp.
+    document.getElementById("outside").innerHTML = merchant
+      ? `<div class="redbutton" style="left:${left + 60}px; top:${top - SELL_HEIGHT - 6}px;">Sell Junk&nbsp; 2<span class="coin silver"></span>14<span class="coin copper"></span></div>`
+      : "";
+
     // Förklaringar till vänster om fönstret.
     const find = pred => result.placed.find(p => p.item && pred(p.item));
     const callouts = [["Spelets eget väskfönster – Tidy Pack ordnar bara sakerna →", top + 2]];
-    callouts.push(["Spelets egen sökruta →", top + 35]);
-    const hat = find(i => i.name === "Fisherman's Hat");
-    if (hat) callouts.push(["Nivå uppe till vänster, BoE nere till vänster →", top + hat.y + 10]);
+    callouts.push([holding ? "★ lyser: släpp saken här för att stjärnmärka →" : "★ är svag tills du håller en sak →", top + 35]);
+    const fav = find(i => i.group === "Favorites");
+    if (fav) callouts.push(["Stjärnmärkt överst, sedan det du nyss fått →", top + fav.y + 10]);
+    const cloth = find(i => i.locked && !i.quest);
+    if (cloth && merchant) callouts.push(["Låst hos handlaren: går inte att sälja →", top + cloth.y + 10]);
     const bag = find(i => i.upgrade);
-    if (bag) callouts.push(["Grön pil: större än din minsta väska – högerklicka för att byta →", top + bag.y + 2]);
+    if (bag && !merchant) callouts.push(["Grön pil: större än din minsta väska →", top + bag.y + 10]);
     const empty = find(i => i.empty);
     if (empty) callouts.push(["Lediga platser: släpp en sak här →", top + empty.y + 10]);
     callouts.push(["Spelets egen rad med pengar →", top + height - 28]);
+    if (merchant) callouts.push(["Sell Junk: gråa saker utom låsta och stjärnmärkta →", top - SELL_HEIGHT - 4]);
     if (gamepad) {
       const potion = find(i => i.cursor);
       callouts.push(["Handkontrollens markör – spelets egna knappar fungerar som vanligt →", top + potion.y + 22]);
@@ -355,7 +372,7 @@
       .join("");
   }
 
-  document.getElementById("gamepadToggle").addEventListener("change", render);
+  document.querySelectorAll("input").forEach(input => input.addEventListener("change", render));
   render();
 
   // Skalar ned skärmen så att hela den syns i webbläsarfönstret.

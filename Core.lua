@@ -11,6 +11,8 @@ local L = ns.L
 ns.defaults = {
     -- Blir sant när Tidy Pack har slagit på spelets inställning "Combined Bags" en gång.
     combinedBagsTurnedOn = false,
+    -- Stjärnmärkta saker: itemID → true (se Favorites.lua).
+    favorites = {},
 }
 
 -- Skriver ett meddelande i användarens eget chattfönster, med addonets namn först.

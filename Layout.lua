@@ -26,21 +26,42 @@ local GRID_WIDTH = COLUMNS * BUTTON + (COLUMNS - 1) * SPACING -- 499
 local HEADER = 18          -- gruppens rubrik, inklusive luft under den
 local GROUP_GAP = 12       -- avstånd mellan grupper som delar rad
 local SHELF_GAP = 6        -- avstånd mellan rader av grupper
-local SECTION_GAP = 16     -- avstånd före en ny sektion, med en tunn linje i mitten
-local SECTION_TITLE = 22   -- sektionens rubrik, t.ex. Equipment
 local MONEY_GAP = 4        -- spelet lägger rutorna 4 enheter ovanför raden med pengar
+local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
 
 -- Utrustning där nivån inte säger något visas utan nivå (skjortor och tabarder).
 local NO_LEVEL = { INVTYPE_BODY = true, INVTYPE_TABARD = true, INVTYPE_NON_EQUIP_IGNORE = true }
 
+-- Stjärnan framför rubriken Favorites, samma bild som ★-knappen.
+local FAVORITE_ICON = "|A:auctionhouse-icon-favorite:13:13|a "
+
 local bagFrame                    -- spelets fönster med alla väskor i ett
-local overlay                     -- vår egen ram i spelets fönster, för rubriker och linjer
+local overlay                     -- vår egen ram i spelets fönster, för rubrikerna
 local contentHeight               -- höjden på det Tidy Pack lägger ut
 local chromeWidth, chromeHeight   -- fönstrets kanter, titelrad, sökruta och pengar
 local location = ItemLocation:CreateEmpty() -- återanvänds för att läsa en saks nivå
 
 ---------------------------------------------------------------------------
--- Återanvända tabeller, textrader och linjer
+-- Gruppen New
+---------------------------------------------------------------------------
+-- Spelet markerar saker du nyss har fått, men tar bort markeringen så fort du håller musen
+-- över saken. Tidy Pack kommer därför ihåg vilka saker som var nya medan fönstret var
+-- öppet, och glömmer dem när fönstret stängs.
+
+local newItems = {} -- bagID * 1000 + slot → itemID
+
+function ns.IsNew(bagID, slot, itemID)
+    return newItems[bagID * 1000 + slot] == itemID
+end
+
+local function rememberNew(bagID, slot, itemID)
+    if C_NewItems.IsNewItem(bagID, slot) then
+        newItems[bagID * 1000 + slot] = itemID
+    end
+end
+
+---------------------------------------------------------------------------
+-- Återanvända tabeller och textrader
 ---------------------------------------------------------------------------
 -- Väskorna ändras ofta, t.ex. när man lootar. För att inte skapa nya tabeller och
 -- textrader varje gång återanvänds de.
@@ -71,59 +92,35 @@ local function addToGroup(group, entry)
     list[#list + 1] = entry
 end
 
-local function createPool(create)
-    return { objects = {}, used = 0, create = create }
-end
+local headers = { objects = {}, used = 0 }
 
-local function acquire(pool)
-    pool.used = pool.used + 1
-    local object = pool.objects[pool.used]
-    if not object then
-        object = pool.create()
-        pool.objects[pool.used] = object
+local function acquireHeader()
+    headers.used = headers.used + 1
+    local header = headers.objects[headers.used]
+    if not header then
+        header = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        headers.objects[headers.used] = header
     end
-    object:Show()
-    return object
+    header:Show()
+    return header
 end
 
-local function releaseAll(pool)
-    for _, object in ipairs(pool.objects) do
-        object:Hide()
+local function releaseHeaders()
+    for _, header in ipairs(headers.objects) do
+        header:Hide()
     end
-    pool.used = 0
+    headers.used = 0
 end
 
-local headers = createPool(function()
-    return overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-end)
-
-local sectionTitles = createPool(function()
-    return overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalMed3")
-end)
-
-local dividers = createPool(function()
-    local line = overlay:CreateTexture(nil, "ARTWORK")
-    line:SetColorTexture(0.6, 0.5, 0.35, 0.5)
-    line:SetSize(GRID_WIDTH, 1)
-    return line
-end)
-
--- Rubriker och linjer får sin plats först när hela höjden är känd.
-local pendingRegions, pendingX, pendingY, pendingCount = {}, {}, {}, 0
-
-local function placeLater(region, x, y)
-    pendingCount = pendingCount + 1
-    pendingRegions[pendingCount] = region
-    pendingX[pendingCount] = x
-    pendingY[pendingCount] = y
-end
+-- Rubrikernas plats sätts först när hela höjden är känd.
+local headerX, headerY = {}, {}
 
 ---------------------------------------------------------------------------
--- Text på rutorna: nivå, BoE och antal tomma platser
+-- Märken på rutorna: nivå, BoE, lås och antal tomma platser
 ---------------------------------------------------------------------------
 
--- Våra textrader per ruta. Rutorna är spelets egna, så Tidy Pack sparar inget i dem –
--- bara här, i en tabell som släpper rutan om spelet slutar använda den.
+-- Våra textrader och bilder per ruta. Rutorna är spelets egna, så Tidy Pack sparar inget i
+-- dem – bara här, i en tabell som släpper rutan om spelet slutar använda den.
 local extras = setmetatable({}, { __mode = "k" })
 
 local function getExtras(button)
@@ -135,33 +132,39 @@ local function getExtras(button)
             level = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall"),
             bind = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall"),
             free = button:CreateFontString(nil, "ARTWORK", "NumberFontNormal"),
+            lock = button:CreateTexture(nil, "OVERLAY", nil, 6),
         }
         extra.level:SetPoint("TOPLEFT", 2, -2)
         extra.bind:SetPoint("BOTTOMLEFT", 2, 2)
         extra.bind:SetText(L["BoE"])
         extra.free:SetPoint("BOTTOMRIGHT", -3, 2)
+        extra.lock:SetAtlas("LFG-lock")
+        extra.lock:SetSize(12, 14)
+        extra.lock:SetPoint("TOPRIGHT", -1, -1)
         extras[button] = extra
     end
     return extra
 end
 
-local function updateExtras(entry)
+local function updateExtras(entry, atMerchant)
     local button = entry.button
     local extra = getExtras(button)
 
-    -- Antalet tomma platser på den enda tomma ruta som syns.
+    -- Antalet tomma platser på den enda tomma ruta som syns. Rött när det är få kvar.
     if entry.isEmpty then
         extra.free:SetText(entry.free)
+        local color = entry.free <= LOW_SPACE and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR
+        extra.free:SetTextColor(color:GetRGB())
         extra.free:Show()
     else
         extra.free:Hide()
     end
 
-    -- Nivå uppe till vänster och BoE nere till vänster, på vapen och rustning.
+    -- Nivå uppe till vänster och BoE nere till vänster, bara på gröna och bättre vapen och
+    -- rustningar – på enklare saker säger de sällan något.
     local level, boe
-    if entry.group == "Weapons" or entry.group == "Armor" then
-        local _, _, _, equipLocation = C_Item.GetItemInfoInstant(entry.itemID)
-        if equipLocation and equipLocation ~= "" and not NO_LEVEL[equipLocation] then
+    if entry.isGear and entry.quality >= Enum.ItemQuality.Uncommon then
+        if entry.equipLocation and entry.equipLocation ~= "" and not NO_LEVEL[entry.equipLocation] then
             location:SetBagAndSlot(entry.bagID, entry.slot)
             level = C_Item.GetCurrentItemLevel(location)
         end
@@ -178,6 +181,16 @@ local function updateExtras(entry)
     end
     extra.bind:SetShown(boe == true)
 
+    -- Låset syns bara hos en handlare, och då går låsta saker inte att klicka på – varken
+    -- med mus eller handkontroll – så de kan inte säljas av misstag (se QuestLock.lua).
+    local locked = atMerchant and entry.locked
+    extra.lock:SetShown(locked)
+    if locked then
+        button:Disable()
+    else
+        button:Enable()
+    end
+
     -- Grön pil på väskor som är större än någon av dina väskor (se BagSwap.lua). Pilen
     -- finns redan i spelets ruta men används inte av spelet i väskorna.
     if button.UpgradeIcon then
@@ -185,14 +198,19 @@ local function updateExtras(entry)
             and ns.IsBagUpgrade(entry.bagID, entry.slot, entry.itemID)
         button.UpgradeIcon:SetShown(isUpgrade == true)
     end
+
+    -- Alt-klick för att stjärnmärka (se Favorites.lua).
+    if ns.HookItemButton then
+        ns.HookItemButton(button)
+    end
 end
 
 ---------------------------------------------------------------------------
 -- Utläggningen
 ---------------------------------------------------------------------------
 
--- Lägger en ruta, rubrik eller linje på plats. x och y räknas från övre vänstra hörnet av
--- det Tidy Pack lägger ut. Allt hänger i spelets rad med pengar, precis som spelets eget
+-- Lägger en ruta eller rubrik på plats. x och y räknas från övre vänstra hörnet av det
+-- Tidy Pack lägger ut. Allt hänger i spelets rad med pengar, precis som spelets eget
 -- rutnät, så att sökrutan, pengarna och spelets andra delar hamnar där de brukar.
 local function anchor(region, x, y)
     region:ClearAllPoints()
@@ -220,15 +238,15 @@ local function onFrameSizeUpdated()
     applySize()
 end
 
--- Sant om någon grupp i sektionen har saker.
-local function sectionHasItems(section)
-    for _, group in ipairs(section.groups) do
-        local list = groupLists[group]
-        if list and #list > 0 then
-            return true
-        end
+-- Rubriken för en grupp. Favorites får en stjärna och Junk visar vad skräpet är värt.
+local function headerText(group, junkValue)
+    local text = ns.groupNames[group]
+    if group == "Favorites" then
+        return FAVORITE_ICON .. text
+    elseif group == "Junk" and junkValue > 0 then
+        return text .. "  " .. GetMoneyString(junkValue)
     end
-    return false
+    return text
 end
 
 -- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
@@ -237,6 +255,7 @@ local function relayout()
     if not bagFrame:IsShown() then
         return -- görs när fönstret öppnas
     end
+    local atMerchant = ns.IsAtMerchant()
 
     -- 1. Sortera in varje sak i sin grupp. Tomma platser räknas per väsktyp.
     entryCount = 0
@@ -244,18 +263,28 @@ local function relayout()
         wipe(list)
     end
     wipe(emptyByFamily)
+    local junkValue = 0
     for _, button in bagFrame:EnumerateValidItems() do
         local bagID, slot = button:GetBagID(), button:GetID()
         local info = C_Container.GetContainerItemInfo(bagID, slot)
         if info then
+            rememberNew(bagID, slot, info.itemID)
+            local _, _, _, equipLocation, _, classID, subClassID = C_Item.GetItemInfoInstant(info.itemID)
             local entry = newEntry()
             entry.button, entry.bagID, entry.slot = button, bagID, slot
             entry.isEmpty = false
-            entry.group = ns.GetGroup(bagID, slot, info)
+            entry.group, entry.subOrder = ns.GetGroup(bagID, slot, info, classID, subClassID)
             entry.quality = info.quality or 0
             entry.name = ns.GetItemName(info.hyperlink)
             entry.count = info.stackCount or 1
             entry.itemID, entry.link, entry.isBound = info.itemID, info.hyperlink, info.isBound
+            entry.isGear = classID == Enum.ItemClass.Weapon or classID == Enum.ItemClass.Armor
+            entry.equipLocation = equipLocation
+            entry.locked = ns.IsLocked(bagID, slot, info)
+            if entry.group == "Junk" and not info.hasNoValue then
+                local sellPrice = select(11, C_Item.GetItemInfo(info.hyperlink))
+                junkValue = junkValue + (sellPrice or 0) * entry.count
+            end
             addToGroup(entry.group, entry)
         elseif bagID ~= KEYRING_CONTAINER then -- tomma platser på nyckelringen visas inte
             local _, family = C_Container.GetContainerNumFreeSlots(bagID)
@@ -265,6 +294,7 @@ local function relayout()
                 empty = newEntry()
                 empty.button, empty.bagID, empty.slot = button, bagID, slot
                 empty.isEmpty, empty.group, empty.family, empty.free = true, "Empty", family, 0
+                empty.locked, empty.isGear = false, false
                 emptyByFamily[family] = empty
                 addToGroup("Empty", empty)
             elseif bagID < empty.bagID or (bagID == empty.bagID and slot < empty.slot) then
@@ -278,63 +308,42 @@ local function relayout()
         table.sort(list, ns.CompareEntries)
     end
 
-    -- 2. Lägg ut sektionerna uppifrån och ned. Inom en sektion läggs grupperna rad för rad:
-    --    en grupp delar rad med föregående om den får plats, annars börjar en ny rad.
-    releaseAll(headers)
-    releaseAll(sectionTitles)
-    releaseAll(dividers)
-    pendingCount = 0
-    local y, firstSection = 0, true
-    for _, section in ipairs(ns.sections) do
-        if sectionHasItems(section) then
-            if not firstSection then
-                placeLater(acquire(dividers), 0, y + SECTION_GAP / 2)
-                y = y + SECTION_GAP
+    -- 2. Lägg ut grupperna rad för rad: en grupp delar rad med föregående om den får
+    --    plats, annars börjar en ny rad.
+    releaseHeaders()
+    local x, y, shelfHeight = 0, 0, 0
+    for _, group in ipairs(ns.groupOrder) do
+        local list = groupLists[group]
+        if list and #list > 0 then
+            local header = acquireHeader()
+            header:SetText(headerText(group, junkValue))
+            local columns = math.min(#list, COLUMNS)
+            local rows = math.ceil(#list / COLUMNS)
+            -- Gruppen är minst lika bred som sin rubrik, så att rubrikerna inte krockar.
+            local width = math.max(columns * BUTTON + (columns - 1) * SPACING, math.ceil(header:GetStringWidth()))
+            local height = HEADER + rows * BUTTON + (rows - 1) * SPACING
+            local left = (x == 0) and 0 or (x + GROUP_GAP)
+            if x > 0 and left + width > GRID_WIDTH then
+                -- Får inte plats på raden: börja en ny.
+                y = y + shelfHeight + SHELF_GAP
+                left, shelfHeight = 0, 0
             end
-            if section.title then
-                local title = acquire(sectionTitles)
-                title:SetText(section.title)
-                placeLater(title, 0, y)
-                y = y + SECTION_TITLE
+            headerX[headers.used], headerY[headers.used] = left, y
+            for index, entry in ipairs(list) do
+                entry.x = left + ((index - 1) % COLUMNS) * CELL
+                entry.y = y + HEADER + math.floor((index - 1) / COLUMNS) * CELL
+                entry.placed = true
             end
-            firstSection = false
-
-            local x, shelfHeight = 0, 0
-            for _, group in ipairs(section.groups) do
-                local list = groupLists[group]
-                if list and #list > 0 then
-                    local header = acquire(headers)
-                    header:SetText(ns.groupNames[group])
-                    local columns = math.min(#list, COLUMNS)
-                    local rows = math.ceil(#list / COLUMNS)
-                    -- Gruppen är minst lika bred som sin rubrik, så att rubrikerna inte krockar.
-                    local width = math.max(columns * BUTTON + (columns - 1) * SPACING, math.ceil(header:GetStringWidth()))
-                    local height = HEADER + rows * BUTTON + (rows - 1) * SPACING
-                    local left = (x == 0) and 0 or (x + GROUP_GAP)
-                    if x > 0 and left + width > GRID_WIDTH then
-                        -- Får inte plats på raden: börja en ny.
-                        y = y + shelfHeight + SHELF_GAP
-                        left, shelfHeight = 0, 0
-                    end
-                    placeLater(header, left, y)
-                    for index, entry in ipairs(list) do
-                        entry.x = left + ((index - 1) % COLUMNS) * CELL
-                        entry.y = y + HEADER + math.floor((index - 1) / COLUMNS) * CELL
-                        entry.placed = true
-                    end
-                    x = left + width
-                    shelfHeight = math.max(shelfHeight, height)
-                end
-            end
-            y = y + shelfHeight
+            x = left + width
+            shelfHeight = math.max(shelfHeight, height)
         end
     end
-    contentHeight = y
+    contentHeight = y + shelfHeight
 
-    -- 3. Flytta spelets rutor dit. Rutor som inte behövs (tomma platser utom en per
-    --    väsktyp) döljs.
-    for i = 1, pendingCount do
-        anchor(pendingRegions[i], pendingX[i], pendingY[i])
+    -- 3. Flytta rubrikerna och spelets rutor dit. Rutor som inte behövs (tomma platser
+    --    utom en per väsktyp) döljs.
+    for i = 1, headers.used do
+        anchor(headers.objects[i], headerX[i], headerY[i])
     end
     wipe(shownButtons)
     for i = 1, entryCount do
@@ -342,7 +351,7 @@ local function relayout()
         if entry.placed then
             anchor(entry.button, entry.x, entry.y)
             entry.button:Show()
-            updateExtras(entry)
+            updateExtras(entry, atMerchant)
             shownButtons[entry.button] = true
         end
     end
@@ -359,7 +368,39 @@ local function relayout()
     end
 
     applySize()
+
+    -- Knappen Sell Junk ligger ovanför fönstret och följer med när höjden ändras.
+    if ns.UpdateJunkButton then
+        ns.UpdateJunkButton()
+    end
 end
+
+-- Andra filer (t.ex. Favorites.lua och QuestLock.lua) ber om en ny genomgång här.
+function ns.Refresh()
+    if bagFrame and bagFrame:IsShown() then
+        relayout()
+    end
+end
+
+---------------------------------------------------------------------------
+-- Varning när väskorna blir fulla
+---------------------------------------------------------------------------
+
+-- Visas en gång mitt på skärmen, som spelets egna felmeddelanden, när den sista lediga
+-- platsen fylls.
+local lastFree
+
+ns.RegisterEvent("PLAYER_ENTERING_WORLD", function()
+    lastFree = C_Container.CalculateTotalNumberOfFreeBagSlots()
+end)
+
+ns.RegisterEvent("BAG_UPDATE_DELAYED", function()
+    local free = C_Container.CalculateTotalNumberOfFreeBagSlots()
+    if free == 0 and lastFree and lastFree > 0 then
+        UIErrorsFrame:AddMessage(L["Your bags are full."], 1.0, 0.1, 0.1, 1.0)
+    end
+    lastFree = free
+end)
 
 ---------------------------------------------------------------------------
 -- Start
@@ -371,6 +412,7 @@ ns.OnLoad(function()
         ns.Print(L["Couldn't find the game's bag window, so the bags look as usual."])
         return
     end
+    ns.bagFrame = bagFrame
 
     overlay = CreateFrame("Frame", nil, bagFrame)
     overlay:SetAllPoints()
@@ -379,10 +421,26 @@ ns.OnLoad(function()
     hooksecurefunc(bagFrame, "UpdateItemLayout", relayout)
     hooksecurefunc(bagFrame, "UpdateItems", relayout)
 
+    -- När fönstret stängs glöms gruppen New, och Sell Junk döljs.
+    bagFrame:HookScript("OnHide", function()
+        wipe(newItems)
+        if ns.UpdateJunkButton then
+            ns.UpdateJunkButton()
+        end
+    end)
+
     -- Spelets knapp för att städa väskorna behövs inte: sakerna visas alltid grupperade.
     -- Spelet visar den igen varje gång fönstret uppdateras, så den döljs direkt efteråt.
     if BagItemAutoSortButton then
         BagItemAutoSortButton:Hide()
         hooksecurefunc(BagItemAutoSortButton, "Show", BagItemAutoSortButton.Hide)
+    end
+
+    -- Spelets väskmeny (klick på väskikonen uppe till vänster, med väskfilter, städning och
+    -- "Combined Bags") behövs inte heller. Utan den kan ingen råka stänga av Combined Bags.
+    local menuButton = bagFrame.PortraitButton
+    if menuButton then
+        menuButton:Hide()
+        hooksecurefunc(menuButton, "Show", menuButton.Hide)
     end
 end)
