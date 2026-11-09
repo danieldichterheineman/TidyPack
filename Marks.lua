@@ -246,7 +246,6 @@ ns.OnLoad(function()
     -- Med mus ger spelet sökrutan en fast bredd (330), som slutade långt före knappen när
     -- Tidy Packs fönster är bredare. Därför går sökrutan i båda lägena fram till knappen,
     -- med samma avstånd till den som spelets egen sorteringsknapp hade.
-    -- Till vänster om sökrutan sitter flikarna Bags och Sets (SetsView.lua).
     hooksecurefunc(bagFrame, "SetSearchBoxPoint", function(_, searchBox)
         searchBox:ClearAllPoints()
         searchBox:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", ns.SEARCH_BOX_LEFT or 62, -37)

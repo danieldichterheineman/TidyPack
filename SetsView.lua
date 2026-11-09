@@ -1,9 +1,9 @@
 -- TidyPack – SetsView.lua
 -- Flikarna Bags och Sets i väskfönstret, och listan med set som fliken Sets visar i
 -- fönstret i stället för sakerna. Flikarna är spelets egna flikar (TabSystemTemplate med
--- TabSystemTopButtonTemplate), samma som i Forevers trollbok: under titelraden, till
--- höger om väskans ikon, med sökrutan till höger om dem. Klick på ett set tar på det
--- (Sets.lua).
+-- TabSystemTopButtonTemplate), samma som i Forevers trollbok. Mallen är gjord för flikar
+-- som hänger ovanpå en ram, så de sitter utanför fönstret, på dess övre kant, till höger
+-- om väskans ikon (användarens önskan). Klick på ett set tar på det (Sets.lua).
 -- Layout.lua lägger ut listan: den anropar ns.LayoutSetsView när fliken Sets är vald.
 -- Väskfönstret öppnas alltid på fliken Bags.
 -- ⚠️ Med handkontroll: raderna är vanliga knappar i väskfönstret och ska nås med markören,
@@ -18,10 +18,10 @@ local EMPTY_HEIGHT = 24
 local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
 local TAB_WIDTH = 90    -- båda flikarna är lika breda
 local TAB_LEFT = 62     -- där spelets sökruta började, till höger om väskans ikon
-local TAB_TOP = -26     -- som trollbokens flikar (Camelot/SpellBook/Blizzard_SpellBookTemplates.xml)
+local TAB_OVERLAP = 2   -- flikarnas nederkant går in 2 enheter i fönstrets kant
 local TAB_GAP = 2
--- Sökrutan börjar till höger om flikarna (Marks.lua flyttar den hit).
-ns.SEARCH_BOX_LEFT = TAB_LEFT + 2 * TAB_WIDTH + TAB_GAP + 12
+-- Sökrutan börjar där spelet lägger den (Marks.lua).
+ns.SEARCH_BOX_LEFT = TAB_LEFT
 local WARNING_ICON = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
 local view = "bags"
@@ -283,7 +283,7 @@ ns.OnLoad(function()
     tabSystem.minTabWidth, tabSystem.maxTabWidth = TAB_WIDTH, TAB_WIDTH
     tabSystem.spacing = TAB_GAP
     tabSystem.tabSelectSound = SOUNDKIT.IG_CHARACTER_INFO_TAB
-    tabSystem:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", TAB_LEFT, TAB_TOP)
+    tabSystem:SetPoint("BOTTOMLEFT", bagFrame, "TOPLEFT", TAB_LEFT, -TAB_OVERLAP)
     tabSystem:SetTabSelectedCallback(function(tabID)
         ns.SetView(tabID == 2 and "sets" or "bags")
         return true -- ns.SetView har redan markerat fliken
