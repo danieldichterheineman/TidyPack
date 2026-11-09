@@ -683,6 +683,15 @@ ns.OnLoad(function()
         end
     end)
 
+    -- Rubriken "Backpack" i stället för spelets "Combined Backpack" (användarens önskan).
+    -- Spelet sätter sin rubrik i UpdateName, så Tidy Pack byter den direkt efteråt. Ordet
+    -- är spelets eget (BACKPACK_TOOLTIP), så det följer spelets språk.
+    local function setTitle()
+        bagFrame:SetTitle(BACKPACK_TOOLTIP)
+    end
+    hooksecurefunc(bagFrame, "UpdateName", setTitle)
+    setTitle()
+
     -- Spelets knapp för att städa väskorna behövs inte: sakerna visas alltid grupperade.
     -- Spelet visar den igen varje gång fönstret uppdateras, så den döljs direkt efteråt.
     if BagItemAutoSortButton then

@@ -473,6 +473,14 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   fast bredd, 330) och döljs i fliken Sets. Questies databas frågas i bakgrunden, högst
   3 ms per bildruta, så att väskfönstret aldrig väntar på den (Sell Junk frågar direkt för
   grå saker).
+- 2026-11-09: Rubriken är "Backpack" (spelets `BACKPACK_TOOLTIP`) i stället för "Combined
+  Backpack" (användarens val). Byts efter spelets `UpdateName`.
+- 2026-11-09: Flikarna i Forevers egna fönster: flikar som byter hela fönstrets innehåll
+  sitter under fönstret (`PanelTabButtonTemplate`, t.ex. handlarens Merchant/Buyback och
+  karaktärsfönstret). Flikar ovanpå (`PanelTopTabButtonTemplate`) används bara inuti ett
+  fönster (samlingarnas Items/Sets). Forevers bank har ikonflikar på sidan
+  (`LargeSideTabButtonTemplate`). Tidy Packs flikar ovanför titelraden följer inget av dem –
+  fråga användaren om placeringen.
 - 2026-11-09: Färre steg (användarens önskan, alla fem förslagen): allt om set sköts i
   fliken Sets (rader med sakerna, släpp på en rad, högerklick för Edit/Remove/Delete, New
   Set i fliken), fliken Sets öppnas när man håller en sak över den, kugghjulets meny utan

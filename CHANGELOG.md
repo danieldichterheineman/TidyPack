@@ -55,6 +55,7 @@
 - Sell Junk now sits above the right side of your bags.
 - The gear button's menu is shorter: your junk list and settings.
 - The groups "Bags" and "Empty" are now called "Spare Bags" and "Free".
+- The bag window is titled "Backpack".
 - The search box reaches all the way to the gear button, and is hidden in the Sets tab.
 - Quest hints from Questie are worked out in the background, so your bags open instantly.
 
