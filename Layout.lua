@@ -26,7 +26,13 @@ local GRID_WIDTH = COLUMNS * BUTTON + (COLUMNS - 1) * SPACING -- 499
 local HEADER = 18          -- gruppens rubrik, inklusive luft under den
 local GROUP_GAP = 12       -- avstånd mellan grupper som delar rad
 local SHELF_GAP = 6        -- avstånd mellan rader av grupper
-local MONEY_GAP = 4        -- spelet lägger rutorna 4 enheter ovanför raden med pengar
+-- Luft mellan ramen och rutorna. Spelets eget rutnät ligger bara 7–8 enheter från ramen
+-- och 4 enheter ovanför pengarna. Tidy Pack lägger till lite mer, så att grupperna inte
+-- trängs mot kanterna (användarens önskan 2026-11-09).
+local BLIZZARD_MONEY_GAP = 4 -- spelets avstånd mellan rutorna och raden med pengar
+local PADDING_SIDE = 6       -- extra på var sida
+local PADDING_TOP = 4        -- extra mellan sökrutan och första rubriken
+local MONEY_GAP = 9          -- mellan sista raden rutor och raden med pengar
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
 
 -- Utrustning där nivån inte säger något visas utan nivå (skjortor och tabarder).
@@ -262,7 +268,8 @@ end
 -- rutnät, så att sökrutan, pengarna och spelets andra delar hamnar där de brukar.
 local function anchor(region, x, y)
     region:ClearAllPoints()
-    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", x - GRID_WIDTH, MONEY_GAP + contentHeight - y)
+    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", x - GRID_WIDTH - PADDING_SIDE,
+        MONEY_GAP + contentHeight - y)
 end
 
 -- Ger spelets fönster Tidy Packs storlek: kanterna, titelraden och raden med pengar som
@@ -271,8 +278,8 @@ local function applySize()
     if not contentHeight or not chromeWidth then
         return
     end
-    local height = contentHeight + chromeHeight
-    bagFrame:SetSize(GRID_WIDTH + chromeWidth, height)
+    local height = contentHeight + chromeHeight + PADDING_TOP + (MONEY_GAP - BLIZZARD_MONEY_GAP)
+    bagFrame:SetSize(GRID_WIDTH + chromeWidth + 2 * PADDING_SIDE, height)
     NineSliceUtil.UpdateCornerCropping(bagFrame, height)
 end
 
