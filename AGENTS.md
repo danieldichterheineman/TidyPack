@@ -383,7 +383,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - Status: inte publicerat på CurseForge.
 - Testversioner för andra datorer läggs som förhandsversion (pre-release) under Releases på
   GitHub, med zip-filen från `package-addon.mjs` (den hamnar i `.release/`, som git
-  ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4` (alla 2026-11-09). Taggarna har `alpha` i namnet. När
+  ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Taggarna har `alpha` i namnet. När
   arbetsflödet för automatisk publicering finns laddar varje tagg upp till CurseForge, så
   fråga då först.
 
