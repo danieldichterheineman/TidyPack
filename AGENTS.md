@@ -446,8 +446,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     kugghjul. Quests: tre rubriker med antal ("Ready to turn in (1)", "In progress (7)", "Other quest
     items (3)") med plus/minus; allt hopfällt första gången utom "Ready to turn in" när en quest är klar;
     ett klick fäller ut och valet finns kvar efter /reload. Under en öppen rubrik står en rad per quest
-    (plus/minus, namn, totalen till höger); ett klick på en quest fäller ut just den med rutorna och en rad per
-    sak (`questOpen["q<questID>"]`). Ingen rullist (inte byggd): ryms inte allt står "...and N more quests".
+    (plus/minus, namn, totalen till höger); ett klick på en quest fäller ut just den: en rad per sak med små rutor
+    (skala 26/37, `entry.scale` i Layout.lua) följda av namn och antal (`questOpen["q<questID>"]`). Ingen rullist (inte byggd): ryms inte allt står "...and N more quests".
 35. Quest-saker: ta en quest som kräver saker (t.ex. fenor, 3 av 7). Bags: Quest Items visar "3/7" på
     rutan, grönt när det räcker; tooltipen säger "Needed for: <quest> (3/7)". Har du två högar av samma sak
     med mer än questen behöver: den största hålls kvar i Quest Items, den andra ligger bland vanliga saker och

@@ -24,6 +24,7 @@ local SPACING = 5          -- avstånd mellan rutor, samma som i spelets eget ru
 -- fönstret högre än skärmen (se chooseColumns). Fönstret blir då bredare i stället för högre.
 local MIN_COLUMNS, MAX_COLUMNS, COLUMN_STEP = 14, 20, 2
 local CELL = BUTTON + SPACING
+ns.ITEM_BUTTON_SIZE = BUTTON -- QuestsView.lua gör rutorna mindre i fliken Quests
 local function widthOf(cols)
     return cols * BUTTON + (cols - 1) * SPACING
 end
@@ -126,6 +127,7 @@ local function newEntry()
         entries[entryCount] = entry
     end
     entry.placed = false
+    entry.scale = nil -- mindre ruta i fliken Quests (QuestsView.lua)
     return entry
 end
 
@@ -346,10 +348,12 @@ end
 -- Lägger en ruta eller rubrik på plats. x och y räknas från övre vänstra hörnet av det
 -- Tidy Pack lägger ut. Allt hänger i spelets rad med pengar, precis som spelets eget
 -- rutnät, så att sökrutan, pengarna och spelets andra delar hamnar där de brukar.
-local function anchor(region, x, y)
+-- Har rutan en annan skala (fliken Quests visar små rutor) räknas avståndet i rutans egna enheter.
+local function anchor(region, x, y, scale)
+    scale = scale or 1
     region:ClearAllPoints()
-    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", x - gridWidth - PADDING_SIDE,
-        MONEY_GAP + contentHeight - y)
+    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", (x - gridWidth - PADDING_SIDE) / scale,
+        (MONEY_GAP + contentHeight - y) / scale)
 end
 
 -- Ger spelets fönster Tidy Packs storlek: kanterna, titelraden och raden med pengar som
@@ -680,7 +684,8 @@ local function commit(atMerchant)
     for i = 1, entryCount do
         local entry = entries[i]
         if entry.placed then
-            anchor(entry.button, entry.x, entry.y)
+            entry.button:SetScale(entry.scale or 1)
+            anchor(entry.button, entry.x, entry.y, entry.scale)
             entry.button:Show()
             updateExtras(entry, atMerchant)
             shownButtons[entry.button] = true

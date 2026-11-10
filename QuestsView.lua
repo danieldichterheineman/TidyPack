@@ -18,13 +18,15 @@ local _, ns = ...
 local L = ns.L
 
 local ITEM_CELL = 42          -- en ruta och luften efter den
-local ROW_HEIGHT = 44         -- en uppfälld quests innehåll (en ruta hög och lite luft)
+local OBJECTIVE_HEIGHT = 30   -- en rad för en sak i en uppfälld quest
+local SMALL_ICON = 26         -- en liten ruta i en uppfälld quest
+local SMALL_CELL = 28
 local QUEST_HEIGHT = 24       -- en quests rad när den är hopfälld
 local INDENT = 16             -- quests står indragna under sin rubrik
 local HEADER_HEIGHT = 26      -- ett avsnitts rubrik
 local SECTION_GAP = 6
-local MAX_SLOTS = 6           -- så många rutor visas på en rad
-local GHOST_SIZE = 30
+local MAX_SLOTS = 4           -- så många rutor (högar av samma sak) visas på en rad
+local GHOST_SIZE = 22
 local EMPTY_SLOT = "Interface\\Buttons\\UI-EmptySlot"
 local CHECK = "common-icon-checkmark"
 
@@ -186,48 +188,38 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         return progressText(done, #quest.objectives)
     end
 
-    -- Innehållet i en uppfälld quest: rutorna, och en rad per sak med hur många som behövs.
-    -- Returnerar höjden.
+    -- Innehållet i en uppfälld quest: en rad för varje sak, med en liten ruta för varje hög du har
+    -- (eller en tom ruta) och därefter sakens namn och hur många som behövs. Returnerar höjden.
     local function placeBody(quest)
-        local slots = {}
+        local rowY = y
+        local first
         for _, objective in ipairs(quest.objectives) do
             local stacks = byName[objective.name]
+            local shown = 0
             if stacks then
                 for _, entry in ipairs(stacks) do
-                    if not placedEntries[entry] then
-                        slots[#slots + 1] = entry
+                    if not placedEntries[entry] and shown < MAX_SLOTS then
+                        placedEntries[entry] = true
+                        entry.scale = SMALL_ICON / ns.ITEM_BUTTON_SIZE
+                        placeEntry(entry, INDENT + shown * SMALL_CELL, rowY + 2)
+                        buttons[#buttons + 1] = entry.button
+                        first = first or entry.button
+                        shown = shown + 1
                     end
                 end
             else
-                slots[#slots + 1] = false -- inget i väskorna: en tom ruta
+                placeRegion(acquireGhost(), INDENT + 2, rowY + 4)
+                shown = 1 -- den tomma rutan tar en plats
             end
-        end
-        local first
-        local shown = 0
-        for _, slot in ipairs(slots) do
-            if shown >= MAX_SLOTS then
-                break
-            end
-            if slot then
-                placedEntries[slot] = true
-                placeEntry(slot, INDENT + shown * ITEM_CELL, y)
-                buttons[#buttons + 1] = slot.button
-                first = first or slot.button
-            else
-                placeRegion(acquireGhost(), INDENT + shown * ITEM_CELL + 3, y + 3)
-            end
-            shown = shown + 1
-        end
-        local textX = INDENT + shown * ITEM_CELL + 6
-        -- En egen text för varje sak (en text med radbrytningar kapas till första raden).
-        for index, objective in ipairs(quest.objectives) do
             local line = acquireText("GameFontHighlightSmall")
+            local textX = INDENT + math.max(shown, 1) * SMALL_CELL + 4
             line:SetWidth(math.max(40, width - textX - 10))
             line:SetText(("%s  %s"):format(objective.name, progressText(objective.have, objective.need)))
-            placeRegion(line, textX, y + 4 + (index - 1) * 15)
+            placeRegion(line, textX, rowY + 8)
+            rowY = rowY + OBJECTIVE_HEIGHT
         end
         firsts[#firsts + 1] = first
-        return math.max(ROW_HEIGHT, #quest.objectives * 15 + 8)
+        return rowY - y + 2
     end
 
     -- En quest: en rad du kan klicka på, och när den är uppfälld dess innehåll.

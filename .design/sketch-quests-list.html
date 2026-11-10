@@ -1,0 +1,57 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tidy Pack – skiss: Quests som lista</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1500px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1350px}
+.row{display:flex;gap:18px}.col{width:480px}.col h2{font-size:13px;color:#ffd100;margin:0 0 6px;min-height:34px}
+.bag{position:relative;width:480px;height:470px;background:#1a1816;border:2px solid #6e6252;border-radius:5px;margin-top:24px}
+.tabs{position:absolute;top:-23px;left:14px;display:flex;gap:6px}.tab{padding:2px 16px;background:#2a2622;border:1px solid #6e6252;border-bottom:0;border-radius:4px 4px 0 0;font:12px Georgia;color:#c9b27a}.tab.on{background:#3a3228;color:#ffd100}
+.t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;border:1px solid #d4af37;border-radius:3px;background:#2a2218;color:#ffd100;text-align:center;font:13px/16px Arial}
+.in{position:absolute;left:8px;right:8px;top:70px;bottom:28px;background:#0a0a0a;border:1px solid #333;padding:8px 10px}
+.sec{height:26px;font:13px/26px Arial;display:flex;align-items:center;gap:6px}.sec .pm{width:13px;height:13px;border:1px solid #c9a227;color:#ffd100;font:bold 11px/10px Arial;text-align:center;background:#3a1a10}
+.sec.g1{color:#3bd13b}.sec.y{color:#ffd100}.sec.gr{color:#9a9a9a}
+.q{height:24px;display:flex;align-items:center;gap:6px;padding-left:16px;font:13px Arial;color:#ffd100}.q span.r{margin-left:auto;color:#fff;font-size:12px}.q .pm{width:13px;height:13px;border:1px solid #c9a227;color:#ffd100;font:bold 11px/10px Arial;text-align:center;background:#3a1a10}
+.body{display:flex;gap:6px;padding-left:16px;min-height:68px}
+.sl{width:36px;height:36px;border:1px solid #555;background:#0a0a0a;border-radius:3px;position:relative;margin-right:3px}.sl i{position:absolute;inset:3px;border-radius:2px}.sl b{position:absolute;right:2px;bottom:0;font:11px Arial;color:#fff}.sl.ghost{border-style:dashed;opacity:.5}
+.lines{font:11px/15px Arial;color:#fff;margin-left:4px}.ok{color:#3bd13b}.gy{color:#8a8a8a}
+.ft{position:absolute;bottom:4px;right:12px;font:11px Arial;color:#fff}
+.call{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:11px/1.3 Arial;padding:3px 8px;border-radius:4px;z-index:5;white-space:nowrap}
+</style></head><body>
+<h1>Quests-fliken som lista – ett quest i taget</h1>
+<p class="n">Skiss, inte spelet. Vänster: så ser fliken ut när du öppnar den. Mitten: du har öppnat "In progress" och sedan ett quest (Westfall Stew). Höger: en klar quest. Allt du öppnar kommer ihåg till nästa gång.</p>
+<div class="row">
+
+<div class="col"><h2>1. Första gången: allt hopfällt, utom klara quests</h2><div class="bag"><div class="tabs"><div class="tab">Bags</div><div class="tab">Sets</div><div class="tab on">Quests ●</div></div><div class="t">Backpack</div><div class="g">⚙</div><div class="x"></div>
+<div class="in">
+<div class="sec g1"><span class="pm">−</span>Ready to turn in (1)</div>
+<div class="q"><span class="pm">+</span>✔ [12] Goretusk Liver Pie<span class="r">8/8</span></div>
+<div class="sec y" style="margin-top:8px"><span class="pm">+</span>In progress (7)</div>
+<div class="sec gr"><span class="pm">+</span>Other quest items (7)</div>
+</div><div class="ft">28 ● 35 ●</div>
+<div class="call" style="left:150px;top:300px">Fäll ut en rubrik: då visas en rad per quest</div></div></div>
+
+<div class="col"><h2>2. "In progress" öppnad, och ett quest uppfällt</h2><div class="bag"><div class="tabs"><div class="tab">Bags</div><div class="tab">Sets</div><div class="tab on">Quests ●</div></div><div class="t">Backpack</div><div class="g">⚙</div><div class="x"></div>
+<div class="in">
+<div class="sec y"><span class="pm">−</span>In progress (7)</div>
+<div class="q"><span class="pm">+</span>[7] Good Steel<span class="r">0/4</span></div>
+<div class="q"><span class="pm">+</span>[15] Dry Times<span class="r">0/4</span></div>
+<div class="q"><span class="pm">+</span>[15] Hilary's Necklace<span class="r">0/1</span></div>
+<div class="q"><span class="pm">−</span>[13] Westfall Stew<span class="r">3/4</span></div>
+<div class="body"><div class="sl"><i style="background:#c83"></i><b>3</b></div><div class="sl ghost"></div><div class="sl"><i style="background:#887"></i><b>8</b></div><div class="sl"><i style="background:#8a4"></i><b>10</b></div>
+<div class="lines"><span class="ok">Stringy Vulture Meat 3/3</span><br><span class="gy">Murloc Eye 0/3</span><br><span class="ok">Goretusk Snout 3/3</span><br><span class="ok">Okra 3/3</span></div></div>
+<div class="q"><span class="pm">+</span>[15] Harvesting the Harvesters<span class="r">0/2</span></div>
+<div class="sec gr" style="margin-top:8px"><span class="pm">+</span>Other quest items (7)</div>
+</div><div class="ft">28 ● 35 ●</div>
+<div class="call" style="left:260px;top:330px">Uppfälld quest: rutor och en rad per sak</div></div></div>
+
+<div class="col"><h2>3. Uppfälld klar quest (grön bock)</h2><div class="bag"><div class="tabs"><div class="tab">Bags</div><div class="tab">Sets</div><div class="tab on">Quests ●</div></div><div class="t">Backpack</div><div class="g">⚙</div><div class="x"></div>
+<div class="in">
+<div class="sec g1"><span class="pm">−</span>Ready to turn in (1)</div>
+<div class="q"><span class="pm">−</span>✔ [12] Goretusk Liver Pie<span class="r ok">8/8</span></div>
+<div class="body"><div class="sl"><i style="background:#c55"></i><b>8</b></div><div class="lines"><span class="ok">Goretusk Liver 8/8</span></div></div>
+<div class="sec y" style="margin-top:8px"><span class="pm">+</span>In progress (7)</div>
+<div class="sec gr"><span class="pm">+</span>Other quest items (7)</div>
+</div><div class="ft">28 ● 35 ●</div></div></div>
+
+</div></body></html>
