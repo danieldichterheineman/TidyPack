@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<title>Tidy Pack – skiss av egna grupper</title>
+<style>
+  :root {
+    --wow-gold: #ffd100;       /* NORMAL_FONT_COLOR: rubriker och vanlig text */
+    --wow-white: #ffffff;      /* HIGHLIGHT_FONT_COLOR: framhävd text */
+    --wow-gray: #808080;       /* GRAY_FONT_COLOR: avstängt */
+    --title-font: "Friz Quadrata", "Friz Quadrata TT", Georgia, "Times New Roman", serif;
+    --text-font: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 16px; background: #0b0d12; color: #d8d8d8;
+    font: 15px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #fff; }
+  .note { margin: 0 0 12px; color: #a8a8a8; max-width: 900px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0 0 12px; font-size: 14px; }
+  .controls fieldset { border: 1px solid #2a2f3a; border-radius: 6px; padding: 6px 12px; margin: 0; }
+  .controls legend { color: #a8a8a8; padding: 0 4px; }
+  .controls label { margin-right: 12px; cursor: pointer; white-space: nowrap; }
+
+  /* Skärmen: 1366 × 768 enheter, skalas ned för att få plats i webbläsaren. */
+  .viewport { width: 100%; max-width: 1366px; aspect-ratio: 1366 / 768; position: relative; overflow: hidden;
+    border-radius: 6px; box-shadow: 0 0 0 1px #2a2f3a; }
+  .screen { position: absolute; left: 0; top: 0; width: 1366px; height: 768px; transform-origin: 0 0;
+    background: radial-gradient(ellipse at 50% 35%, #3d4a3a 0%, #222a22 45%, #111511 100%); }
+
+  /* Spelets standardgränssnitt, ungefär där det ligger från början. */
+  .blizz { position: absolute; border: 1px dashed rgba(255,255,255,.28); border-radius: 4px;
+    color: rgba(255,255,255,.45); font: 12px var(--text-font); display: flex; align-items: center;
+    justify-content: center; text-align: center; background: rgba(0,0,0,.18); }
+
+  /* Spelets väskfönster: ram med porträtt, titelrad och stängknapp. */
+  .bagframe { position: absolute; background: linear-gradient(160deg, #24221f 0%, #171614 60%, #100f0e 100%);
+    border: 2px solid #6e6252; border-radius: 6px; box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6); }
+  .bagframe .titlebar { position: absolute; left: 0; right: 0; top: 0; height: 24px; border-bottom: 1px solid #000;
+    background: linear-gradient(#3a3631, #24221f); font: 13px/24px var(--title-font); color: var(--wow-gold);
+    text-align: center; text-shadow: 1px 1px 0 #000; }
+  .bagframe .titlebar .free { color: var(--wow-white); margin-left: 6px; }
+  .portrait { position: absolute; left: -10px; top: -10px; width: 58px; height: 58px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #b08a4a, #5a3a18 70%); border: 3px solid #c9a227;
+    box-shadow: 0 0 0 1px #000; }
+  .portrait::after { content: ""; position: absolute; left: 15px; top: 17px; width: 22px; height: 20px;
+    border-radius: 4px 4px 8px 8px; background: #3a2410; box-shadow: inset 0 3px 0 #7a5228; }
+  .close { position: absolute; top: 2px; right: 3px; width: 20px; height: 20px; border-radius: 50%;
+    background: radial-gradient(#b22219, #5b0d08); border: 1px solid #d4af37; color: #ffd9a0;
+    font: bold 12px/18px Arial, sans-serif; text-align: center; }
+
+  /* Innehållet. Alla lägen räknas från fönstrets övre vänstra hörn. */
+  .abs { position: absolute; }
+  .search { height: 20px; border: 1px solid #5a5a5a; border-radius: 3px; background: #050505;
+    font: 12px var(--text-font); color: var(--wow-gray); padding: 1px 6px 0 22px; line-height: 17px; }
+  .search::before { content: ""; position: absolute; left: 6px; top: 4px; width: 8px; height: 8px;
+    border: 2px solid #9a9a9a; border-radius: 50%; }
+  .search::after { content: ""; position: absolute; left: 15px; top: 13px; width: 5px; height: 2px;
+    background: #9a9a9a; transform: rotate(45deg); }
+  /* ★-knappen: svag tills du håller en sak. */
+  .starbutton { width: 26px; height: 26px; color: var(--wow-gold); font: 22px/26px Arial, sans-serif;
+    text-align: center; text-shadow: 0 0 4px #ffb000, 1px 1px 0 #000; }
+  .starbutton.idle { opacity: .35; }
+  .header { font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
+  .header .star { color: var(--wow-gold); }
+  /* Förslag: flikar ovanför fönstret (spelets PanelTopTabButtonTemplate) och fliken Sets. */
+  .toptab { position: absolute; height: 26px; width: 84px; display: flex; align-items: center; justify-content: center;
+    font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; border: 2px solid #5a4a2a;
+    border-bottom: none; border-radius: 6px 6px 0 0; background: linear-gradient(#2a2620, #15130f); }
+  /* Flikarna som i Forevers trollbok, men ovanpå fönstrets kant; den valda högre och ljusare. */
+  .toptab { height: 27px; width: 88px; font-size: 13px; filter: brightness(0.75); z-index: 3; }
+  .toptab.active { height: 31px; color: #fff; background: linear-gradient(#3a342a, #1e1c18); border-color: #c8a040; filter: none; }
+  .setrow { position: absolute; height: 44px; border-radius: 3px; }
+  .setrow:hover, .setrow.hover { background: rgba(255, 210, 0, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 210, 0, 0.25); }
+  .setrow .icon { position: absolute; left: 4px; top: 3px; width: 37px; height: 37px; box-shadow: 0 0 0 1px #000; }
+  .setrow .name { position: absolute; left: 50px; top: 6px; font: 13px var(--text-font); color: #fff; text-shadow: 1px 1px 0 #000; }
+  .setrow .info { position: absolute; left: 50px; top: 25px; font: 11px var(--text-font); color: #9a9a9a; }
+  .setrow .info.warn { color: #ff9a2a; }
+  .setrow .worn { position: absolute; right: 10px; top: 14px; font: 11px var(--text-font); color: #3ad13a; }
+  .setrow .mini { position: absolute; top: 25px; width: 22px; height: 22px; box-shadow: 0 0 0 1px #000; }
+  .setrow .mini.plus { color: #777; font: 16px/22px Arial, sans-serif; text-align: center; }
+  .setrow .mini.gone { background: #222; box-shadow: inset 0 0 0 1px #555; }
+  .setrow .worn.warnright { color: #ff9a2a; }
+  .setshint { position: absolute; font: 11px var(--text-font); color: #9a9a9a; }
+  /* Förslag: specialväskorna längst ned, under en skiljelinje som i spelets egna fönster. */
+  .divider { height: 1px; background: linear-gradient(90deg, transparent, #8a7440 15%, #8a7440 85%, transparent); }
+  .header .bagicon { display: inline-block; width: 12px; height: 12px; margin-right: 4px; vertical-align: -2px;
+    border-radius: 2px; background: linear-gradient(135deg, #a07040, #4a2a10); box-shadow: 0 0 0 1px #000; }
+  .slot { width: 37px; height: 37px; border-radius: 3px; border: 1px solid #000;
+    box-shadow: inset 0 0 0 1px #3a3a3a; }
+  .slot .count, .slot .ilvl, .slot .boe { position: absolute; font: bold 11px var(--text-font); color: #fff;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
+  .slot .count { right: 2px; bottom: 0; font-size: 12px; }
+  .slot .ilvl { left: 2px; top: 0; }
+  .slot .boe { left: 2px; bottom: 0; }
+  .slot.q2 { box-shadow: inset 0 0 0 2px #1eff00; }   /* ovanlig: grön ram */
+  .slot.q3 { box-shadow: inset 0 0 0 2px #0070dd; }   /* sällsynt: blå ram */
+  .slot.junk::after { content: ""; position: absolute; left: 2px; top: 2px; width: 9px; height: 9px;
+    border-radius: 50%; background: radial-gradient(#e8d070, #8a6a10); box-shadow: 0 0 0 1px #000; }
+  .slot.quest::after { content: "!"; position: absolute; left: 3px; top: 0; font: bold 14px Arial, sans-serif;
+    color: #ffd100; text-shadow: 1px 1px 0 #000; }
+  .slot.upgrade::after { content: ""; position: absolute; right: 2px; top: 2px; width: 0; height: 0;
+    border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid #1aff1a;
+    filter: drop-shadow(0 0 1px #000); }
+  .slot.new { box-shadow: inset 0 0 0 2px #fff6a0, 0 0 8px 2px rgba(255,240,140,.8); }
+  .slot.empty { background: #141414; box-shadow: inset 0 0 0 1px #2a2a2a; }
+  .slot.cursor { outline: 3px solid #4fc3ff; outline-offset: 2px; }
+  .slot.disabled { filter: grayscale(.8) brightness(.55); }
+  /* Låset: en liten bygel och kropp uppe till höger. Syns bara hos en handlare. */
+  .lock { position: absolute; right: 1px; top: 1px; width: 11px; height: 13px; }
+  .lock::before { content: ""; position: absolute; left: 2px; top: 0; width: 7px; height: 7px;
+    border: 2px solid #e8d070; border-bottom: none; border-radius: 4px 4px 0 0; }
+  .lock::after { content: ""; position: absolute; left: 0; top: 6px; width: 11px; height: 7px;
+    background: #e8c050; border-radius: 1px; box-shadow: 0 0 0 1px #000; }
+  .money { font: 12px var(--text-font); color: var(--wow-white); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
+  .coin { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 1px;
+    vertical-align: -1px; box-shadow: 0 0 0 1px #000; }
+  .coin.gold { background: radial-gradient(#fff2a0, #c9a227); }
+  .coin.silver { background: radial-gradient(#ffffff, #9a9a9a); }
+  .coin.copper { background: radial-gradient(#ffc090, #a0522d); }
+  /* Spelets röda knapp (UIPanelButtonTemplate). */
+  .redbutton { position: absolute; height: 22px; padding: 0 12px; border-radius: 3px; border: 1px solid #000;
+    background: linear-gradient(#a8261a, #5a0c06); box-shadow: inset 0 0 0 1px #d4af37;
+    font: 12px/20px var(--title-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
+
+  /* Förslag: spelets ruta för tips (mallen HelpTipTemplate, som ärver GlowBoxTemplate). Mörk ruta
+     med gul glöd, vit text och en gul pil mot det tipset handlar om. 226 enheter bred, som
+     HelpTip.width i spelets kod. */
+  .helptip { position: absolute; width: 226px; padding: 14px 16px 12px; background: rgba(0,0,0,.9);
+    border: 1px solid #ffd100; border-radius: 3px; color: var(--wow-white); font: 13px/1.35 var(--text-font);
+    box-shadow: 0 0 7px 2px rgba(255,190,0,.8), inset 0 0 8px rgba(255,190,0,.3); z-index: 5; }
+  .helptip .redbutton { position: relative; display: block; width: max-content; margin: 10px auto 0; }
+  .helptip .hint { margin-top: 8px; color: #b0b0b0; font-size: 11px; }
+  .tiparrow { position: absolute; width: 0; height: 0; z-index: 6; filter: drop-shadow(0 0 3px #ffb000); }
+  .tiparrow.down { border-left: 11px solid transparent; border-right: 11px solid transparent; border-top: 16px solid #ffd100; }
+  .tiparrow.right { border-top: 11px solid transparent; border-bottom: 11px solid transparent; border-left: 16px solid #ffd100; }
+  /* Handkontrollens knappar. Spelet visar symbolerna för just den kontroll man har (Xbox,
+     PlayStation eller Switch); här ritas Xbox-varianten ungefär. */
+  .pad { display: inline-block; min-width: 17px; height: 17px; padding: 0 3px; border-radius: 9px; margin: 0 1px;
+    font: bold 10px/17px Arial, sans-serif; color: #fff; text-align: center; vertical-align: -3px;
+    box-shadow: 0 0 0 1px #000; text-shadow: none; }
+  .pad.a { background: #3a9a3a; }
+  .pad.x { background: #2f6fc0; }
+  .pad.lb, .pad.rb { background: #3c3c3c; border-radius: 4px; }
+  #tipNote { min-height: 0; }
+
+  /* Förslag: skräpknappen bredvid ★ och märket på saker du markerat som skräp är spelets eget
+     skräpmynt (bags-junkcoin, som spelet visar på grå saker hos en handlare). Saker som en quest
+     behöver senare får kartans gula utropstecken för quests du kan ta (QuestNormal). */
+  .trashbutton { width: 26px; height: 26px; }
+  .trashbutton.idle { opacity: .35; }
+  .trashbutton::before { content: ""; position: absolute; left: 4px; top: 4px; width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #f3dc7a, #a07a18 70%); box-shadow: 0 0 0 1px #000, inset 0 0 0 2px #7a5a10; }
+  .slot .junkmark { position: absolute; left: 2px; top: 2px; width: 9px; height: 9px; border-radius: 50%;
+    background: radial-gradient(#e8d070, #8a6a10); box-shadow: 0 0 0 1px #000; }
+  .slot .later { position: absolute; right: 3px; top: -1px; font: bold 14px Arial, sans-serif; color: #ffd100;
+    text-shadow: 1px 1px 0 #000, -1px 0 0 #000; }
+  .slot .later::before { content: "!"; }
+  /* Spelets tooltip, ungefär. */
+  .gametip { position: absolute; max-width: 280px; padding: 6px 9px; background: rgba(6,8,22,.95);
+    border: 1px solid #9a9a9a; border-radius: 4px; font: 12px/1.45 var(--text-font); color: #fff; z-index: 7; }
+  .gametip .gold { color: var(--wow-gold); }
+  .gametip .white { font-size: 13px; }
+  /* Spelets lootfönster, ungefär, och Tidy Packs fråga under det. */
+  .lootframe { position: absolute; width: 200px; background: linear-gradient(#2a2723, #151412);
+    border: 2px solid #6e6252; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6); }
+  .lootframe .ltitle { font: 13px/24px var(--title-font); color: var(--wow-gold); text-align: center;
+    border-bottom: 1px solid #000; text-shadow: 1px 1px 0 #000; }
+  .lootrow { display: flex; align-items: center; gap: 7px; padding: 5px 7px; font: 12px var(--text-font); color: #fff; }
+  .lootrow .licon { width: 30px; height: 30px; border-radius: 3px; border: 1px solid #000; flex: none; }
+  .lootrow.cursor .licon { outline: 3px solid #4fc3ff; outline-offset: 1px; }
+  /* Samma panel som spelets lootfönster (DefaultPanelFlatTemplate), lika bred och direkt under det. */
+  .makeroom { position: absolute; width: 200px; background: linear-gradient(#2a2723, #151412);
+    border: 2px solid #6e6252; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6);
+    font: 12px/1.4 var(--text-font); color: #fff; z-index: 6; }
+  .makeroom .ltitle { font: 13px/24px var(--title-font); color: var(--wow-gold); text-align: center;
+    border-bottom: 1px solid #000; text-shadow: 1px 1px 0 #000; }
+  .makeroom .body { padding: 7px 10px 10px; }
+  .makeroom .grey { color: #9d9d9d; }
+  .makeroom .buttons { display: flex; gap: 8px; justify-content: center; margin-top: 9px; }
+  .makeroom .redbutton { position: relative; }
+  .makeroom .redbutton.focus { outline: 3px solid #4fc3ff; outline-offset: 2px; }
+  .errortext { position: absolute; left: 0; right: 0; top: 150px; text-align: center; color: #ff2a2a;
+    font: bold 17px var(--title-font); text-shadow: 1px 1px 0 #000, 0 0 4px #000; }
+
+  /* Förslag: spelets egen meny (Menu-systemet, MenuUtil.CreateContextMenu), ungefär. */
+  .gamemenu { position: absolute; min-width: 190px; padding: 6px 0; background: rgba(8,8,8,.96);
+    border: 1px solid #6e6252; border-radius: 4px; box-shadow: 0 0 0 1px #000, 0 4px 12px rgba(0,0,0,.6);
+    font: 13px/1.7 var(--text-font); color: #fff; z-index: 8; }
+  .gamemenu .mtitle { color: var(--wow-gold); padding: 0 14px 2px; }
+  .gamemenu .mitem { padding: 0 14px; }
+  .gamemenu .mitem.focus { background: rgba(255,209,0,.18); }
+  .gamemenu .sep { height: 1px; margin: 4px 10px; background: #444; }
+  /* Förslag: spelets inställningsfönster (Options → AddOns), ungefär. */
+  .options { position: absolute; left: 233px; top: 70px; width: 900px; height: 610px; z-index: 9;
+    background: linear-gradient(#1c1b19, #0e0d0c); border: 2px solid #6e6252; border-radius: 6px;
+    box-shadow: 0 0 0 1px #000, 0 8px 24px rgba(0,0,0,.7); font: 13px var(--text-font); color: #fff; }
+  .options .otitle { height: 26px; line-height: 26px; text-align: center; font-family: var(--title-font);
+    color: var(--wow-gold); border-bottom: 1px solid #000; }
+  .options .tabs { display: flex; gap: 4px; padding: 6px 10px 0; }
+  .options .tab { padding: 4px 14px; border: 1px solid #555; border-bottom: none; border-radius: 4px 4px 0 0; color: #bbb; }
+  .options .tab.on { color: var(--wow-gold); background: #2a2723; }
+  .options .left { position: absolute; left: 10px; top: 64px; bottom: 10px; width: 200px; padding: 8px;
+    border: 1px solid #333; background: rgba(0,0,0,.35); }
+  .options .left div { padding: 3px 8px; color: #ccc; }
+  .options .left .on { color: #fff; background: rgba(255,209,0,.15); }
+  .options .left .sub { padding-left: 22px; }
+  .options .right { position: absolute; left: 226px; top: 64px; right: 10px; bottom: 10px; padding: 12px 18px; }
+  .options h3 { margin: 0 0 8px; font: 18px var(--title-font); color: var(--wow-gold); font-weight: normal; }
+  .options .row { display: flex; align-items: center; gap: 10px; height: 28px; }
+  .options .check { flex: none; width: 18px; height: 18px; border: 1px solid #888; border-radius: 2px; background: #111; position: relative; }
+  .options .check.on::after { content: "✓"; position: absolute; left: 2px; top: -3px; color: var(--wow-gold); font: bold 16px Arial; }
+  .options .note { color: #9d9d9d; font-size: 12px; margin: -4px 0 4px 28px; }
+  .options .section { margin: 12px 0 6px; padding-bottom: 3px; color: var(--wow-gold); font-size: 14px; border-bottom: 1px solid #333; }
+  .options .item { display: flex; align-items: center; gap: 8px; height: 30px; padding-right: 8px; }
+  .options .item .icon { width: 24px; height: 24px; border: 1px solid #000; border-radius: 2px; }
+  .options .item .x { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; text-align: center;
+    background: radial-gradient(#b22219, #5b0d08); border: 1px solid #d4af37; color: #ffd9a0; font: bold 11px/16px Arial; }
+  .options .addbox { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+  .options .input { width: 300px; height: 22px; padding: 2px 6px; border: 1px solid #5a5a5a; background: #050505;
+    color: #8a8a8a; font-size: 12px; line-height: 16px; }
+  .options .redbutton { position: relative; }
+
+  /* Förklaringar till skissen. */
+  .callout { position: absolute; font: 12px -apple-system, "Segoe UI", sans-serif; color: #fff;
+    background: #2563eb; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  ul { max-width: 900px; padding-left: 20px; }
+  li { margin-bottom: 4px; }
+
+  body { padding: 0; background: #0b0d12; width: 1366px; }
+  .card { position: relative; width: 1366px; margin: 0 0 20px; overflow: hidden;
+    background: radial-gradient(ellipse at 40% 40%, #3d4a3a 0%, #222a22 50%, #111511 100%); }
+  .card h2 { position: absolute; left: 40px; top: 12px; margin: 0; font: 600 17px -apple-system, "Segoe UI", sans-serif; color: #fff; }
+  .side { position: absolute; width: 560px; font: 14px/1.5 -apple-system, "Segoe UI", sans-serif; color: #e8e8e8; }
+  .side b { color: #fff; }
+  .side ul { padding-left: 18px; margin: 0; max-width: none; }
+  .inset { position: absolute; background: linear-gradient(#1d1c1a, #141311); border: 1px solid #3a352b;
+    box-shadow: inset 0 0 0 1px #000; border-radius: 3px; }
+  .gear { position: absolute; width: 24px; height: 24px; text-align: center; font: 20px/24px Arial, sans-serif; color: #9a9a9a; }
+  .tag { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 3px; background: #2563eb; color: #fff;
+    font: 10px/15px -apple-system, "Segoe UI", sans-serif; vertical-align: 1px; text-shadow: none; }
+  .plus { position: absolute; left: 0; right: 0; top: 4px; text-align: center; font: bold 22px/26px Arial, sans-serif; color: var(--wow-gold);
+    text-shadow: 1px 1px 0 #000; }
+  .gamemenu .mitem .arrow { float: right; margin-left: 18px; color: var(--wow-gold); }
+  .gamemenu .mitem .box { display: inline-block; width: 12px; text-align: center; margin-right: 6px; color: var(--wow-gold); }
+  .gamemenu.flat { position: absolute; }
+  .mcap { position: absolute; font: 12px -apple-system, "Segoe UI", sans-serif; color: #cfe0ff; }
+  .options { z-index: 1; }
+  .options .grp { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 8px; border-radius: 3px; }
+  .options .grp.on { background: rgba(255,209,0,.12); box-shadow: inset 0 0 0 1px rgba(255,209,0,.3); }
+  .options .grp .arrows { color: #8a8a8a; width: 34px; letter-spacing: 4px; }
+  .options .grp .gname { color: #fff; min-width: 150px; }
+  .options .grp .gmeta { color: #9d9d9d; font-size: 12px; }
+  .options .grp .btn { margin-left: auto; color: var(--wow-gold); font-size: 12px; }
+  .options .grp .x { margin-left: 8px; width: 18px; height: 18px; border-radius: 50%; text-align: center;
+    background: radial-gradient(#b22219, #5b0d08); border: 1px solid #d4af37; color: #ffd9a0; font: bold 11px/16px Arial; }
+  .options .detail { margin: 2px 0 8px 42px; padding-left: 12px; border-left: 2px solid #3a352b; }
+  .options .detail .sub { color: #9d9d9d; font-size: 12px; margin: 6px 0 2px; }
+  .options .redbutton { position: relative; display: inline-block; }
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================ 1. Väskan -->
+<div class="card" style="height: 470px;">
+  <h2>1. Fliken Bags med två egna grupper (Potions och Food &amp; Drink)</h2>
+  <div class="bagframe" id="bag" style="left: 70px; top: 62px; width: 628px; height: 380px;"></div>
+  <div class="side" style="left: 760px; top: 70px;">
+    <b>Så ser det ut</b>
+    <ul>
+      <li>De egna grupperna står <b>efter Favorites och "Add to bag"</b> och före spelets vanliga grupper.
+        De syns bara när de innehåller något, och ser ut som alla andra grupper.</li>
+      <li>Potions innehåller <b>alla drycker</b> (en regel för hela typen) och Food &amp; Drink
+        <b>enskilda saker</b> som du lagt dit. Dryckerna lämnar Consumables, som nu bara har det som är kvar.</li>
+      <li><b>Går före:</b> Favorites, New, Quest Items och Junk. En sak som är favorit, nyss lootad, behövs
+        för en quest eller är skräp hamnar alltså kvar där, inte i din grupp.</li>
+      <li>Med fler grupper ökar höjden. Antalet kolumner ökar då automatiskt, som nu när väskorna är fulla.</li>
+      <li>Fönstret, sökrutan och pengarna är spelets egna.</li>
+    </ul>
+    <p style="color:#a8a8a8; font-size:12px;">Skissen är ungefärlig: typsnitt och bilder blir annorlunda i spelet.</p>
+  </div>
+</div>
+
+<!-- ============================================================ 2. Menyn -->
+<div class="card" style="height: 380px;">
+  <h2>2. Kugghjulets meny när du håller en sak (här en Healing Potion)</h2>
+  <div class="gear" style="left: 56px; top: 56px;">⚙</div>
+  <div class="slot abs" style="left: 90px; top: 50px; background: radial-gradient(circle at 35% 30%, #ff7a7a, #7a1010); outline: 3px solid #4fc3ff; outline-offset: 2px;"></div>
+  <div class="mcap" style="left: 134px; top: 60px;">← saken du håller i markören</div>
+
+  <div class="gamemenu flat" style="left: 56px; top: 104px; min-width: 250px;">
+    <div class="mtitle">Healing Potion</div>
+    <div class="mitem">Add to Favorites</div>
+    <div class="mitem">Add to Junk List</div>
+    <div class="mitem">Add to Set <span class="arrow">▸</span></div>
+    <div class="mitem focus">Add to Group <span class="arrow">▸</span></div>
+    <div class="mitem focus" style="background: rgba(79,195,255,.18);">Add all Potions to Group <span class="arrow">▸</span></div>
+  </div>
+
+  <div class="gamemenu flat" style="left: 316px; top: 196px; min-width: 190px;">
+    <div class="mitem"><span class="box">☑</span>Potions</div>
+    <div class="mitem"><span class="box">☐</span>Food &amp; Drink</div>
+    <div class="sep"></div>
+    <div class="mitem">New Group…</div>
+  </div>
+  <div class="mcap" style="left: 316px; top: 172px;">Add to Group: bara den här saken</div>
+
+  <div class="gamemenu flat" style="left: 560px; top: 196px; min-width: 190px;">
+    <div class="mitem"><span class="box">☑</span>Potions</div>
+    <div class="mitem"><span class="box">☐</span>Food &amp; Drink</div>
+    <div class="sep"></div>
+    <div class="mitem">New Group…</div>
+  </div>
+  <div class="mcap" style="left: 560px; top: 172px;">Add all Potions: hela typen Potion</div>
+
+  <div class="side" style="left: 800px; top: 60px; width: 520px;">
+    <b>Så lägger du saker i en grupp</b>
+    <ul>
+      <li><b>Add to Group</b> lägger just den här saken i en grupp. En bock visar vilka grupper den redan finns i.</li>
+      <li><b>Add all Potions to Group</b> lägger hela typen: alla drycker, även nya du hittar senare.
+        Typens namn läses ur spelet och följer spelets språk.</li>
+      <li><b>New Group…</b> frågar efter ett namn (en liten ruta som när du döper ett set) och lägger saken eller typen dit.</li>
+      <li>Samma meny finns med handkontroll: plocka upp saken med A och lägg den på kugghjulet.</li>
+      <li>Är sakerna redan favorit, nyss lootade, på skräplistan eller behövs för en quest står de kvar i sin
+        vanliga grupp. Menyn säger det i en grå rad.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ 3. Inställningssidan -->
+<div class="card" style="height: 540px;">
+  <h2>3. Egen sida i inställningarna: Esc → Options → AddOns → Tidy Pack → Groups</h2>
+  <div class="options" style="left: 40px; top: 52px; width: 900px; height: 460px;">
+    <div class="otitle">Options</div>
+    <div class="tabs"><div class="tab">Game</div><div class="tab on">AddOns</div></div>
+    <div class="left">
+      <div>Tidy Pack</div>
+      <div class="sub">Junk List</div>
+      <div class="sub on">Groups</div>
+    </div>
+    <div class="right">
+      <h3>Groups</h3>
+      <div class="note" style="margin-left:0; margin-top:0;">Collect items under your own names. Groups come after Favorites and "Add to bag".
+        Drop an item on the gear button in your bags to add it.</div>
+
+      <div class="grp on"><span class="arrows">▲▼</span><span class="gname">Potions</span>
+        <span class="gmeta">All Potions · 1 more item</span><span class="btn">Rename</span><span class="x">✕</span></div>
+      <div class="detail">
+        <div class="sub">What's in it</div>
+        <div class="item"><span class="icon" style="background:#46a"></span>All Potions <span style="color:#9d9d9d">(type)</span><span class="x">✕</span></div>
+        <div class="item"><span class="icon" style="background:radial-gradient(circle at 35% 30%,#7ad,#135)"></span>Elixir of Fortitude<span class="x">✕</span></div>
+        <div class="addbox"><div class="input">Shift-click a link, type a name or ID, or drop an item here.</div>
+          <div class="redbutton">Add</div></div>
+      </div>
+      <div class="grp"><span class="arrows">▲▼</span><span class="gname">Food &amp; Drink</span>
+        <span class="gmeta">7 items</span><span class="btn">Rename</span><span class="x">✕</span></div>
+      <div class="grp"><span class="arrows">▲▼</span><span class="gname">Crafting</span>
+        <span class="gmeta">All Trade Goods · 2 items</span><span class="btn">Rename</span><span class="x">✕</span></div>
+
+      <div style="margin-top: 14px; display:flex; align-items:center; gap:14px;">
+        <div class="redbutton">New Group</div>
+        <span style="color:#9d9d9d; font-size:12px;">3 of 8 groups used.</span>
+      </div>
+    </div>
+  </div>
+  <div class="side" style="left: 980px; top: 70px; width: 340px;">
+    <b>Hantera grupperna</b>
+    <ul>
+      <li><b>▲▼</b> ändrar ordningen mellan de egna grupperna.</li>
+      <li><b>Rename</b> byter namn, <b>✕</b> tar bort gruppen (sakerna går tillbaka till sina vanliga grupper).</li>
+      <li>Under varje grupp ser du reglerna ("All Potions") och enskilda saker, och kan ta bort dem. Nya saker
+        läggs till som på skräplistans sida: länk, namn, nummer eller släpp en sak.</li>
+      <li>Högst <b>8 grupper</b>, så att fönstret inte blir rörigt.</li>
+      <li>Sparas <b>per konto</b>, som favoriter och skräplistan.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ------------------------------------------------------------------ hjälpare
+function icon(c) {
+  // en enkel "ikon": en färgad ruta med lite ljus uppe till vänster
+  const shade = (hex, f) => '#' + hex.slice(1).match(/../g).map(h => Math.round(parseInt(h, 16) * f).toString(16).padStart(2, '0')).join('');
+  return 'background: radial-gradient(circle at 35% 30%, ' + shade(c, 1.35 > 1 ? 1 : 1) + ', ' + shade(c, 0.4) + ');';
+}
+const BUTTON = 37, SPACING = 5, CELL = 42, HEADER = 18, GAP = 12, SHELF = 10, COLS = 14;
+const GRID = COLS * BUTTON + (COLS - 1) * SPACING;
+const bag = document.getElementById('bag');
+function add(html) { bag.insertAdjacentHTML('beforeend', html); }
+
+// ------------------------------------------------------------------ ramen
+add('<div class="titlebar">Backpack</div><div class="portrait"></div>' +
+    '<div class="abs" style="left:2px; top:36px; width:44px; text-align:center; font:11px Arial; color:#fff; text-shadow:1px 1px 0 #000; z-index:2;">(10)</div>' +
+    '<div class="close">✕</div>' +
+    '<div class="toptab active" style="left:62px; top:-31px;">Bags</div><div class="toptab" style="left:156px; top:-27px;">Sets</div>' +
+    '<div class="abs search" style="left:62px; top:32px; width:480px;">Search</div><div class="gear" style="left:594px; top:30px;">⚙</div>');
+
+const insetLeft = 10, contentLeft = 22, contentTop = 74;
+// ------------------------------------------------------------------ grupperna
+const groups = [
+  { h: '★ Favorites', items: ['#8ab4d8'] },
+  { h: 'Add to bag', free: true },
+  { h: 'Potions', custom: true, items: ['#d23c3c', '#d23c3c', '#3c6cd2', '#3cb04a', '#7a4fd0'] },
+  { h: 'Food &amp; Drink', custom: true, items: ['#d89a4a', '#c88a3a', '#e8d9a8', '#b8782a', '#d8b86a', '#a8683a', '#e8e8e8'] },
+  { h: 'Consumables', items: ['#f0f0f0', '#d8c9a0', '#9a6ad0'] },
+  { h: 'Equipment', items: ['#7a8aa8', '#a88a5a', '#5a7aa8', '#8a8a8a'] },
+  { h: 'Trade Goods', items: ['#b03a3a', '#d8803a', '#a08a4a', '#7a4a8a', '#3a9ab0', '#c8c8c8'] },
+  { h: 'Quest Items', items: ['#c9a227', '#7ab03a', '#a85a5a', '#d8a85a'] },
+  { h: 'Miscellaneous', items: ['#9ab0c8', '#8a8a6a'] },
+];
+let x = 0, y = 0, shelf = 0;
+groups.forEach(g => {
+  const n = g.free ? 1 : g.items.length;
+  const cols = Math.min(n, COLS), rows = Math.ceil(n / COLS);
+  const headW = Math.ceil(g.h.replace(/&amp;/g, '&').length * 6.6) + (g.custom ? 54 : 4);
+  const w = Math.max(cols * BUTTON + (cols - 1) * SPACING, headW);
+  const height = HEADER + rows * BUTTON + (rows - 1) * SPACING;
+  let left = x === 0 ? 0 : x + GAP;
+  if (x > 0 && left + w > GRID) { y += shelf + SHELF; left = 0; shelf = 0; }
+  const px = contentLeft + left, py = contentTop + y;
+  add('<div class="abs header" style="left:' + px + 'px; top:' + py + 'px;">' + g.h +
+      (g.custom ? '<span class="tag">egen grupp</span>' : '') + '</div>');
+  if (g.free) {
+    add('<div class="abs slot empty" style="left:' + px + 'px; top:' + (py + HEADER) + 'px;"><div class="plus">+</div><span class="count">10</span></div>');
+  } else {
+    g.items.forEach((c, i) => {
+      const sx = px + (i % COLS) * CELL, sy = py + HEADER + Math.floor(i / COLS) * CELL;
+      add('<div class="abs slot" style="left:' + sx + 'px; top:' + sy + 'px; ' + icon(c) + '"></div>');
+    });
+  }
+  x = left + w; shelf = Math.max(shelf, height);
+});
+const contentH = y + shelf;
+const insetTop = contentTop - 12, insetH = contentH + 24;
+bag.insertAdjacentHTML('afterbegin', '<div class="inset" style="left:' + insetLeft + 'px; top:' + insetTop + 'px; width:' + (GRID + 24) + 'px; height:' + insetH + 'px;"></div>');
+bag.style.height = (insetTop + insetH + 44) + 'px';
+bag.style.width = (insetLeft * 2 + GRID + 24 + 0) + 'px';
+add('<div class="abs money" style="right:14px; top:' + (insetTop + insetH + 12) + 'px;">28 <span class="coin silver"></span>35 <span class="coin copper"></span></div>');
+document.querySelector('#bag').parentElement.style.height = (62 + insetTop + insetH + 44 + 30) + 'px';
+</script>
+</body>
+</html>

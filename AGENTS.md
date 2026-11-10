@@ -243,6 +243,14 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   nya nycklar med standardvärden, så ingen migrering behövdes.
 
 ## Idéer och önskemål
+- Förslag (2026-11-10, väntar på godkännande): egna grupper. Skiss i `.design/sketch-groups.html`
+  (och `.png`). Kort: upp till 8 egna grupper per konto, efter Favorites och "Add to bag";
+  enskilda saker (kugghjulets meny, "Add to Group") och hela typer ("Add all Potions to Group",
+  regel på klass och undertyp ur `C_Item.GetItemInfoInstant`, namn ur `C_Item.GetItemSubClassInfo`,
+  båda kontrollerade i live och forever); hanteras på en egen sida i inställningarna.
+  Favorites, New, Quest Items och Junk går före, enskild sak går före typregel, och högst
+  upp bland grupperna vinner. Kompisens förslag (dela quest-saker per quest med antal 3/7 och
+  bara låsa det som behövs) tas efter detta.
 - Nästa efter första testet: introduktion med sex korta tips i spelets tipsruta (välkommen,
   stjärnan, LB/RB, låsta saker, större väska), ett i taget och en gång per konto.
   Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
