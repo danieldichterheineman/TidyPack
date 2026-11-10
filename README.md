@@ -29,7 +29,7 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   when you run low.
 - **Quick bag swaps**: right-click a bigger bag to replace your smallest one.
 - **Questie support** (optional): items that quests you haven't taken yet will need get a
-  yellow exclamation mark and are never sold or suggested for deletion.
+  yellow exclamation mark and are never suggested for deletion.
 - **Controller**: the cursor starts on your newest loot, LB and RB jump between groups, and
   the D-pad moves to the nearest item.
 

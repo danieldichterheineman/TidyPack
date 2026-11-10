@@ -40,14 +40,20 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   ikon, namn, sakerna som små rutor (grå = saknas) och till höger "Equipped", "⚠ N
   missing", antal eller "Drop items here". Klick tar på allt som går att ha på sig
   (`C_Item.EquipItemByName`, ringar, smycken och enhandsvapen på båda platserna). Släpp en
-  sak på en rad = lägg till. Högerklick = spelets meny med "Edit Name and Icon…", "Remove
-  Item ▸" och "Delete Set…". "New Set" under listan (en sak på markören hamnar i det nya
-  setet). Håller man en sak över fliken Sets byter fönstret dit. Kugghjulets "Add to Set"
+  sak på en rad = lägg till. Ett kugghjul på varje rad (och högerklick) öppnar setets
+  meny: "Add What I'm Wearing" (allt du har på dig utom skjorta och tabard), "Edit Name and
+  Icon…", "Remove Item ▸" och "Delete Set…". "New Set" står på sökrutans plats, och mitt i
+  fönstret med en förklaring när det inte finns några set (en sak på markören hamnar i det
+  nya setet). Håller man en sak över fliken Sets byter fönstret dit. Kugghjulets "Add to Set"
   finns kvar. Saker i set är låsta hos handlaren och tooltipen visar "Tidy Pack set: …".
   Fönstret öppnas alltid på Bags.
 - ⚠️ Set tas bara på utanför strid (spelet låter ingen byta rustning i strid). Flikarna
   och raderna med handkontroll är inte provade; kugghjulets meny har "Show Sets"/"Show
   Bags" som reserv, bara med handkontroll.
+- ✅ Hel, mörk bakgrund bakom sakerna (`inset` i `Layout.lua`, spelets `InsetFrameTemplate`
+  med mörkare marmor), så att världen och questlistan inte lyser igenom när de tomma rutorna
+  döljs, och mer luft mellan grupperna (`SHELF_GAP`). Inte provat i spelet än – färgen
+  justeras efter en skärmbild.
 - ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
   vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
   bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 12 rutor brett.
@@ -60,8 +66,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-högerklick, via ★ eller på skräplistans
   sida i inställningarna (lägg till med länk, namn, nummer eller genom att släppa en sak;
   ta bort med det röda krysset). Saker på listan hamnar sist i Junk, får spelets eget
-  skräpmynt (`JunkIcon` på rutan), säljs av Sell Junk och föreslås först när väskorna är
-  fulla. En sak kan inte vara både favorit och på listan. Sparas per itemID och konto.
+  skräpmynt (`JunkIcon` på rutan) och föreslås först när väskorna är fulla. En sak kan inte vara både favorit och på listan. Sparas per itemID och konto.
 - ⚠️ Frågor om radering (`MakeRoom.lua`), i en panel med samma mall som lootfönstret
   (`DefaultPanelFlatTemplate`): (1) när en sak från skräplistan lootas (antalet ökar,
   `C_Item.GetItemCount` vid `BAG_UPDATE_DELAYED`) frågar Tidy Pack direkt, (2) när loot
@@ -74,7 +79,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   (`GamepadMode.FrameControlsManager:HandlePopupShown`), bara utanför strid. Måste provas i
   spelet, särskilt med handkontroll.
 - ✅ Inställningar (`Options.lua`), allt påslaget från början: fråga när skräp lootas,
-  förslag vid fulla väskor, Sell Junk-knappen, quests i förväg (går inte att ändra utan
+  förslag vid fulla väskor, lås för quest- och set-saker hos handlaren, quests i förväg (går inte att ändra utan
   Questie, och rubriken säger om Questie finns), nivå och BoE.
 - ⚠️ Quests i förväg (`QuestHints.lua`): kräver Questie (QuestieDB, `## OptionalDeps`).
   Saker som behövs för quests man inte har gjort, för ens ras och klass, som man kan ta nu
@@ -95,11 +100,10 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ⚠️ Låsen: namnmatchningen följer spelets språk (engelska). Spelets egen knapp
   "Sell All Junk" i handlarfönstret känner inte till låsen. Med handkontroll kan låset inte
   sättas eller släppas i strid; det görs när striden är över.
-- ⚠️ Sell Junk (`Junk.lua`): säker knapp ovanför väskfönstret när man handlar och det
-  finns skräp. Säljer gråa saker utom låsta och stjärnmärkta, högst 12 per klick (Buyback
-  rymmer 12), med spelets `/use väska plats`. Kan inte ändras i strid. Ligger utanför
-  väskfönstret, så handkontrollens markör når den inte – med handkontroll används spelets
-  "Sell All Junk".
+- ⚠️ Ingen egen Sell Junk-knapp (togs bort 2026-11-09, användarens beslut): spelets egen
+  "Sell All Junk" (`MerchantSellAllJunkButton`) i handlarfönstret säljer alla grå saker, och
+  går att nå med handkontroll. Den känner inte till Tidy Packs lås eller skräplista, så saker
+  på skräplistan som inte är grå säljs för hand. `Junk.lua` har bara `ns.GetJunkKind` kvar.
 - ✅ Junk-rubriken visar skräpets värde.
 - ✅ Tomma platser: en ruta per väsktyp med antalet. Siffran blir röd vid 5 eller färre.
   När väskorna blir helt fulla visas "Your bags are full." en gång (`UIErrorsFrame`).
@@ -138,15 +142,12 @@ Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
   (`EnumerateValidItems`), sorterar in dem i grupper, flyttar dem (fästa i `MoneyFrame`,
   som spelets eget rutnät), sätter märken och lås och sätter fönstrets storlek.
 - `SetSearchBoxPoint`: med handkontroll kortas sökrutan av så att ★-knappen får plats.
-- `OnHide` (HookScript): gruppen New glöms och Sell Junk döljs.
+- `OnHide` (HookScript): gruppen New glöms.
 - Rutornas `OnClick` (HookScript, en gång per ruta): Alt-klick stjärnmärker.
 - `EventRegistry`-eventet `ContainerFrameItemButton.OnItemClicked` (sist i spelets klick på
   en ruta): väskbytet.
 - `TooltipDataProcessor.AddTooltipPostCall` (typ Item): raden "Needed for" och den röda
   raden på låsta saker hos en handlare (tooltipens ägare är en låst ruta).
-- Sell Junk är en `SecureActionButtonTemplate` med typ `macro`, hängd i `UIParent` (en säker
-  knapp i spelets väskfönster skulle skydda hela fönstret i strid). Den placeras utifrån
-  väskfönstrets läge, bara utanför strid. Uppdateringen samlas till en per bildruta.
 - Handkontrollens markör (`Gamepad.lua`), som är spelets `SmartNavigation`:
   - `hooksecurefunc(SmartNavigation, "SetUseGridNavigation")`: spelet slår på sitt rutnät
     för väskfönstret (i `SmartNavPanelInfoAdded`). Tidy Pack slår av det en bildruta senare
@@ -210,7 +211,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `TidyPackDB` (per konto): `combinedBagsTurnedOn` (sant när Tidy Pack har slagit på
   "Combined Bags" en gång), `favorites` (itemID → true), `junk` (skräplistan, itemID →
   true), `questieNoticeShown` (sant när raden om Questie har visats), inställningarna
-  `suggestOnLoot`, `suggestWhenFull`, `sellJunkButton`, `questHints` och `itemLevelAndBoE`
+  `suggestOnLoot`, `suggestWhenFull`, `lockAtMerchant`, `questHints` och `itemLevelAndBoE`
   (alla sanna från början) och `dataVersion`
 - `TidyPackCharDB` (per karaktär, ny 2026-11-09): `sets` = lista med
   `{ name = "...", items = { itemID, ... } }` i den ordning seten skapades. Kräver omstart
@@ -220,7 +221,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 
 ## Idéer och önskemål
 - Nästa efter första testet: introduktion med sex korta tips i spelets tipsruta (välkommen,
-  stjärnan, LB/RB, Sell Junk, låsta saker, större väska), ett i taget och en gång per konto.
+  stjärnan, LB/RB, låsta saker, större väska), ett i taget och en gång per konto.
   Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
 - Möjliga senare: slå ihop högar av samma sak till en ruta, fälla ihop grupper, visa
   antalet pilar och kulor i rubriken.
@@ -246,7 +247,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `QuestHints.lua`: saker som quests man inte har tagit än behöver, via Questies databas
 - `Marks.lua`: favoriter och skräplistan, med Alt-klick och ★ med spelets meny (hette
   `Favorites.lua` före 2026-11-09)
-- `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`) och knappen Sell Junk
+- `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`)
 - `MakeRoom.lua`: frågorna om radering, när skräp lootas och när väskorna är fulla
 - `Options.lua`: inställningssidan, skräplistans sida, `/tidypack` och addonmenyn
 - `Gamepad.lua`: handkontrollens markör (start, LB/RB, fri navigering, dolda rutor), låsen
@@ -274,9 +275,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 9. Sökrutan tonar ner det som inte matchar.
 10. Hos en handlare: låsta saker har ett lås och går inte att klicka på (quest-sak, en vanlig
     sak som en quest kräver, en sak i ett utrustningsset). Tooltipen visas ändå, med
-    "Needed for" och den röda raden "Locked by Tidy Pack: can't be sold." Sell Junk syns
-    ovanför fönstret med skräpets värde, säljer högst 12 per klick och aldrig låsta eller
-    stjärnmärkta saker. Allt går att köpa tillbaka.
+    "Needed for" och den röda raden "Locked by Tidy Pack: can't be sold." Spelets egen
+    "Sell All Junk" säljer alla grå saker och känner inte till låsen. Inställningen "Lock
+    quest and set items" (Esc → Options → AddOns → Tidy Pack) slår av och på låsen.
 11. Väskbyte: med alla fyra väskplatser fulla och en större väska bland sakerna (grön pil):
     högerklick byter ut den minsta väskan och sakerna flyttas med. I strid kommer ett
     meddelande i stället.
@@ -301,8 +302,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 15. Efter `/reload` ser allt likadant ut.
 16. Skräplistan: Alt-högerklicka på en vit sak – den hamnar sist i Junk med spelets
     skräpmynt. Alt-högerklicka igen – den går tillbaka. Med handkontroll: plocka upp en sak
-    med A, gå till ★, tryck A och välj "Add to Junk List" i menyn. Sell Junk säljer saker
-    på listan, men aldrig stjärnmärkta eller låsta saker.
+    med A, gå till ★, tryck A och välj "Add to Junk List" i menyn. Saker på listan som
+    inte är grå säljs för hand (spelets "Sell All Junk" tar bara grå).
 17. Loota en sak som står på skräplistan: frågan "You looted ..., which is on your junk
     list. Delete it?" kommer direkt – under lootfönstret, och uppe i mitten om lootfönstret
     stängs. Delete raderar just den saken, "Not now" stänger. Inte i strid: då kommer frågan
@@ -345,7 +346,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ikon, ta bort en sak, ta bort setet. Hos en handlare är setets saker låsta. Tooltipen
     visar "Tidy Pack set". I strid: ett meddelande i stället. Kugghjulets "Add to Set"
     fungerar också. Med handkontroll: nå flikarna och raderna med markören, och prova "Show
-    Sets" i kugghjulets meny. Sell Junk står till höger ovanför fönstret. Grupperna heter
+    Sets" i kugghjulets meny. Grupperna heter
     "Spare Bags" och "Free".
 27. Efter uppdateringen: starta om spelet helt (ny rad i TOC-filen), och kontrollera att
     favoriter, skräplista och inställningar finns kvar.
@@ -356,6 +357,11 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 29. Specialväska och `/reload`: med en specialväska på plats (t.ex. Apprentice's Mining Pack
     eller ett koger), gör `/reload` och öppna väskan direkt, med mus och med handkontroll.
     Grupperna och linjen ovanför specialväskan syns, och inget felmeddelande kommer.
+30. Set: kugghjulet på en rad öppnar setets meny, också med handkontroll. "Add What I'm
+    Wearing" lägger det du har på dig i setet (inte skjorta och tabard). Fliken Sets utan
+    set visar en förklaring med New Set under.
+31. Bakgrund och lås: bakgrunden bakom sakerna är mörk och hel i båda flikarna. Med "Lock
+    quest and set items" avstängd går låsta saker att klicka på hos handlaren.
 
 ### Provat i spelet
 - 2026-11-09, testversion `v0.2.0-alpha1` på en annan dator (skärmbilder): addonet laddas
@@ -393,16 +399,38 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   släppt version) och committa med git.
 
 ## Publicering
-- Status: inte publicerat på CurseForge. Version 1.0.0 är förberedd (2026-11-09): LICENSE (MIT),
+- Status: projektet "Tidy Pack" är skapat på CurseForge och 1.0.0 uppladdad för hand
+  (2026-11-09), väntar på granskning (inte godkänt 2026-11-10). Den innehåller kraschen med
+  specialväskor och knappen Sell Junk; rättat i 1.0.1 (ännu inte på CurseForge). Version 1.0.0 förbereddes så: LICENSE (MIT),
   README.md (projektbeskrivningen), CHANGELOG.md med `## 1.0.0`, zip-filen i `.release/` och
   texterna till projektsidan i `.design/curseforge-page.md`. Kategori Bags & Inventory,
   spelversion WoW Forever 1.60.1, Questie som valfritt beroende. Loggan är `.design/logo.png` (egen teckning, källa `logo.svg`). Väntar på test i
   spelet och att användaren skapar projektet.
+- GitHub-sidan: `.github/README.md` är förstasidan på GitHub (logga, installation, kort
+  funktionslista, länk till feedback). GitHub visar den före `README.md` i roten, som i stället
+  är CurseForge-beskrivningen och också följer med i zip-filen. Håll funktionerna lika i
+  båda, och uppdatera raden om CurseForge när projektet är godkänt. Loggan ligger i
+  `.design/logo.png` (länkas med adress till `main`). Repots "Social preview" (1280 × 640,
+  `.design/social-preview.png`) kan bara läggas in för hand: Settings → General → Social
+  preview. Beskrivning och ämnesord sätts med `gh repo edit`.
 - Testversioner för andra datorer läggs som förhandsversion (pre-release) under Releases på
   GitHub, med zip-filen från `package-addon.mjs` (den hamnar i `.release/`, som git
   ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Efter 1.0.0: `v1.0.1-alpha1` (2026-11-09, rättelsen för specialväskor, ny bakgrund, set-menyn, utan Sell Junk). Taggarna har `alpha` i namnet. När
-  arbetsflödet för automatisk publicering finns laddar varje tagg upp till CurseForge, så
-  fråga då först.
+  arbetsflödet nedan finns får bara rena versionstaggar (vN.N.N) något att göra; testtaggar
+  med `alpha` startar ingenting och laddas inte upp till CurseForge.
+- Automatisk uppladdning (förberedd 2026-11-10, inte pushad eller provad än):
+  `.github/workflows/release.yml` startar bara när en tagg som `v1.0.1` pushas (inte
+  `v1.0.1-alpha1`). Först kontrolleras att taggen stämmer med `## Version:` i TOC-filen
+  (ett fast nummer, inte `@project-version@`), sedan bygger BigWigs packager v2 zip-filen
+  utifrån `.pkgmeta`, laddar upp den till CurseForge som Release och lägger en release med
+  zip-filen på GitHub. Kräver hemligheten `CF_API_TOKEN` (användaren lägger in den själv)
+  och `## X-Curse-Project-ID: <id>` i TOC-filen (saknas än). Packagern känner igen Forever
+  (Interface 16xxx, spelversionstyp 88568). Fråga alltid före en tagg: den släpper en
+  version. Två spår på GitHub: förhandsversioner (alpha, för testare, med `gh release create
+  --prerelease`) och rena versioner (laddas upp av arbetsflödet). GitHubs "Latest" pekar
+  alltid på den senaste rena versionen.
+- Packagerns skript (`release.sh`) kräver bash 4.3 eller nyare. Macens egen bash är 3.2, så
+  provkörning på Macen kräver `brew install bash`, eller en körning på GitHub.
 
 ## Beslut
 - 2026-11-08: Addon för WoW Forever som hanterar väskorna man bär med sig, med fokus på
@@ -551,8 +579,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   and set items"), påslagen från början. (4) Knappen Sell Junk är borttagen (`Junk.lua` har
   bara `ns.GetJunkKind` kvar, inställningen `sellJunkButton` används inte längre): spelet har
   `MerchantSellAllJunkButton`. Den säljer alla grå saker och känner inte till låsen eller
-  skräplistan. Beskrivningarna av Sell Junk under Funktioner och i testlistan ovan gäller
-  inte längre. Inte provat i spelet.
+  skräplistan. Funktioner och testlistan ovan är rättade efter det. Inte provat i spelet.
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1
