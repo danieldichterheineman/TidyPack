@@ -7,8 +7,9 @@
 - Bags, Sets and Quests are always the same size, so the window no longer changes when you
   switch tabs. It only grows or shrinks when your bags do.
 - The Sets tab has five numbered places, the same as the key bindings "Equip set 1–5". Click an
-  empty place, or drop an item on it, to make a new set. The New Set button is gone. You can
-  have at most five sets.
+  empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
+  its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
+  can have at most five sets.
 - When quest items are hidden from the Bags tab, they are shown as one slot with their number.
   Click it to open the Quests tab.
 - The Quests tab starts right away, without the summary line.

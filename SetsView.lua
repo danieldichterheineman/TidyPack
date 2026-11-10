@@ -329,8 +329,9 @@ local function fillRow(row, index, set)
     row.equip:SetEnabled(not (worn and #missing == 0))
 end
 
--- Skapar ett nytt set. Håller du en sak hamnar den i setet.
-local function newSet()
+-- Skapar ett nytt set med spelets ruta för namn och ikon. Håller du en sak hamnar den i setet.
+-- Används med handkontroll, där det inte går att skriva direkt på raden.
+local function newSetWithPopup()
     local itemID = cursorItemID()
     if itemID then
         ClearCursor()
@@ -338,7 +339,69 @@ local function newSet()
     ns.AskNewSet(itemID)
 end
 
--- En tom plats: spelets tomma ruta med ett +, och en text. Klick eller en släppt sak skapar ett set.
+-- Ett nytt set skrivs direkt på den tomma raden (användarens önskan 2026-11-10): klick eller en
+-- släppt sak gör raden till en skrivruta, Enter skapar setet och Esc avbryter. Ikonen blir den
+-- första sakens, och kan bytas med "..." → Edit Name and Icon.
+local editingRow
+
+local function stopNaming(row)
+    if not row.edit:IsShown() then
+        return
+    end
+    row.pendingItem = nil
+    row.edit:ClearFocus()
+    row.edit:Hide()
+    row.problem:SetText("")
+    row.slot:SetTexture(EMPTY_SLOT)
+    row.slot:SetTexCoord(0.140625, 0.84375, 0.140625, 0.84375)
+    row.slot:SetAlpha(0.7)
+    row.plus:Show()
+    row.label:Show()
+    if editingRow == row then
+        editingRow = nil
+    end
+end
+
+local function startNaming(row)
+    if InputUtil.IsGamepadUIEnabled() then
+        newSetWithPopup()
+        return
+    end
+    if editingRow and editingRow ~= row then
+        stopNaming(editingRow)
+    end
+    editingRow = row
+    local itemID = cursorItemID()
+    if itemID then
+        ClearCursor() -- saken går tillbaka till sin plats och läggs i setet när det skapas
+        row.pendingItem = itemID
+        row.slot:SetTexture(C_Item.GetItemIconByID(itemID))
+        row.slot:SetTexCoord(0, 1, 0, 1)
+        row.slot:SetAlpha(1)
+        row.plus:Hide()
+    end
+    row.label:Hide()
+    row.problem:SetText("")
+    row.edit:SetText("")
+    row.edit:Show()
+    row.edit:SetFocus()
+end
+
+local function finishNaming(edit)
+    local row = edit:GetParent()
+    local itemID = row.pendingItem
+    local index, problem = ns.CreateSet(edit:GetText(), nil)
+    if not index then
+        row.problem:SetText(problem or "")
+        return
+    end
+    stopNaming(row)
+    if itemID then
+        ns.SetInSet(index, itemID, true)
+    end
+end
+
+-- En tom plats: spelets tomma ruta med ett +, och en text. Klick eller en släppt sak börjar ett nytt set.
 local function acquireEmptyRow(index, parent)
     local row = emptyRows[index]
     if row then
@@ -347,8 +410,9 @@ local function acquireEmptyRow(index, parent)
     row = CreateFrame("Button", nil, parent)
     row:SetHeight(ROW_HEIGHT)
     row:SetHighlightAtlas("Options_List_Hover", "ADD")
-    row:SetScript("OnClick", newSet)
-    row:SetScript("OnReceiveDrag", newSet)
+    row:SetScript("OnClick", startNaming)
+    row:SetScript("OnReceiveDrag", startNaming)
+    row:SetScript("OnHide", stopNaming)
     row.number = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
     row.number:SetPoint("LEFT", 4, 0)
     row.slot = row:CreateTexture(nil, "ARTWORK")
@@ -362,6 +426,27 @@ local function acquireEmptyRow(index, parent)
     row.plus:SetText("+")
     row.label = row:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     row.label:SetPoint("LEFT", row.slot, "RIGHT", 9, 0)
+    -- Skrivrutan för namnet, på samma plats som texten.
+    row.edit = CreateFrame("EditBox", nil, row, "InputBoxTemplate")
+    row.edit:SetSize(220, 22)
+    row.edit:SetPoint("LEFT", row.slot, "RIGHT", 14, 0)
+    row.edit:SetAutoFocus(false)
+    row.edit:SetMaxLetters(40)
+    row.edit:SetScript("OnEnterPressed", finishNaming)
+    row.edit:SetScript("OnEscapePressed", function(self)
+        stopNaming(self:GetParent())
+    end)
+    row.edit:SetScript("OnEditFocusLost", function(self)
+        if strtrim(self:GetText()) == "" then
+            stopNaming(self:GetParent())
+        end
+    end)
+    row.edit:Hide()
+    row.hint = row.edit:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    row.hint:SetPoint("LEFT", row.edit, "RIGHT", 10, 0)
+    row.hint:SetText(L["Name the set, then press Enter"])
+    row.problem = row:CreateFontString(nil, "ARTWORK", "GameFontRedSmall")
+    row.problem:SetPoint("TOPLEFT", row.edit, "BOTTOMLEFT", -4, -1)
     row:SetScript("OnEnter", function(self)
         self.plus:SetFontObject("GameFontHighlightLarge")
         self.label:SetFontObject("GameFontHighlight")

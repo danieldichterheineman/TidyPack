@@ -448,7 +448,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     `relayout`: den högsta av Bags, `ns.SETS_VIEW_HEIGHT` och `MIN_QUESTS_HEIGHT`); Quests visar "...and N
     more" i stället för att växa. Sets: fem numrerade platser (`ns.MAX_SETS = 5`, samma som Equip set
     1–5), tomma platser med "+" som skapar ett set (klick eller släppt sak), ingen New Set-knapp, ingen
-    tipstext. Dolda quest-saker i Bags: en ruta med antalet och spelets gula quest-ram
+    tipstext. Ett klick (eller en släppt sak) gör den tomma raden till en skrivruta (`startNaming`):
+    Enter skapar setet utan ikon (första sakens ikon visas), Esc eller tom ruta avbryter, fel visas
+    i rött under rutan. Med handkontroll öppnas spelets ruta för namn och ikon som förut. Dolda quest-saker i Bags: en ruta med antalet och spelets gula quest-ram
     (`TEXTURE_ITEM_QUEST_BORDER`), tooltip och klick öppnar Quests. Quests saknar sammanfattningsraden.
     Mac: `ns.KeyText` byter "Alt-click" mot "Option-click" (`IsMacClient`). Inte provat i spelet.
 37. Sista granskningen (2026-11-10): kugghjulet är gult med en tunn gul ram på mörk botten (grå bild som
