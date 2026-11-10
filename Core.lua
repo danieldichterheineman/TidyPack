@@ -105,6 +105,15 @@ local eventHandlers = {}
 
 -- Låter addonets alla filer lyssna på events, t.ex.
 -- ns.RegisterEvent("PLAYER_REGEN_ENABLED", function() ... end)
+-- På Mac heter Alt-tangenten Option (spelet läser den som Alt). Texter som nämner Alt-klick går
+-- hit, så att de säger "Option-click" på en Mac (IsMacClient, BuildDocumentation i Forever).
+function ns.KeyText(text)
+    if IsMacClient and IsMacClient() then
+        return (text:gsub("Alt%-click", "Option-click"))
+    end
+    return text
+end
+
 function ns.RegisterEvent(event, handler)
     if not eventHandlers[event] then
         eventHandlers[event] = {}

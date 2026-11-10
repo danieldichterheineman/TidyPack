@@ -14,23 +14,16 @@ local L = ns.L
 
 local ROW_HEIGHT = 50
 local ROW_GAP = 4
-local HINT_MAX_SETS = 3  -- hjälptexten under raderna visas när du har så här få set
-local HINT_INSET, HINT_GAP = 6, 12
-local EMPTY_TOP = 24     -- tomt läge: luft ovanför texten och under knappen
-local EMPTY_INSET = 30   -- tomt läge: textens marginal på var sida
-local NEW_SET_LEFT, NEW_SET_TOP = 62, -36 -- knappen New Set på sökrutans plats
-local MIN_HEIGHT = 120  -- listan är minst så här hög, så att fönstret inte krymper ihop
 local TAB_WIDTH = 90    -- båda flikarna är lika breda
-local TAB_LEFT = 62     -- där spelets sökruta började, till höger om väskans ikon
+local TAB_LEFT = 14     -- fönstret har ingen väskikon, så flikarna börjar nära kanten
 local TAB_OVERLAP = 2   -- flikarnas nederkant går in 2 enheter i fönstrets kant
 local TAB_GAP = 2
--- Sökrutan börjar där spelet lägger den (Marks.lua).
-ns.SEARCH_BOX_LEFT = TAB_LEFT
 local WARNING_ICON = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
 local view = "bags"
-local tabSystem, tabHost, emptyText, hintText, newSetButton
+local tabSystem, tabHost
 local rows = {}
+local emptyRows = {} -- de tomma platserna med "+"
 
 function ns.IsSetsView()
     return view == "sets"
@@ -78,16 +71,8 @@ function ns.SetView(newView)
     for _, row in ipairs(rows) do
         row:Hide()
     end
-    if hintText then
-        hintText:Hide() -- visas av ns.LayoutSetsView när fliken Sets ritas
-    end
-    if newSetButton then
-        newSetButton:SetShown(view == "sets")
-        emptyText:SetShown(view == "sets" and #ns.GetSets() == 0)
-    end
-    -- Sökrutan söker bara bland sakerna, så den visas inte i fliken Sets.
-    if BagItemSearchBox and ns.bagFrame and BagItemSearchBox:GetParent() == ns.bagFrame then
-        BagItemSearchBox:SetShown(view == "bags")
+    for _, row in ipairs(emptyRows) do
+        row:Hide()
     end
     if ns.Refresh then
         ns.Refresh()
@@ -221,9 +206,12 @@ local function acquireRow(index, parent)
     row:SetScript("OnEnter", showRowTooltip)
     row:SetScript("OnLeave", GameTooltip_Hide)
 
+    -- Platsens nummer, samma som tangentbindningen Equip set 1–5.
+    row.number = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    row.number:SetPoint("LEFT", 4, 0)
     row.icon = row:CreateTexture(nil, "ARTWORK")
     row.icon:SetSize(37, 37)
-    row.icon:SetPoint("LEFT", 4, 0)
+    row.icon:SetPoint("LEFT", 18, 0)
     row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 9, -1)
     -- Läget direkt efter namnet: "· 1 item", "✔ Equipped" eller "⚠ 1 missing".
@@ -279,6 +267,7 @@ end
 -- Fyller en rad med setets ikon, namn, saker och läge.
 local function fillRow(row, index, set)
     row.setIndex = index
+    row.number:SetText(index)
     row.name:SetText(set.name)
     row.icon:SetTexture(ns.GetSetIcon(index))
 
@@ -340,31 +329,63 @@ local function fillRow(row, index, set)
     row.equip:SetEnabled(not (worn and #missing == 0))
 end
 
--- Lägger ut listan. place(region, x, y) placerar en del i väskfönstret, width är
--- rutornas bredd. Returnerar höjden och knapparna (för handkontrollen).
+-- Skapar ett nytt set. Håller du en sak hamnar den i setet.
+local function newSet()
+    local itemID = cursorItemID()
+    if itemID then
+        ClearCursor()
+    end
+    ns.AskNewSet(itemID)
+end
+
+-- En tom plats: spelets tomma ruta med ett +, och en text. Klick eller en släppt sak skapar ett set.
+local function acquireEmptyRow(index, parent)
+    local row = emptyRows[index]
+    if row then
+        return row
+    end
+    row = CreateFrame("Button", nil, parent)
+    row:SetHeight(ROW_HEIGHT)
+    row:SetHighlightAtlas("Options_List_Hover", "ADD")
+    row:SetScript("OnClick", newSet)
+    row:SetScript("OnReceiveDrag", newSet)
+    row.number = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    row.number:SetPoint("LEFT", 4, 0)
+    row.slot = row:CreateTexture(nil, "ARTWORK")
+    row.slot:SetTexture(EMPTY_SLOT)
+    row.slot:SetTexCoord(0.140625, 0.84375, 0.140625, 0.84375)
+    row.slot:SetSize(37, 37)
+    row.slot:SetPoint("LEFT", 18, 0)
+    row.slot:SetAlpha(0.7)
+    row.plus = row:CreateFontString(nil, "OVERLAY", "GameFontDisableLarge")
+    row.plus:SetPoint("CENTER", row.slot, "CENTER", 0, 1)
+    row.plus:SetText("+")
+    row.label = row:CreateFontString(nil, "ARTWORK", "GameFontDisable")
+    row.label:SetPoint("LEFT", row.slot, "RIGHT", 9, 0)
+    row:SetScript("OnEnter", function(self)
+        self.plus:SetFontObject("GameFontHighlightLarge")
+        self.label:SetFontObject("GameFontHighlight")
+    end)
+    row:SetScript("OnLeave", function(self)
+        self.plus:SetFontObject("GameFontDisableLarge")
+        self.label:SetFontObject("GameFontDisable")
+    end)
+    emptyRows[index] = row
+    return row
+end
+
+-- Fliken Sets är alltid så här hög: fem platser (Layout.lua ger alla flikar samma höjd).
+ns.SETS_VIEW_HEIGHT = ns.MAX_SETS * (ROW_HEIGHT + ROW_GAP) - ROW_GAP
+
+-- Lägger ut listan: dina set och sedan tomma platser upp till fem, numrerade som
+-- tangentbindningarna Equip set 1–5. place(region, x, y) placerar en del i väskfönstret, width är
+-- rutornas bredd. Returnerar höjden och raderna (för handkontrollen).
 function ns.LayoutSetsView(place, width)
-    -- New Set står överst, där sökrutan står i fliken Bags, och nås först med handkontroll.
-    newSetButton:Show()
-    local shown = { newSetButton }
+    local shown = {}
     local sets = ns.GetSets()
     local y = 0
-    if #sets == 0 then
-        -- Tomt läge, som spelets egna tomma listor: en kort förklaring mitt i fönstret och
-        -- knappen under den.
-        emptyText:SetWidth(width - 2 * EMPTY_INSET)
-        place(emptyText, EMPTY_INSET, EMPTY_TOP)
-        emptyText:Show()
-        local buttonY = EMPTY_TOP + math.ceil(emptyText:GetStringHeight()) + 12
-        place(newSetButton, (width - newSetButton:GetWidth()) / 2, buttonY)
-        y = buttonY + newSetButton:GetHeight() + EMPTY_TOP
-    else
-        emptyText:Hide()
-        -- Med set i listan står knappen på sökrutans plats.
-        newSetButton:ClearAllPoints()
-        newSetButton:SetPoint("TOPLEFT", ns.bagFrame, "TOPLEFT", NEW_SET_LEFT, NEW_SET_TOP)
-    end
     for index, set in ipairs(sets) do
-        local row = acquireRow(index, newSetButton:GetParent())
+        local row = acquireRow(index, tabHost)
         fillRow(row, index, set)
         row:SetWidth(width)
         place(row, 0, y)
@@ -375,17 +396,22 @@ function ns.LayoutSetsView(place, width)
     for index = #sets + 1, #rows do
         rows[index]:Hide()
     end
-    -- Med få set förklaras hur man lägger till saker, så att den tomma ytan under raderna
-    -- inte ser ofärdig ut.
-    if #sets >= 1 and #sets <= HINT_MAX_SETS then
-        hintText:SetWidth(width - 2 * HINT_INSET)
-        place(hintText, HINT_INSET, y + HINT_GAP)
-        hintText:Show()
-        y = y + HINT_GAP + math.ceil(hintText:GetStringHeight())
-    else
-        hintText:Hide()
+    local emptyCount = math.max(0, ns.MAX_SETS - #sets)
+    for k = 1, emptyCount do
+        local row = acquireEmptyRow(k, tabHost)
+        local number = #sets + k
+        row.number:SetText(number)
+        row.label:SetText(k == 1 and L["New set – click, or drop an item here"] or L["New set"])
+        row:SetWidth(width)
+        place(row, 0, y)
+        row:Show()
+        shown[#shown + 1] = row
+        y = y + ROW_HEIGHT + ROW_GAP
     end
-    return math.max(y, MIN_HEIGHT), shown
+    for k = emptyCount + 1, #emptyRows do
+        emptyRows[k]:Hide()
+    end
+    return math.max(y - ROW_GAP, ns.SETS_VIEW_HEIGHT), shown
 end
 
 ---------------------------------------------------------------------------
@@ -426,33 +452,6 @@ ns.OnLoad(function()
         tab:UpdateTabWidth()
     end
     tabSystem:SetTabVisuallySelected(1)
-
-    hintText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    hintText:SetJustifyH("LEFT")
-    hintText:SetAlpha(0.75)
-    hintText:SetText(L["Tip: drop an item on a set to add it. The ... button has more options."])
-    hintText:Hide()
-
-    emptyText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    emptyText:SetJustifyH("CENTER")
-    emptyText:SetText(L["No sets yet. Create one to put on your gear with one click."])
-    emptyText:Hide()
-
-    -- "New Set" under listan. Håller du en sak hamnar den i det nya setet.
-    newSetButton = CreateFrame("Button", nil, tabHost, "UIPanelButtonTemplate")
-    newSetButton:SetSize(120, 22)
-    newSetButton:SetText(L["New Set"])
-    newSetButton:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", NEW_SET_LEFT, NEW_SET_TOP)
-    newSetButton:Hide()
-    local function newSet()
-        local itemID = cursorItemID()
-        if itemID then
-            ClearCursor()
-        end
-        ns.AskNewSet(itemID)
-    end
-    newSetButton:SetScript("OnClick", newSet)
-    newSetButton:SetScript("OnReceiveDrag", newSet)
 
     -- Håller du en sak över fliken Sets byter fönstret till den, så att du kan släppa
     -- saken på ett set – som spelets egna flikar när man drar något över dem.

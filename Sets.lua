@@ -70,7 +70,13 @@ function ns.GetSetIcon(index)
 end
 
 -- Skapar ett nytt set. Returnerar dess plats i listan, eller nil och en förklaring.
+-- Fliken Sets visar fem fasta platser (samma som tangentbindningarna Equip set 1–5).
+ns.MAX_SETS = 5
+
 function ns.CreateSet(name, icon)
+    if #sets() >= ns.MAX_SETS then
+        return nil, L["You can have at most %d sets."]:format(ns.MAX_SETS)
+    end
     name = cleanName(name)
     if name == "" then
         return nil, L["Give the set a name."]

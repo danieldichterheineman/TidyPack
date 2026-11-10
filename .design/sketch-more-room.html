@@ -1,0 +1,74 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tidy Pack – skiss: mer plats för innehållet</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1560px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1450px}
+.row{display:flex;gap:18px;align-items:flex-start}.col{width:500px}.col h2{font-size:13px;color:#ffd100;margin:0 0 6px;min-height:34px}
+.bag{position:relative;width:500px;background:#1a1816;border:2px solid #6e6252;border-radius:5px;margin-top:24px;padding-bottom:24px}
+.tabs{position:absolute;top:-23px;left:14px;display:flex;gap:6px}.tab{padding:2px 16px;background:#2a2622;border:1px solid #6e6252;border-bottom:0;border-radius:4px 4px 0 0;font:12px Georgia;color:#c9b27a}.tab.on{background:#3a3228;color:#ffd100}
+.t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000;position:relative}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;border:1px solid #ffd100;border-radius:3px;background:#1a140c;color:#ffd100;text-align:center;font:12px/16px Arial}
+.in{margin:6px 8px 0;background:#0a0a0a;border:1px solid #333;padding:6px 8px 8px}
+.gr{display:inline-block;vertical-align:top;margin:0 14px 6px 0}.gr b{display:block;color:#ffd100;font:12px Arial;font-weight:normal;margin-bottom:3px}
+.sl{display:inline-block;width:34px;height:34px;border:1px solid #555;background:#0a0a0a;border-radius:3px;position:relative;margin-right:3px;vertical-align:top}.sl i{position:absolute;inset:3px;border-radius:2px}.sl s{position:absolute;right:2px;bottom:0;font:11px Arial;color:#fff;text-decoration:none}
+.sl.q{border-color:#d4af37;background:#2a2008}.sl.q i{background:radial-gradient(circle at 50% 40%,#ffd100 0 4px,transparent 5px),#3a2a08}.sl.q em{position:absolute;inset:0;text-align:center;font:bold 18px/32px Arial;color:#ffd100;font-style:normal}
+.money{position:absolute;bottom:4px;right:12px;font:11px Arial;color:#fff}
+.call{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:11px/1.3 Arial;padding:3px 8px;border-radius:4px;z-index:5;white-space:nowrap}
+.tip{position:absolute;background:#0c0c0c;border:1px solid #777;padding:4px 8px;font:11px/1.5 Arial;color:#fff;z-index:6;white-space:nowrap}.tip .y{color:#ffd100}.tip .bl{color:#6fb5ff}
+.set{display:flex;align-items:center;gap:8px;height:46px;border-bottom:1px solid #1d1b19;padding:0 4px}.set .num{width:14px;color:#777;font:11px Arial}
+.set .ic{width:36px;height:36px;border:1px solid #555;border-radius:3px;background:#a44}.set.empty .ic{background:#0a0a0a;border-style:dashed;color:#777;text-align:center;font:20px/34px Arial}
+.set .nm{font:13px Arial;color:#fff}.set .nm small{color:#3bd13b;font-size:11px}.set.empty .nm{color:#777}
+.set .mini{display:flex;gap:2px;margin-top:3px}.set .mini i{width:18px;height:18px;border:1px solid #444;border-radius:2px}
+.set .dots{color:#ffd100;font:bold 14px Arial}.set .eq{margin-left:auto;border:1px solid #555;border-radius:3px;padding:2px 12px;font:11px Arial;color:#ccc;background:#222}
+.sec{height:24px;font:13px/24px Arial;display:flex;align-items:center;gap:6px}.pm{width:13px;height:13px;border:1px solid #c9a227;color:#ffd100;font:bold 11px/10px Arial;text-align:center;background:#3a1a10}
+.q{height:24px;display:flex;align-items:center;gap:6px;padding-left:16px;font:13px Arial;color:#ffd100}.q span.r{margin-left:auto;color:#fff;font-size:12px}
+.gone{position:absolute;border:1px dashed #e44;color:#e88;font:10px Arial;padding:1px 4px;border-radius:3px}
+</style></head><body>
+<h1>Mer plats för innehållet – ditt förslag</h1>
+<p class="n">Skiss, inte spelet. Rött streckat = tas bort. Sökrutan, väskikonen uppe till vänster, knappen New Set och raden med antal quests försvinner, och innehållet börjar direkt under titeln "Backpack". Fönstret blir lika mycket lägre.</p>
+<div class="row">
+
+<div class="col"><h2>1. Bags: inget sökfält, ingen väskikon. Quest-sakerna blir en ruta</h2><div class="bag">
+<div class="tabs"><div class="tab on">Bags</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="gr"><b>★ Favorites</b><span class="sl"><i style="background:#9bc"></i></span></div><div class="gr"><b>Add to bag</b><span class="sl"><i style="background:#111"></i><s>13</s></span></div><div class="gr"><b>Potion</b><span class="sl"><i style="background:#c33"></i><s>5</s></span></div><div class="gr"><b>Consumables</b><span class="sl"><i style="background:#d82"></i></span><span class="sl"><i style="background:#ddd"></i><s>20</s></span><span class="sl"><i style="background:#ddd"></i><s>20</s></span><span class="sl"><i style="background:#764"></i></span><span class="sl"><i style="background:#c95"></i></span></div>
+<div class="gr"><b>Equipment</b><span class="sl"><i style="background:#58a"></i></span><span class="sl"><i style="background:#c62"></i></span><span class="sl"><i style="background:#a83"></i></span><span class="sl"><i style="background:#875"></i></span><span class="sl"><i style="background:#a64"></i></span><span class="sl"><i style="background:#686"></i></span></div>
+<div class="gr"><b>Trade Goods</b><span class="sl"><i style="background:#c55"></i><s>9</s></span><span class="sl"><i style="background:#c75"></i><s>6</s></span><span class="sl"><i style="background:#b84"></i></span><span class="sl"><i style="background:#cb8"></i><s>20</s></span><span class="sl"><i style="background:#cb8"></i><s>20</s></span></div><div class="gr"><b>Quest Items</b><span class="sl q"><em>12</em></span></div>
+</div><div class="money">95 ● 72 ●</div>
+<div class="gone" style="right:0;top:-21px">borta: sökrutan och väskikonen</div>
+<div class="tip" style="left:300px;top:228px"><span class="y">Quest Items</span><br>12 slots hold quest items.<br><span class="bl">Click to see them in the Quests tab.</span></div>
+<div class="call" style="left:150px;top:300px">En ruta i stil med "Add to bag" i stället för en lös text</div>
+</div></div>
+
+<div class="col"><h2>2. Sets: en rad per plats, + på de tomma</h2><div class="bag">
+<div class="tabs"><div class="tab">Bags</div><div class="tab on">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="set"><span class="num">1</span><div class="ic"></div><div><div class="nm">Normal <small>✓ Equipped</small></div><div class="mini"><i style="background:#a44"></i><i style="background:#687"></i><i style="background:#889"></i><i style="background:#9a8"></i><i style="background:#875"></i></div></div><span class="dots">...</span><span class="eq">Equip</span></div>
+<div class="set"><span class="num">2</span><div class="ic" style="background:#4a6"></div><div><div class="nm">Fishing <small style="color:#aaa">· 3 items</small></div><div class="mini"><i style="background:#8a6"></i><i style="background:#666"></i><i style="background:#a95"></i></div></div><span class="dots">...</span><span class="eq">Equip</span></div>
+<div class="set empty"><span class="num">3</span><div class="ic">+</div><div class="nm">New set – click, or drop an item here</div></div>
+<div class="set empty"><span class="num">4</span><div class="ic">+</div><div class="nm">New set</div></div>
+<div class="set empty"><span class="num">5</span><div class="ic">+</div><div class="nm">New set</div></div>
+</div><div class="money">95 ● 72 ●</div>
+<div class="gone" style="right:0;top:-21px">borta: knappen New Set</div>
+<div class="call" style="left:120px;top:300px">Siffran = tangentbindningen "Equip set 1–5"</div>
+</div></div>
+
+<div class="col"><h2>3. Quests: ingen rad med antal, listan börjar direkt</h2><div class="bag">
+<div class="tabs"><div class="tab">Bags</div><div class="tab">Sets</div><div class="tab on">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="sec" style="color:#3bd13b"><span class="pm">−</span>Ready to turn in (1)</div>
+<div class="q"><span class="pm">+</span>✔ [12] Goretusk Liver Pie<span class="r" style="color:#3bd13b">8/8</span></div>
+<div class="sec" style="color:#ffd100"><span class="pm">−</span>In progress (7)</div>
+<div class="q"><span class="pm">+</span>[7] Good Steel<span class="r">0/4</span></div>
+<div class="q"><span class="pm">+</span>[15] Dry Times<span class="r">0/4</span></div>
+<div class="q"><span class="pm">+</span>[15] Hilary's Necklace<span class="r">0/1</span></div>
+<div class="q"><span class="pm">+</span>[13] Westfall Stew<span class="r">3/4</span></div>
+<div class="sec" style="color:#999"><span class="pm">+</span>Other quest items (7)</div>
+</div><div class="money">95 ● 72 ●</div>
+<div class="gone" style="right:0;top:-21px">borta: raden "8 quests need items"</div>
+</div></div>
+
+</div></body></html>

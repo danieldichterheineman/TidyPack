@@ -439,6 +439,18 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+38. Mer plats (2026-11-10, efter 1.0.1, skissen `.design/sketch-more-room.html`): ingen sökruta
+    (`BagItemSearchBox` döljs efter varje `Show`), ingen väskikon (`PortraitContainer`, `PortraitButton`
+    och `CountContainer` döljs, ramen byts till `ButtonFrameTemplateNoPortrait` med
+    `NineSliceUtil.ApplyLayoutByName`), och sakerna börjar direkt under titeln (`searchRoom()`: 30 med
+    mus, 18 med handkontroll – måttet är gissat ur spelets `GetPaddingHeight`, kontrollera med en
+    skärmbild). Flikarna börjar 14 från kanten. Alla tre flikar har samma höjd (`sharedHeight` i
+    `relayout`: den högsta av Bags, `ns.SETS_VIEW_HEIGHT` och `MIN_QUESTS_HEIGHT`); Quests visar "...and N
+    more" i stället för att växa. Sets: fem numrerade platser (`ns.MAX_SETS = 5`, samma som Equip set
+    1–5), tomma platser med "+" som skapar ett set (klick eller släppt sak), ingen New Set-knapp, ingen
+    tipstext. Dolda quest-saker i Bags: en ruta med antalet och spelets gula quest-ram
+    (`TEXTURE_ITEM_QUEST_BORDER`), tooltip och klick öppnar Quests. Quests saknar sammanfattningsraden.
+    Mac: `ns.KeyText` byter "Alt-click" mot "Option-click" (`IsMacClient`). Inte provat i spelet.
 37. Sista granskningen (2026-11-10): kugghjulet är gult med en tunn gul ram på mörk botten (grå bild som
     färgas, `SetDesaturated` + `SetVertexColor`), i lagret HIGH så att det syns över titelraden. Quests har
     en rad under titeln ("8 quests need items – 1 ready to turn in"). Inställningssidan: Bag window (nivå och

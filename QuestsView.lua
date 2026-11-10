@@ -30,7 +30,6 @@ local GHOST_SIZE = 22
 local EMPTY_SLOT = "Interface\\Buttons\\UI-EmptySlot"
 local CHECK = "common-icon-checkmark"
 
-local summary                 -- raden under titeln: hur många quests som behöver saker
 local host                    -- en egen ram i väskfönstret för texterna och rubrikerna
 local texts, ghosts, headers = {}, {}, {}
 local usedTexts, usedGhosts, usedHeaders = 0, 0, 0
@@ -132,9 +131,6 @@ function ns.HideQuestsView()
     for _, header in ipairs(headers) do
         header:Hide()
     end
-    if summary then
-        summary:Hide()
-    end
     usedTexts, usedGhosts, usedHeaders = 0, 0, 0
 end
 
@@ -163,22 +159,6 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         local target = quest.ready and ready or progress
         target[#target + 1] = quest
     end
-
-    -- Sammanfattningen står där sökrutan står i fliken Bags, så att bandet under titeln inte är tomt.
-    if not summary then
-        summary = host:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-        summary:SetPoint("TOPLEFT", ns.bagFrame, "TOPLEFT", ns.SEARCH_BOX_LEFT or 62, -41)
-    end
-    if #list == 0 then
-        summary:SetText("")
-    else
-        local text = #list == 1 and L["1 quest needs items"] or L["%d quests need items"]:format(#list)
-        if #ready > 0 then
-            text = text .. " – " .. GREEN_FONT_COLOR:WrapTextInColorCode(L["%d ready to turn in"]:format(#ready))
-        end
-        summary:SetText(text)
-    end
-    summary:Show()
 
     local y = 0
     local hidden = 0

@@ -3,8 +3,8 @@
 Tidy Pack sorts the game's own bag window into clear groups, so you find what you need at a
 glance – made for WoW Forever, with mouse or controller.
 
-Tidy Pack doesn't replace your bags with a new window. It keeps the game's own backpack,
-search box and money display, and simply puts your items in order. Everything the game lets
+Tidy Pack doesn't replace your bags with a new window. It keeps the game's own backpack and
+money display, and simply puts your items in order. Everything the game lets
 you do with an item – use, equip, sell, split, link – works as usual, also with a controller.
 
 ## Features
@@ -23,7 +23,7 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   get their own groups at the bottom, with the bag's icon, name and free slots.
 - **New loot** is shown at the top until you close your bags.
 - **Favorites**: keep items like your Hearthstone at the top.
-- **Sets**: collect items under a name and icon you pick, like "Fishing", in the Sets tab.
+- **Sets**: up to five sets, with a name and icon you pick, like "Fishing", in the Sets tab.
   Click a set to put it all on. Missing items are greyed out, and a dot on the tab tells you
   something is missing.
 - **Locked items**: quest items, items your active quests ask for and items in your sets
@@ -42,12 +42,12 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 
 ## How to use
 
-- **Item options**: hold Alt to see a small "..." on every item, then Alt-click one for a menu:
-  favorite, junk list, sets and your own groups. With a controller, pick the item up and drop
+- **Item options**: hold Alt (Option on a Mac) to see a small "..." on every item, then
+  Alt-click one for a menu: favorite, junk list, sets and your own groups. With a controller, pick the item up and drop
   it on the gear button.
 - **Gear button** (next to the close button): click it for your junk list, groups and settings.
-- **Sets tab**: click "New Set", then use the set's "..." button and choose "Add What I'm
-  Wearing", or drop items on the set. The "..." button also renames the set, changes its
+- **Sets tab**: click an empty place, or drop an item on it, to make a set. Then use the set's
+  "..." button and choose "Add What I'm Wearing", or drop items on the set. The "..." button also renames the set, changes its
   icon, removes an item or deletes it.
 - **Quests tab**: click a heading to open it, then a quest to see its items.
 - **Settings**: type `/tidypack`, use the minimap's addon menu, or go to Esc → Options →
@@ -65,6 +65,7 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   Tidy Pack's locks or your junk list.
 - Quest hints need Questie, whose data for Forever's new quests isn't complete yet.
 - Tidy Pack turns on the game's "Combined Bags" once, at your first login.
+- There is no search box: Tidy Pack's groups take its place.
 
 ## Feedback
 

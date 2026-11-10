@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- More room for your items: the search box and the bag icon in the top left corner are gone, and
+  the items start right under the title. Your free slots are shown in "Add to bag".
+- Bags, Sets and Quests are always the same size, so the window no longer changes when you
+  switch tabs. It only grows or shrinks when your bags do.
+- The Sets tab has five numbered places, the same as the key bindings "Equip set 1–5". Click an
+  empty place, or drop an item on it, to make a new set. The New Set button is gone. You can
+  have at most five sets.
+- When quest items are hidden from the Bags tab, they are shown as one slot with their number.
+  Click it to open the Quests tab.
+- The Quests tab starts right away, without the summary line.
+- On a Mac, the texts say Option-click instead of Alt-click.
+
 ## 1.0.1 (2026-11-10)
 
 New

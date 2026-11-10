@@ -163,10 +163,12 @@ local function buildMenu(_, rootDescription, itemOverride)
                 return MenuResponse.CloseAll
             end)
         end
-        setMenu:CreateButton(L["New Set..."], function()
-            ClearCursor()
-            ns.AskNewSet(itemID)
-        end)
+        if #ns.GetSets() < ns.MAX_SETS then
+            setMenu:CreateButton(L["New Set..."], function()
+                ClearCursor()
+                ns.AskNewSet(itemID)
+            end)
+        end
         -- Egna grupper (Groups.lua): den här saken, eller hela typen.
         if ns.AddGroupMenus then
             ns.AddGroupMenus(rootDescription, itemID)
@@ -236,7 +238,7 @@ local function showTooltip(self)
     GameTooltip_AddNormalLine(GameTooltip, L["Click for your junk list, groups and settings."])
     if not InputUtil.IsGamepadUIEnabled() then
         GameTooltip_AddBlankLineToTooltip(GameTooltip)
-        GameTooltip_AddInstructionLine(GameTooltip, L["Alt-click an item for its Tidy Pack options: favorite, junk list, sets and groups."])
+        GameTooltip_AddInstructionLine(GameTooltip, ns.KeyText(L["Alt-click an item for its Tidy Pack options: favorite, junk list, sets and groups."]))
     end
     GameTooltip:Show()
 end
@@ -248,7 +250,7 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tool
     end
     local owner = tooltip:GetOwner()
     if owner and hookedButtons[owner] and owner:IsShown() then
-        tooltip:AddLine(L["Alt-click: Tidy Pack options"], 0.44, 0.71, 1)
+        tooltip:AddLine(ns.KeyText(L["Alt-click: Tidy Pack options"]), 0.44, 0.71, 1)
     end
 end)
 
@@ -337,13 +339,4 @@ ns.OnLoad(function()
 
     ns.RegisterEvent("CURSOR_CHANGED", updateGearButton)
     updateGearButton()
-
-    -- Med mus ger spelet sökrutan en fast bredd (330), som slutade långt före knappen när
-    -- Tidy Packs fönster är bredare. Därför går sökrutan i båda lägena fram till knappen,
-    -- med samma avstånd till den som spelets egen sorteringsknapp hade.
-    hooksecurefunc(bagFrame, "SetSearchBoxPoint", function(_, searchBox)
-        searchBox:ClearAllPoints()
-        searchBox:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", ns.SEARCH_BOX_LEFT or 62, -37)
-        searchBox:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9, -37)
-    end)
 end)

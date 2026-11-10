@@ -7,8 +7,8 @@
 Tidy Pack sorts the game's own bag window into clear groups, so you find what you need at a
 glance. It is an addon for **WoW Forever** (Interface 16001), with mouse or controller.
 
-It doesn't replace your bags with a new window. It keeps the game's own backpack, search box
-and money display, and simply puts your items in order. Everything the game lets you do with
+It doesn't replace your bags with a new window. It keeps the game's own backpack and money
+display, and simply puts your items in order. Everything the game lets you do with
 an item – use, equip, sell, split, link – works as usual, also with a controller.
 
 ## Install
@@ -28,7 +28,7 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
   in them by Alt-clicking an item.
 - **Quests:** quest items show "3/7", and the Quests tab lists your quests – open one to see its
   items and what is still missing.
-- **Sets:** collect items under a name and icon, like "Fishing", in the Sets tab. Click a set
+- **Sets:** up to five sets with a name and icon, like "Fishing", in the Sets tab. Click a set
   to put it on, or use its "..." button and choose "Add What I'm Wearing". Missing items are
   greyed out.
 - **Locks:** quest items, items your quests ask for and items in your sets can't be sold by
