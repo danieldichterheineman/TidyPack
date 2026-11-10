@@ -1,0 +1,41 @@
+# Provbygge av zip-filen utan att ladda upp något. Startas för hand: Actions → Package check
+# (no upload) → Run workflow. Bygger paketet med BigWigs packager (flaggan -d hoppar över
+# uppladdningen, och ingen nyckel skickas med), skriver ut vad som följer med och lägger
+# zip-filen som en nedladdningsbar fil på körningen.
+name: Package check (no upload)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # hela historiken, som i det riktiga arbetsflödet
+
+      - name: Build the package without uploading
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -d
+
+      - name: List what is in the package
+        run: |
+          ls -la .release
+          for zip in .release/*.zip; do
+            echo "== $zip"
+            unzip -l "$zip"
+          done
+
+      - name: Keep the zip file
+        uses: actions/upload-artifact@v7
+        with:
+          name: TidyPack-package-check
+          path: .release/*.zip
+          retention-days: 7

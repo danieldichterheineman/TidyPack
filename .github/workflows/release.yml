@@ -1,0 +1,45 @@
+# Bygger Tidy Pack och laddar upp det till CurseForge när en versionstagg pushas,
+# t.ex. v1.0.1. Använder BigWigs packager: https://github.com/BigWigsMods/packager
+#
+# Bara "rena" versionstaggar (vN.N.N) startar arbetsflödet. Testversioner som
+# v1.0.1-alpha1 läggs för hand som förhandsversioner under Releases på GitHub och
+# laddas inte upp till CurseForge (se AGENTS.md, avsnittet Publicering).
+name: Package and release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+# Låter arbetsflödet skapa en release med zip-filen på GitHub.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    env:
+      # CurseForge-nyckeln, som användaren själv har lagt in som hemlighet i repot.
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+      # Skapas automatiskt av GitHub – behöver inte läggas in.
+      GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # hela historiken, så att packagern hittar föregående tagg
+
+      # Versionen i TidyPack.toc är ett fast nummer. Stämmer den inte med taggen stoppas
+      # körningen innan något laddas upp, så att spelare aldrig får fel versionsnummer.
+      - name: Check that the tag matches the version in the TOC file
+        run: |
+          toc_version=$(grep -m1 '^## Version:' TidyPack.toc | sed 's/^## Version:[[:space:]]*//' | tr -d '\r')
+          if [ "v${toc_version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::The tag is ${GITHUB_REF_NAME}, but TidyPack.toc says version ${toc_version}. Nothing was uploaded."
+            exit 1
+          fi
+
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
