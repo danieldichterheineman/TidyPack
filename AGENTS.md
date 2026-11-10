@@ -77,6 +77,20 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   till höger och en tooltip ("Free slots: N / Drop an item here to put it in your bags").
   Handkontrollens markör börjar på första riktiga sak (`startGroupIndex`), inte på rutan.
   Inte provat i spelet.
+- ✅ Quest-saker (`QuestLock.lua`, `Layout.lua`, `QuestsView.lua`, `SetsView.lua`, byggt 2026-11-10 efter
+  skissen `.design/sketch-quests-tab.html`): (1) varje quest-sak på en vanlig ruta visar antal man har /
+  antal som behövs ("3/7", grönt när det räcker) uppe till vänster (questloggens `numFulfilled` och
+  `numRequired`; `entry.questRecord`, `extra.quest` i `Layout.lua`), och tooltipen säger "Needed for: <quest>
+  (3/7)" och "And N more quests". (2) `ns.UpdateQuestStacks`: har du flera högar av samma sak räknas de
+  största tills antalet räcker som quest-saker, resten (över) är vanliga saker och går att sälja; en ensam
+  hög är alltid kvar hel och spelets egna quest-saker rörs aldrig. (3) Tredje fliken Quests
+  (`ns.BuildQuestsView`): klara quests överst ("Ready to turn in", `C_QuestLog.ReadyForTurnIn`), sedan de som
+  pågår, med de riktiga rutorna, namn, antal och en stapel, och tom ruta med grå text för det som saknas;
+  "Other quest items" sist; högst så många quests som ryms (`maxContentHeight`), resten som "...and N more
+  quests". Samma rutor flyttas mellan flikarna. En grön/blå prick på fliken (`ns.UpdateQuestsNotice`) när en
+  quest är klar. (4) Inställningen `showQuestItemsInBags` ("Show quest items in Bags", påslagen): avstängd
+  ersätts gruppen Quest Items i Bags av en rad "N slots hold quest items – see Quests" (`questNote`) som
+  öppnar fliken. Inte provat i spelet.
 - ✅ Egna grupper (`Groups.lua`, `GroupsPage.lua`, byggda 2026-11-10 efter skissen
   `.design/sketch-groups.html`): upp till 8 per konto, efter Favorites och "Add to bag". En sak
   läggs dit med kugghjulets meny ("Add to Group ▸", med en bockruta per grupp och "New
@@ -246,7 +260,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `TidyPackDB` (per konto): `combinedBagsTurnedOn` (sant när Tidy Pack har slagit på
   "Combined Bags" en gång), `favorites` (itemID → true), `junk` (skräplistan, itemID →
   true), `questieNoticeShown` (sant när raden om Questie har visats), inställningarna
-  `suggestOnLoot`, `suggestWhenFull`, `lockAtMerchant`, `questHints` och `itemLevelAndBoE`
+  `suggestOnLoot`, `suggestWhenFull`, `lockAtMerchant`, `showQuestItemsInBags`, `questHints` och `itemLevelAndBoE`
   (alla sanna från början), `groups` (egna grupper, ny 2026-11-10: lista med
   `{ id, name, items = { [itemID] = true }, types = { ["klass:undertyp"] = true } }` i visningsordning)
   och `nextGroupID`, och `dataVersion`. De nya nycklarna har standardvärden, så ingen migrering behövdes.
@@ -258,7 +272,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   nya nycklar med standardvärden, så ingen migrering behövdes.
 
 ## Idéer och önskemål
-- Egna grupper är byggda (2026-11-10, se Funktioner). Kompisens förslag (2026-11-10): visa vilken
+- Quest-saker är byggda (2026-11-10, se Funktioner; planen A + fliken Quests). Kompisens förslag (2026-11-10): visa vilken
   quest en sak hör till och antal (3/7), och bara låsa det som behövs. Skiss med tre sätt i
   `.design/sketch-quests.html` (och `.png`): A antal på ikonen och i tooltipen (rekommenderas
   först), B en grupp med rubrik per quest, C en flik "Quests". Planen: A, sedan C som en översikt, med Quest Items kvar i väskan (B behövs troligen inte); skiss i `.design/sketch-quests-tab.html` (och `.png`): klara quests överst, grön prick på fliken, och ett valfritt val "Show quest items in the Bags tab" (påslaget från början; avstängt ersätts gruppen av en rad "N slots hold quest items – see Quests"). Samma rutor flyttas mellan flikarna, aldrig i båda samtidigt. Spelet ger `numFulfilled` och
@@ -281,6 +295,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `Locales.lua`: all text som visas i spelet (engelska)
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
+- `QuestsView.lua`: fliken Quests – rubriker, texter, staplar och rader per quest
 - `Groups.lua`: egna grupper – data, regler, ordning, frågor, kugghjulets menyer och tooltipen
 - `GroupsPage.lua`: sidan "Groups" i inställningarna
 - `QuestLock.lua`: vilka saker som är låsta (quest, utrustningsset och egna set),
@@ -419,6 +434,16 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+35. Quest-saker: ta en quest som kräver saker (t.ex. fenor, 3 av 7). Bags: Quest Items visar "3/7" på
+    rutan, grönt när det räcker; tooltipen säger "Needed for: <quest> (3/7)". Har du två högar av samma sak
+    med mer än questen behöver: den största hålls kvar i Quest Items, den andra ligger bland vanliga saker och
+    går att sälja hos handlaren. Fliken Quests: klara quests överst under "Ready to turn in", sedan de som
+    pågår, med rutor, namn, antal och en stapel; det du inte har plockat än syns som grå text med en tom
+    ruta; en sak som två quests behöver visas bara under den första. En prick på fliken lyser när en quest
+    är klar. Esc → Options → AddOns → Tidy Pack → "Show quest items in Bags" av: Bags visar en rad "N slots
+    hold quest items – see Quests", och ett klick öppnar fliken Quests. Fönstret är lika högt i alla flikar.
+    Med många quests: de som inte får plats ersätts av "...and N more quests". Med handkontroll: nå
+    fliken och rutorna i den.
 32. Stora väskor: med så många saker att fönstret annars skulle bli högre än skärmen blir
     fönstret bredare (upp till 20 kolumner) och ryms. Fyll gärna alla väskplatser och kontrollera
     att sökrutan, kugghjulet och flikarna syns och går att nå. Byt flik Bags ↔ Sets: fönstret

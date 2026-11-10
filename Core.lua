@@ -27,6 +27,7 @@ ns.defaults = {
     suggestOnLoot = true,     -- fråga när en sak från skräplistan lootas (MakeRoom.lua)
     suggestWhenFull = true,   -- föreslå en sak att radera när väskorna är fulla (MakeRoom.lua)
     lockAtMerchant = true,    -- lås quest- och set-saker hos en handlare (Layout.lua)
+    showQuestItemsInBags = true, -- quest-saker i fliken Bags (annars bara i fliken Quests, Layout.lua)
     questHints = true,        -- saker som kommande quests behöver (QuestHints.lua)
     itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
 }

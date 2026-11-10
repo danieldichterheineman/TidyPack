@@ -36,6 +36,22 @@ function ns.IsSetsView()
     return view == "sets"
 end
 
+-- Vilken flik som visas: "bags", "sets" eller "quests".
+function ns.GetView()
+    return view
+end
+
+-- Numret på varje flik i flikraden.
+local TAB_OF = { bags = 1, sets = 2, quests = 3 }
+
+-- Pricken på fliken Quests lyser när minst en quest med saker är klar att lämna in.
+-- Layout.lua anropar den efter varje genomgång.
+function ns.UpdateQuestsNotice()
+    if tabSystem then
+        tabSystem:SetTabNotification(3, ns.HasReadyQuest ~= nil and ns.HasReadyQuest())
+    end
+end
+
 -- Pricken på fliken Sets (spelets egen, TabSystemButtonMixin:SetTabNotification) lyser
 -- när ett set saknar en sak. Layout.lua anropar den efter varje genomgång.
 function ns.UpdateSetsNotice()
@@ -53,11 +69,11 @@ function ns.UpdateSetsNotice()
     tabSystem:SetTabNotification(2, anyMissing)
 end
 
--- Byter mellan "bags" och "sets".
+-- Byter mellan "bags", "sets" och "quests".
 function ns.SetView(newView)
-    view = newView == "sets" and "sets" or "bags"
+    view = TAB_OF[newView] and newView or "bags"
     if tabSystem then
-        tabSystem:SetTabVisuallySelected(view == "sets" and 2 or 1)
+        tabSystem:SetTabVisuallySelected(TAB_OF[view])
     end
     for _, row in ipairs(rows) do
         row:Hide()
@@ -380,10 +396,10 @@ ns.OnLoad(function()
     tabSystem.tabSelectSound = SOUNDKIT.IG_CHARACTER_INFO_TAB
     tabSystem:SetPoint("BOTTOMLEFT", bagFrame, "TOPLEFT", TAB_LEFT, -TAB_OVERLAP)
     tabSystem:SetTabSelectedCallback(function(tabID)
-        ns.SetView(tabID == 2 and "sets" or "bags")
+        ns.SetView(tabID == 2 and "sets" or (tabID == 3 and "quests" or "bags"))
         return true -- ns.SetView har redan markerat fliken
     end)
-    for _, label in ipairs({ L["Bags"], L["Sets"] }) do
+    for _, label in ipairs({ L["Bags"], L["Sets"], L["Quests"] }) do
         local tabID = tabSystem:AddTab(label)
         -- Lite större text än spelets standard, som i trollboken.
         local tab = tabSystem:GetTabButton(tabID)

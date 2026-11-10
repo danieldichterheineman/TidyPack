@@ -16,6 +16,9 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Your own groups**: make groups like "Potions" or "Food & Drink" – put single items in them
   with the gear button, or a whole type at once ("Add all Potion items to Group"). Manage them
   under Esc → Options → AddOns → Tidy Pack → Groups.
+- **Quests**: quest items show how many you have and need ("3/7") and which quest wants them. A
+  Quests tab lists what each quest needs, with ready quests first. Extra stacks of an item that a quest
+  only needs some of can be sold.
 - **Special bags** – quivers, ammo pouches, soul bags, profession bags and the reagent bag –
   get their own groups at the bottom, with the bag's icon, name and free slots.
 - **New loot** is shown at the top until you close your bags.

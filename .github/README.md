@@ -27,6 +27,7 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
   groups at the bottom.
 - **Your own groups:** make groups like "Potions", and put single items or whole item types
   in them from the gear button's menu.
+- **Quests:** quest items show "3/7", and a Quests tab gives an overview of what each quest needs.
 - **Sets:** collect items under a name and icon, like "Fishing", in the Sets tab. Click a set
   to put it on, or use its gear button and choose "Add What I'm Wearing". Missing items are
   greyed out.

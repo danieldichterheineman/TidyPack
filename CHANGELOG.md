@@ -26,6 +26,12 @@
   Drink". Drop an item on the gear button and choose "Add to Group" for that item, or "Add all
   ... items to Group" for the whole type (all potions, all bandages …). They come after
   Favorites and "Add to bag". Manage them under Esc → Options → AddOns → Tidy Pack → Groups.
+- Quest items: each quest item shows how many you have and how many the quest needs (3/7), and its
+  tooltip names the quest. A new Quests tab lists every quest that needs items, ready ones first, with
+  your items, a progress bar and what you are still missing. Stacks of an item beyond what the quest
+  needs are no longer locked at merchants. A dot on the tab shows when a quest is ready to turn in.
+  The setting "Show quest items in Bags" can move them out of the Bags tab (a line there says how many
+  slots they use).
 - If the game ever blocks something because of Tidy Pack, a line in chat now says what was
   blocked, so you can report it.
 

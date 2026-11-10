@@ -272,6 +272,13 @@ ns.OnLoad(function()
     end)
 
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Bag window"]))
+    addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
+        L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
+        function()
+            if ns.Refresh then
+                ns.Refresh()
+            end
+        end)
     addCheckbox("lockAtMerchant", L["Lock quest and set items"],
         L["At merchants, items your quests need and items in your sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
         function()

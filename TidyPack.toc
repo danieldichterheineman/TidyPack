@@ -21,6 +21,7 @@ QuestHints.lua
 BagSwap.lua
 Layout.lua
 SetsView.lua
+QuestsView.lua
 Marks.lua
 Junk.lua
 MakeRoom.lua

@@ -42,6 +42,8 @@ local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till ba
 local MONEY_GAP = 16         -- mellan sista raden rutor och raden med pengar
 local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
 local TAB_ROOM = 30          -- flikarna ovanför fönstret
+local NOTE_HEIGHT = 20       -- raden som ersätter quest-sakerna när de är dolda i väskan
+local MIN_QUESTS_HEIGHT = 120 -- fliken Quests är minst så här hög
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
 local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
 local DIVIDER_GAP = 6      -- luft ovanför och under linjen före specialväskorna
@@ -63,6 +65,9 @@ local bagsContentHeight           -- höjden i fliken Bags, som fliken Sets mins
 local gridCols = MIN_COLUMNS      -- antal kolumner just nu
 local gridWidth = widthOf(MIN_COLUMNS) -- rutnätets bredd just nu
 local measurer                    -- osynlig text som mäter hur breda rubrikerna är
+local noteMeasurer                -- samma för raden om dolda quest-saker
+local questNote                   -- raden som ersätter quest-sakerna när de är dolda i väskan
+local questNoteState              -- var raden ligger och vad den säger, eller nil
 local chromeWidth, chromeHeight   -- fönstrets kanter, titelrad, sökruta och pengar
 local location = ItemLocation:CreateEmpty() -- återanvänds för att läsa en saks nivå
 
@@ -186,7 +191,10 @@ local function getExtras(button)
             later = button:CreateTexture(nil, "OVERLAY", nil, 6),
             -- Ett + mitt på den tomma rutan, som den tomma rutan i fliken Sets: släpp en sak här.
             plus = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"),
+            -- Antal man har / antal som behövs för en quest-sak ("3/7"), där nivån står på utrustning.
+            quest = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall"),
         }
+        extra.quest:SetPoint("TOPLEFT", 2, -2)
         extra.plus:SetPoint("CENTER", 0, 1)
         extra.plus:SetText("+")
         extra.level:SetPoint("TOPLEFT", 2, -2)
@@ -269,6 +277,18 @@ local function updateExtras(entry, atMerchant)
         extra.level:Hide()
     end
     extra.bind:SetShown(boe == true)
+
+    -- Antal man har / antal som behövs för en quest-sak, grönt när det räcker. Saken är då
+    -- ingen utrustning att visa nivån på. I fliken Quests står siffrorna i raden i stället.
+    local record = entry.questRecord
+    if record and record.need > 0 and not entry.hideProgress and not entry.isEmpty then
+        extra.quest:SetText(("%d/%d"):format(record.have, record.need))
+        extra.quest:SetTextColor((record.have >= record.need and GREEN_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
+        extra.quest:Show()
+        extra.level:Hide()
+    else
+        extra.quest:Hide()
+    end
 
     -- Låset syns bara hos en handlare, och då går låsta saker inte att klicka på – varken
     -- med mus eller handkontroll – så de kan inte säljas av misstag (se QuestLock.lua).
@@ -399,6 +419,8 @@ local function layoutSetsView(atMerchant)
     if divider then
         divider:Hide()
     end
+    questNoteState = nil
+    questNote:Hide()
     for _, button in bagFrame:EnumerateValidItems() do
         if lockedButtons[button] or disabledButtons[button] then
             setLocked(button, false)
@@ -448,12 +470,23 @@ local function flow(cols, apply, junkValue)
         if not (list and #list > 0) then
             return
         end
+        -- Är quest-sakerna dolda i väskan (inställningen) står en rad i stället för rutorna.
+        local hideQuests = group == "QuestItems" and ns.db.showQuestItemsInBags == false
         measurer:SetText(text)
-        local groupCols = math.min(#list, cols)
-        local rows = math.ceil(#list / cols)
-        -- Gruppen är minst lika bred som sin rubrik, så att rubrikerna inte krockar.
-        local groupWidth = math.max(widthOf(groupCols), math.ceil(measurer:GetStringWidth()))
-        local height = HEADER + rows * BUTTON + (rows - 1) * SPACING
+        local headerWidth = math.ceil(measurer:GetStringWidth())
+        local noteText, groupWidth, height
+        if hideQuests then
+            noteText = L["%d slots hold quest items – see Quests"]:format(#list)
+            noteMeasurer:SetText(noteText)
+            groupWidth = math.max(headerWidth, math.ceil(noteMeasurer:GetStringWidth()) + 4)
+            height = HEADER + NOTE_HEIGHT
+        else
+            local groupCols = math.min(#list, cols)
+            local rows = math.ceil(#list / cols)
+            -- Gruppen är minst lika bred som sin rubrik, så att rubrikerna inte krockar.
+            groupWidth = math.max(widthOf(groupCols), headerWidth)
+            height = HEADER + rows * BUTTON + (rows - 1) * SPACING
+        end
         local left = (x == 0) and 0 or (x + GROUP_GAP)
         if x > 0 and left + groupWidth > width then
             -- Får inte plats på raden: börja en ny.
@@ -461,22 +494,26 @@ local function flow(cols, apply, junkValue)
             left, shelfHeight = 0, 0
         end
         if apply then
-            local groupIndex = #groupFirst + 1
-            groupFirst[groupIndex] = list[1].button
-            if group == "New" then
-                newGroupIndex = groupIndex
-            end
-            if not startGroupIndex and not list[1].isEmpty then
-                startGroupIndex = groupIndex
-            end
             local header = acquireHeader()
             header:SetText(text)
             headerX[headers.used], headerY[headers.used] = left, y
-            for index, entry in ipairs(list) do
-                entry.x = left + ((index - 1) % cols) * CELL
-                entry.y = y + HEADER + math.floor((index - 1) / cols) * CELL
-                entry.placed = true
-                groupOfButton[entry.button] = groupIndex
+            if hideQuests then
+                questNoteState = { x = left, y = y + HEADER, text = noteText }
+            else
+                local groupIndex = #groupFirst + 1
+                groupFirst[groupIndex] = list[1].button
+                if group == "New" then
+                    newGroupIndex = groupIndex
+                end
+                if not startGroupIndex and not list[1].isEmpty then
+                    startGroupIndex = groupIndex
+                end
+                for index, entry in ipairs(list) do
+                    entry.x = left + ((index - 1) % cols) * CELL
+                    entry.y = y + HEADER + math.floor((index - 1) / cols) * CELL
+                    entry.placed = true
+                    groupOfButton[entry.button] = groupIndex
+                end
             end
         end
         x = left + groupWidth
@@ -532,18 +569,9 @@ local function chooseColumns(junkValue)
     return chosen
 end
 
--- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
--- storlek. Körs efter spelets egen utläggning och varje gång innehållet ändras.
-local function relayout()
-    if not bagFrame:IsShown() then
-        return -- görs när fönstret öppnas
-    end
-    local atMerchant = ns.IsAtMerchant()
-    if ns.IsSetsView and ns.IsSetsView() then
-        layoutSetsView(atMerchant)
-        return
-    end
-
+-- Sorterar in varje sak i sin grupp och räknar ut vad skräpet är värt (första steget i en
+-- genomgång av fliken Bags eller Quests).
+local function classify()
     -- Vilka väskplatser har en specialväska? Deras saker och tomma platser får egna grupper
     -- längst ned, med väskans namn.
     wipe(specialBags)
@@ -551,7 +579,10 @@ local function relayout()
         specialBags[bagID] = isSpecialBag(bagID) or nil
     end
 
-    -- 1. Sortera in varje sak i sin grupp. Tomma platser räknas per väsktyp.
+    -- Vilka högar av en quest-sak som behövs och vilka som är över (QuestLock.lua).
+    ns.UpdateQuestStacks()
+
+    -- Sortera in varje sak i sin grupp. Tomma platser räknas per väsktyp.
     entryCount = 0
     for _, list in pairs(groupLists) do
         wipe(list)
@@ -584,6 +615,9 @@ local function relayout()
             entry.junkMarked = ns.IsJunkMarked(info.itemID)
             entry.noValue = info.hasNoValue
             entry.neededLater = ns.IsNeededLater ~= nil and ns.IsNeededLater(info.itemID)
+            -- Vad en quest kräver av saken (antal man har och behöver), för siffran på rutan.
+            entry.questRecord = isQuestItem and ns.GetQuestRecord(entry.name) or nil
+            entry.hideProgress = false
             if entry.group == "Junk" and not info.hasNoValue then
                 local sellPrice = select(11, C_Item.GetItemInfo(info.hyperlink))
                 junkValue = junkValue + (sellPrice or 0) * entry.count
@@ -603,6 +637,7 @@ local function relayout()
                 -- Tabellen kan ha använts för en sak förut, så allt som märkena läser nollställs.
                 empty.locked, empty.isGear, empty.junkMarked, empty.neededLater = false, false, false, false
                 empty.quality, empty.noValue = 0, true
+                empty.questRecord, empty.hideProgress = nil, false
                 emptyByFamily[key] = empty
                 addToGroup(group, empty)
             elseif bagID < empty.bagID or (bagID == empty.bagID and slot < empty.slot) then
@@ -615,31 +650,12 @@ local function relayout()
     for _, list in pairs(groupLists) do
         table.sort(list, ns.CompareEntries)
     end
+    return junkValue
+end
 
-    -- 2. Välj antal kolumner och lägg ut grupperna (se flow).
-    releaseHeaders()
-    wipe(groupFirst)
-    wipe(groupOfButton)
-    newGroupIndex, startGroupIndex = nil, nil
-    gridCols = chooseColumns(junkValue)
-    gridWidth = widthOf(gridCols)
-    local dividerY
-    -- Höjden måste vara känd innan något placeras, eftersom allt räknas uppifrån men hänger
-    -- i raden med pengar (se anchor). Linjen placerades tidigare före höjden: direkt efter
-    -- inloggning eller /reload var höjden då okänd (nil) och genomgången stannade med ett fel
-    -- när du bar en specialväska.
-    contentHeight, dividerY = flow(gridCols, true, junkValue)
-    bagsContentHeight = contentHeight
-    if dividerY then
-        anchor(divider, -6, dividerY)
-        divider:SetWidth(gridWidth + 12)
-        divider:Show()
-    else
-        divider:Hide()
-    end
-
-    -- 3. Flytta rubrikerna och spelets rutor dit. Rutor som inte behövs (tomma platser
-    --    utom en per väsktyp) döljs.
+-- Flyttar spelets rutor och rubrikerna till sina platser (sista steget i en genomgång). Rutor
+-- som inte behövs (tomma platser utom en per väsktyp) döljs.
+local function commit(atMerchant)
     for i = 1, headers.used do
         anchor(headers.objects[i], headerX[i], headerY[i])
     end
@@ -659,8 +675,18 @@ local function relayout()
         end
     end
 
-    -- 4. Med handkontroll lägger spelet in väskorna du har på dig i rutnätet. De ska inte
-    --    synas bland sakerna, så Tidy Pack döljer dem.
+    -- Raden som ersätter quest-sakerna när de är dolda i väskan. Ett klick öppnar fliken Quests.
+    if questNoteState then
+        questNote.label:SetText(questNoteState.text)
+        questNote:SetWidth(math.ceil(questNote.label:GetStringWidth()) + 4)
+        anchor(questNote, questNoteState.x, questNoteState.y + 2)
+        questNote:Show()
+    else
+        questNote:Hide()
+    end
+
+    -- Med handkontroll lägger spelet in väskorna du har på dig i rutnätet. De ska inte synas
+    -- bland sakerna, så Tidy Pack döljer dem.
     if GamepadBagBar and GamepadBagBar:IsShown() then
         GamepadBagBar:Hide()
     end
@@ -670,11 +696,122 @@ local function relayout()
     if ns.UpdateSetsNotice then
         ns.UpdateSetsNotice()
     end
+    if ns.UpdateQuestsNotice then
+        ns.UpdateQuestsNotice()
+    end
 
     -- Handkontrollens markör kan stå på en ruta som just dolts (se Gamepad.lua).
     if ns.OnLayoutChanged then
         ns.OnLayoutChanged()
     end
+end
+
+-- Fliken Quests (QuestsView.lua): quest-sakerna ordnade per quest, med de riktiga rutorna.
+local function layoutQuestsView(atMerchant)
+    -- Spelet visar sökrutan igen när fönstret uppdateras; den söker bara bland sakerna i Bags.
+    if BagItemSearchBox and BagItemSearchBox:GetParent() == bagFrame then
+        BagItemSearchBox:Hide()
+    end
+    releaseHeaders()
+    if divider then
+        divider:Hide()
+    end
+    questNoteState = nil
+    wipe(groupFirst)
+    wipe(groupOfButton)
+    newGroupIndex, startGroupIndex = nil, nil
+    -- Vilka rutor hör till vilken sak (på namn), och vilka är quest-saker utan quest.
+    local byName, others = {}, {}
+    for i = 1, entryCount do
+        local entry = entries[i]
+        entry.hideProgress = true
+        if not entry.isEmpty then
+            -- Även en quest-sak som ligger i New eller Favorites i väskan hör hit.
+            if entry.questRecord then
+                local stacks = byName[entry.name]
+                if not stacks then
+                    stacks = {}
+                    byName[entry.name] = stacks
+                end
+                stacks[#stacks + 1] = entry
+            elseif entry.group == "QuestItems" then
+                others[#others + 1] = entry
+            end
+        end
+    end
+    -- Allt hänger i raden med pengar och räknas uppifrån, så höjden måste vara känd innan något
+    -- placeras (som i fliken Sets): texterna och staplarna samlas först.
+    local placements = {}
+    local height, _, firsts = ns.BuildQuestsView(byName, others, gridWidth, maxContentHeight(),
+        function(entry, x, y)
+            entry.x, entry.y, entry.placed = x, y, true
+        end,
+        function(region, x, y)
+            placements[#placements + 1] = { region, x, y }
+        end)
+    -- Fönstret är lika högt i alla flikar: minst lika högt som fliken Bags.
+    contentHeight = math.max(height, MIN_QUESTS_HEIGHT, bagsContentHeight or 0)
+    for _, placement in ipairs(placements) do
+        anchor(placement[1], placement[2], placement[3])
+    end
+    for index, first in ipairs(firsts) do
+        groupFirst[index] = first
+        groupOfButton[first] = index
+    end
+    commit(atMerchant)
+end
+
+-- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
+-- storlek. Körs efter spelets egen utläggning och varje gång innehållet ändras.
+local function relayout()
+    if not bagFrame:IsShown() then
+        return -- görs när fönstret öppnas
+    end
+    local atMerchant = ns.IsAtMerchant()
+    local view = ns.GetView and ns.GetView() or "bags"
+    if view == "sets" then
+        if ns.HideQuestsView then
+            ns.HideQuestsView()
+        end
+        layoutSetsView(atMerchant)
+        return
+    end
+
+    -- 1. Sortera in varje sak i sin grupp.
+    local junkValue = classify()
+    if view == "quests" then
+        layoutQuestsView(atMerchant)
+        return
+    end
+    if ns.HideQuestsView then
+        ns.HideQuestsView()
+    end
+
+    -- 2. Välj antal kolumner och lägg ut grupperna (se flow).
+    releaseHeaders()
+    wipe(groupFirst)
+    wipe(groupOfButton)
+    newGroupIndex, startGroupIndex = nil, nil
+    questNoteState = nil
+    gridCols = chooseColumns(junkValue)
+    gridWidth = widthOf(gridCols)
+    local dividerY
+    -- Höjden måste vara känd innan något placeras, eftersom allt räknas uppifrån men hänger
+    -- i raden med pengar (se anchor). Linjen placerades tidigare före höjden: direkt efter
+    -- inloggning eller /reload var höjden då okänd (nil) och genomgången stannade med ett fel
+    -- när du bar en specialväska.
+    contentHeight, dividerY = flow(gridCols, true, junkValue)
+    bagsContentHeight = contentHeight
+    if dividerY then
+        anchor(divider, -6, dividerY)
+        divider:SetWidth(gridWidth + 12)
+        divider:Show()
+    else
+        divider:Hide()
+    end
+
+    -- 3. Flytta rubrikerna och spelets rutor dit.
+    commit(atMerchant)
 end
 
 -- Stoppar ett fel genomgången visar spelet sitt eget rutnät. Då skrivs felet en gång i
@@ -788,6 +925,25 @@ ns.OnLoad(function()
     -- lägga ut något (se flow).
     measurer = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     measurer:SetAlpha(0)
+    noteMeasurer = overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    noteMeasurer:SetAlpha(0)
+
+    -- Raden som ersätter quest-sakerna när de är dolda i väskan (inställningen). Ett klick
+    -- öppnar fliken Quests.
+    questNote = CreateFrame("Button", nil, overlay)
+    questNote:SetHeight(NOTE_HEIGHT - 2)
+    questNote.label = questNote:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    questNote.label:SetPoint("LEFT")
+    questNote:SetScript("OnClick", function()
+        ns.SetView("quests")
+    end)
+    questNote:SetScript("OnEnter", function(self)
+        self.label:SetTextColor(NORMAL_FONT_COLOR:GetRGB())
+    end)
+    questNote:SetScript("OnLeave", function(self)
+        self.label:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB())
+    end)
+    questNote:Hide()
 
     -- Linjen ovanför specialväskorna, lika bred som rutorna och lite till (bredden sätts vid
     -- varje utläggning, eftersom antalet kolumner kan ändras).
