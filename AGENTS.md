@@ -418,7 +418,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Efter 1.0.0: `v1.0.1-alpha1` (2026-11-09, rättelsen för specialväskor, ny bakgrund, set-menyn, utan Sell Junk). Taggarna har `alpha` i namnet. När
   arbetsflödet nedan finns får bara rena versionstaggar (vN.N.N) något att göra; testtaggar
   med `alpha` startar ingenting och laddas inte upp till CurseForge.
-- Automatisk uppladdning (förberedd 2026-11-10, inte pushad eller provad än):
+- Automatisk uppladdning (pushad och provbyggd 2026-11-10, men ingen riktig tagg är släppt än):
   `.github/workflows/release.yml` startar bara när en tagg som `v1.0.1` pushas (inte
   `v1.0.1-alpha1`). Först kontrolleras att taggen stämmer med `## Version:` i TOC-filen
   (ett fast nummer, inte `@project-version@`), sedan bygger BigWigs packager v2 zip-filen
@@ -426,11 +426,21 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   zip-filen på GitHub. Kräver hemligheten `CF_API_TOKEN` (användaren lägger in den själv)
   och `## X-Curse-Project-ID: <id>` i TOC-filen (saknas än). Packagern känner igen Forever
   (Interface 16xxx, spelversionstyp 88568). Fråga alltid före en tagg: den släpper en
-  version. Två spår på GitHub: förhandsversioner (alpha, för testare, med `gh release create
+  version. `.github/workflows/package-check.yml` är ett provbygge som startas för hand
+  (Actions → Package check → Run workflow): samma packager med `-d` (ingen uppladdning, ingen
+  nyckel), och zip-filen sparas som nedladdningsbar fil i 7 dagar. Provet 2026-11-10 gav
+  samma 19 filer som `package-addon.mjs`, byte för byte lika med flaggan `-u` (Unix-radslut;
+  utan den skriver packagern Windows-radslut, CRLF). Packagern kände igen Forever
+  (spelversion 1.60.1) och döper filen `TidyPack-<tagg>-forever.zip`. Byggtypen följer taggen:
+  en ren `vN.N.N` ger Release, annars (som vid provet, efter taggen `v1.0.1-alpha1`) Alpha.
+  Två spår på GitHub: förhandsversioner (alpha, för testare, med `gh release create
   --prerelease`) och rena versioner (laddas upp av arbetsflödet). GitHubs "Latest" pekar
   alltid på den senaste rena versionen.
 - Packagerns skript (`release.sh`) kräver bash 4.3 eller nyare. Macens egen bash är 3.2, så
-  provkörning på Macen kräver `brew install bash`, eller en körning på GitHub.
+  provbygget görs på GitHub med `package-check.yml` (inget behöver installeras).
+- Kvar innan första riktiga släppet: hemligheten `CF_API_TOKEN` (användaren lägger in den),
+  `## X-Curse-Project-ID` i TOC-filen och att CurseForge godkänt projektet. Att API:t tar emot
+  uppladdningar till ett ännu ogodkänt projekt är inte verifierat.
 
 ## Beslut
 - 2026-11-08: Addon för WoW Forever som hanterar väskorna man bär med sig, med fokus på
