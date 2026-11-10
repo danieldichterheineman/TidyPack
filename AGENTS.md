@@ -418,6 +418,13 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Efter 1.0.0: `v1.0.1-alpha1` (2026-11-09, rättelsen för specialväskor, ny bakgrund, set-menyn, utan Sell Junk). Taggarna har `alpha` i namnet. När
   arbetsflödet nedan finns får bara rena versionstaggar (vN.N.N) något att göra; testtaggar
   med `alpha` startar ingenting och laddas inte upp till CurseForge.
+- CurseForge-projektet: id 1794643 (`## X-Curse-Project-ID` i TOC-filen), adress
+  `curseforge.com/wow/addons/tidy-pack`. 1.0.0 laddades upp med "publish manually once
+  approved" (bekräftat 2026-11-10), så den släpps inte av sig själv när projektet godkänns;
+  den har kraschen och ska inte släppas. Hemligheten `CF_API_TOKEN` ligger i repot
+  (2026-11-10). Nyckeln skrevs av misstag i chatten en gång och byttes ut. Arbetsflödet
+  markerar inga filer för manuell release (packagern har ingen sådan flagga), så 1.0.1 blir
+  tillgänglig så fort CurseForge godkänt filen.
 - Automatisk uppladdning (pushad och provbyggd 2026-11-10, men ingen riktig tagg är släppt än):
   `.github/workflows/release.yml` startar bara när en tagg som `v1.0.1` pushas (inte
   `v1.0.1-alpha1`). Först kontrolleras att taggen stämmer med `## Version:` i TOC-filen
