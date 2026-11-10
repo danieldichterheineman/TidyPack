@@ -39,3 +39,5 @@ jobs:
           name: TidyPack-package-check
           path: .release/*.zip
           retention-days: 7
+          # .release är en dold mapp, och dolda mappar hoppas annars över
+          include-hidden-files: true
