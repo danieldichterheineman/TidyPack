@@ -107,7 +107,6 @@ local MINI_SIZE = 22
 local MINI_GAP = 3
 local MAX_MINI = 12     -- fler än så visas som "+3"
 local EMPTY_SLOT = "Interface\\Buttons\\UI-EmptySlot" -- spelets tomma ruta
-local MENU_ATLAS = "questlog-icon-setting"              -- spelets kugghjul
 
 local STATE_TEXT = {
     equipped = { L["Equipped"], GREEN_FONT_COLOR },
@@ -136,7 +135,7 @@ local function showRowTooltip(row)
     end
     GameTooltip_AddBlankLineToTooltip(GameTooltip)
     GameTooltip_AddInstructionLine(GameTooltip, L["Click to put it on. Drop an item here to add it."])
-    GameTooltip_AddInstructionLine(GameTooltip, L["Use the gear button to add what you wear, edit or delete the set."])
+    GameTooltip_AddInstructionLine(GameTooltip, L["Use the ... button to add what you wear, edit or delete the set."])
     GameTooltip:Show()
 end
 
@@ -239,27 +238,30 @@ local function acquireRow(index, parent)
     row.equip:SetScript("OnClick", function(self)
         ns.EquipSet(self:GetParent().setIndex)
     end)
-    -- Kugghjulet bredvid Equip öppnar setets meny: samma bild som väskfönstrets kugghjul
-    -- (Marks.lua), och spelets egen menyknapp, så att den fungerar med handkontroll.
+    -- Knappen bredvid Equip öppnar setets meny. Den är spelets egen menyknapp, så att den fungerar
+    -- med handkontroll.
     row.menu = CreateFrame("DropdownButton", nil, row)
     row.menu:SetSize(22, 22)
     row.menu:SetPoint("RIGHT", row.equip, "LEFT", -6, 0)
-    row.menu:SetNormalAtlas(MENU_ATLAS)
-    row.menu:SetHighlightAtlas(MENU_ATLAS, "ADD")
-    for _, texture in ipairs({ row.menu:GetNormalTexture(), row.menu:GetHighlightTexture() }) do
-        texture:ClearAllPoints()
-        texture:SetPoint("CENTER")
-        texture:SetSize(18, 18)
-    end
+    -- Tre punkter i stället för ett kugghjul, så att det syns att knappen gäller just den här raden
+    -- (kugghjulet i fönsterhuvudet gäller hela Tidy Pack).
+    row.menu.dots = row.menu:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    row.menu.dots:SetPoint("CENTER", 0, 3)
+    row.menu.dots:SetText("...")
+    row.menu.dots:SetAlpha(0.8)
     row.menu:SetupMenu(function(owner, rootDescription)
         buildRowMenu(owner:GetParent(), rootDescription)
     end)
     row.menu:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip_SetTitle(GameTooltip, L["Set options"])
+        GameTooltip_SetTitle(GameTooltip, L["More options"])
         GameTooltip:Show()
+        self.dots:SetAlpha(1)
     end)
-    row.menu:SetScript("OnLeave", GameTooltip_Hide)
+    row.menu:SetScript("OnLeave", function(self)
+        GameTooltip_Hide()
+        self.dots:SetAlpha(0.8)
+    end)
     rows[index] = row
     return row
 end
@@ -414,7 +416,7 @@ ns.OnLoad(function()
     hintText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     hintText:SetJustifyH("LEFT")
     hintText:SetAlpha(0.75)
-    hintText:SetText(L["Tip: drop an item on a set to add it. The gear button has more options."])
+    hintText:SetText(L["Tip: drop an item on a set to add it. The ... button has more options."])
     hintText:Hide()
 
     emptyText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontHighlight")

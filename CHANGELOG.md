@@ -26,6 +26,11 @@
   Drink". Drop an item on the gear button and choose "Add to Group" for that item, or "Add all
   ... items to Group" for the whole type (all potions, all bandages …). They come after
   Favorites and "Add to bag". Manage them under Esc → Options → AddOns → Tidy Pack → Groups.
+- The Tidy Pack gear button now sits next to the close button on every tab, and its menu also has
+  "Show quest items in Bags" and "Lock quest and set items". Each set has a "..." button for its own
+  options, so the two menus can no longer be mixed up.
+- The Quests tab is more compact: one line per quest, and the sections (Ready to turn in, In progress,
+  Other quest items) fold open and closed with a click. Your choice is remembered.
 - Quest items: each quest item shows how many you have and how many the quest needs (3/7), and its
   tooltip names the quest. A new Quests tab lists every quest that needs items, ready ones first, with
   your items, a progress bar and what you are still missing. Stacks of an item beyond what the quest

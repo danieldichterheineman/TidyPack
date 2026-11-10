@@ -1,35 +1,34 @@
 -- TidyPack – QuestsView.lua
--- Fliken Quests i väskfönstret: en översikt över quests som kräver saker. Klara quests står
--- överst ("Ready to turn in"), sedan de som pågår. Under varje quest: en rad per sak med de
--- riktiga rutorna du har (de går att använda, dra och sälja som i väskan, och har samma lås hos
--- en handlare), vad saken heter, hur många du har av hur många som behövs, och en stapel. Det du
--- inte har plockat än syns som text med en tom ruta. Saker som spelet själv markerat som
--- quest-saker men som inte hör till en quest nedan står sist under "Other quest items".
--- Samma rutor flyttas mellan flikarna (Layout.lua), så en sak syns aldrig på två ställen.
+-- Fliken Quests i väskfönstret: en översikt över quests som kräver saker, kompakt med en rad per
+-- quest. Raden har de riktiga rutorna du har (de går att använda, dra och sälja som i väskan,
+-- och har samma lås hos en handlare), questens namn och en rad med vad som behövs, och hur långt du
+-- kommit till höger. Det du inte har plockat än syns som en tom ruta. Saker som spelet själv
+-- markerat som quest-saker men som inte hör till en quest nedan står sist under "Other quest items".
+-- Avsnitten "Ready to turn in", "In progress" och "Other quest items" går att fälla ihop med ett klick
+-- på rubriken (valet sparas i TidyPackDB.questOpen). Från början är allt hopfällt, utom "Ready to
+-- turn in" när någon quest är klar. Samma rutor flyttas mellan flikarna (Layout.lua), så en sak syns
+-- aldrig på två ställen.
 -- Layout.lua ger den här filen rutorna och en funktion för att placera dem, och filen lägger ut
--- rubriker, texter och staplar (de delarna återanvänds mellan genomgångarna).
+-- rubriker och texter (de delarna återanvänds mellan genomgångarna).
 -- ⚠️ Sakerna känns igen på namnet i questloggens text, alltså på spelets språk.
 -- ⚠️ Får inte alla quests plats får de sista vänta ("...and N more"), eftersom fönstret inte
---    får bli högre än skärmen.
+--    får bli högre än skärmen. Fäll då ihop ett avsnitt.
 
 local _, ns = ...
 local L = ns.L
 
 local ITEM_CELL = 42          -- en ruta och luften efter den
-local ROW_HEIGHT = 40         -- en sak (en ruta hög)
-local HEAD_HEIGHT = 22        -- questens rubrik
-local SECTION_HEIGHT = 22     -- "Ready to turn in" och "In progress"
-local QUEST_GAP = 8
-local MAX_STACKS = 6          -- så många högar av samma sak visas bredvid varandra
-local BAR_WIDTH = 160
-local BAR_HEIGHT = 6
+local ROW_HEIGHT = 44         -- en quest (en ruta hög och lite luft)
+local HEADER_HEIGHT = 26      -- ett avsnitts rubrik
+local SECTION_GAP = 6
+local MAX_SLOTS = 6           -- så många rutor visas på en rad
 local GHOST_SIZE = 30
 local EMPTY_SLOT = "Interface\\Buttons\\UI-EmptySlot"
 local CHECK = "common-icon-checkmark"
 
-local host                    -- en egen ram i väskfönstret för texterna och staplarna
-local texts, bars, ghosts = {}, {}, {}
-local usedTexts, usedBars, usedGhosts = 0, 0, 0
+local host                    -- en egen ram i väskfönstret för texterna och rubrikerna
+local texts, ghosts, headers = {}, {}, {}
+local usedTexts, usedGhosts, usedHeaders = 0, 0, 0
 
 local function ensureHost()
     if not host and ns.bagFrame then
@@ -54,22 +53,6 @@ local function acquireText(fontObject)
     return text
 end
 
-local function acquireBar()
-    usedBars = usedBars + 1
-    local bar = bars[usedBars]
-    if not bar then
-        bar = {}
-        bar.background = ensureHost():CreateTexture(nil, "ARTWORK")
-        bar.background:SetColorTexture(0, 0, 0, 0.6)
-        bar.fill = ensureHost():CreateTexture(nil, "ARTWORK", nil, 1)
-        bars[usedBars] = bar
-    end
-    bar.background:SetSize(BAR_WIDTH, BAR_HEIGHT)
-    bar.background:Show()
-    bar.fill:Show()
-    return bar
-end
-
 local function acquireGhost()
     usedGhosts = usedGhosts + 1
     local ghost = ghosts[usedGhosts]
@@ -85,20 +68,58 @@ local function acquireGhost()
     return ghost
 end
 
+-- Är avsnittet öppet? Sparat val först, annars: bara "Ready to turn in" när någon quest är klar.
+local function isOpen(key, defaultOpen)
+    local saved = ns.db and ns.db.questOpen and ns.db.questOpen[key]
+    if saved == nil then
+        return defaultOpen
+    end
+    return saved
+end
+
+-- En rubrik du kan klicka på för att öppna eller fälla ihop avsnittet.
+local function acquireHeader(key, label, count, open, color, width)
+    usedHeaders = usedHeaders + 1
+    local header = headers[usedHeaders]
+    if not header then
+        header = CreateFrame("Button", nil, ensureHost())
+        header:SetHeight(HEADER_HEIGHT - 2)
+        header:SetHighlightAtlas("Options_List_Hover", "ADD")
+        header.text = header:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+        header.text:SetPoint("LEFT", 4, 0)
+        header:SetScript("OnClick", function(self)
+            if ns.db then
+                ns.db.questOpen = ns.db.questOpen or {}
+                ns.db.questOpen[self.key] = not self.open
+            end
+            if ns.Refresh then
+                ns.Refresh()
+            end
+        end)
+        headers[usedHeaders] = header
+    end
+    header.key, header.open = key, open
+    header:SetWidth(width)
+    local icon = ("|TInterface\\Buttons\\UI-%sButton-Up:14:14|t "):format(open and "Minus" or "Plus")
+    header.text:SetText(("%s%s (%d)"):format(icon, label, count))
+    header.text:SetTextColor(color:GetRGB())
+    header:Show()
+    return header
+end
+
 -- Döljer allt som den här filen har lagt ut (när du byter till en annan flik, och först i varje
 -- genomgång av fliken Quests).
 function ns.HideQuestsView()
     for _, text in ipairs(texts) do
         text:Hide()
     end
-    for _, bar in ipairs(bars) do
-        bar.background:Hide()
-        bar.fill:Hide()
-    end
     for _, ghost in ipairs(ghosts) do
         ghost:Hide()
     end
-    usedTexts, usedBars, usedGhosts = 0, 0, 0
+    for _, header in ipairs(headers) do
+        header:Hide()
+    end
+    usedTexts, usedGhosts, usedHeaders = 0, 0, 0
 end
 
 local function progressText(have, need)
@@ -109,17 +130,12 @@ local function progressText(have, need)
     return text
 end
 
--- Hur högt en quest blir: rubriken och en rad per sak.
-local function questHeight(quest)
-    return HEAD_HEIGHT + #quest.objectives * ROW_HEIGHT + QUEST_GAP
-end
-
 -- Lägger ut fliken Quests.
 --   byName      sakens namn → rutorna (entries i Layout.lua) som hör till en quest
 --   others      rutor med saker som spelet markerat som quest-saker men som inte hör till en quest ovan
 --   width       rutnätets bredd
 --   maxHeight   så högt får innehållet bli (nil = obegränsat)
---   placeEntry(entry, x, y) och placeRegion(del, x, y) placerar en ruta eller en text, stapel eller bild
+--   placeEntry(entry, x, y) och placeRegion(del, x, y) placerar en ruta eller en text, rubrik eller bild
 -- Returnerar höjden, listan med rutor i ordning och första rutan i varje quest (för handkontrollen).
 function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeRegion)
     ensureHost()
@@ -135,31 +151,73 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
     local y = 0
     local hidden = 0
     local placedEntries = {}  -- en ruta visas bara en gång, även om flera quests behöver saken
+
     local function fits(height)
-        return not maxHeight or y + height <= maxHeight or (#buttons == 0 and y == 0)
+        return not maxHeight or y + height <= maxHeight
     end
 
-    local function section(label, color)
-        local text = acquireText("GameFontHighlightSmall")
-        text:SetText(label)
-        text:SetTextColor(color:GetRGB())
-        placeRegion(text, 0, y)
-        y = y + SECTION_HEIGHT
+    local function section(key, label, count, open, color)
+        local header = acquireHeader(key, label, count, open, color, width)
+        placeRegion(header, 0, y)
+        y = y + HEADER_HEIGHT
     end
 
     local function placeQuest(quest)
+        -- Rutorna: de du har, och en tom ruta för varje sak du inte har något av.
+        local slots = {}
+        for _, objective in ipairs(quest.objectives) do
+            local stacks = byName[objective.name]
+            if stacks then
+                for _, entry in ipairs(stacks) do
+                    if not placedEntries[entry] then
+                        slots[#slots + 1] = entry
+                    end
+                end
+            else
+                slots[#slots + 1] = false
+            end
+        end
+        local first
+        local shown = 0
+        for _, slot in ipairs(slots) do
+            if shown >= MAX_SLOTS then
+                break
+            end
+            if slot then
+                placedEntries[slot] = true
+                placeEntry(slot, shown * ITEM_CELL, y)
+                buttons[#buttons + 1] = slot.button
+                first = first or slot.button
+            else
+                placeRegion(acquireGhost(), shown * ITEM_CELL + 3, y + 3)
+            end
+            shown = shown + 1
+        end
+        local textX = shown * ITEM_CELL + 6
+
         local head = acquireText("GameFontNormal")
         local prefix = quest.level > 0 and ("[%d] "):format(quest.level) or ""
         local mark = quest.ready and (CreateAtlasMarkup(CHECK, 12, 12) .. " ") or ""
-        head:SetWidth(width - 70)
+        head:SetWidth(math.max(40, width - textX - 60))
         head:SetText(mark .. prefix .. quest.title)
-        placeRegion(head, 0, y)
-        -- Framsteget till höger: hur många av målen som är klara om flera, annars antalet.
-        local progressLabel = acquireText("GameFontHighlightSmall")
-        progressLabel:SetWidth(width)
-        progressLabel:SetJustifyH("RIGHT")
+        placeRegion(head, textX, y + 4)
+
+        -- Vad som behövs, på en rad: "Goretusk Liver 4/8".
+        local parts = {}
+        for _, objective in ipairs(quest.objectives) do
+            parts[#parts + 1] = ("%s %s"):format(objective.name, progressText(objective.have, objective.need))
+        end
+        local detail = acquireText("GameFontHighlightSmall")
+        detail:SetWidth(math.max(40, width - textX - 60))
+        detail:SetText(table.concat(parts, "   "))
+        placeRegion(detail, textX, y + 22)
+
+        -- Framsteget till höger: antalet om en sak, annars hur många mål som är klara.
+        local total = acquireText("GameFontHighlightSmall")
+        total:SetWidth(54)
+        total:SetJustifyH("RIGHT")
         if #quest.objectives == 1 then
-            progressLabel:SetText(progressText(quest.objectives[1].have, quest.objectives[1].need))
+            total:SetText(progressText(quest.objectives[1].have, quest.objectives[1].need))
         else
             local done = 0
             for _, objective in ipairs(quest.objectives) do
@@ -167,105 +225,65 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
                     done = done + 1
                 end
             end
-            progressLabel:SetText(progressText(done, #quest.objectives))
+            total:SetText(progressText(done, #quest.objectives))
         end
-        placeRegion(progressLabel, 0, y + 2)
-        y = y + HEAD_HEIGHT
+        placeRegion(total, width - 58, y + 14)
 
-        local first
-        for _, objective in ipairs(quest.objectives) do
-            local stacks = byName[objective.name]
-            local free = {}
-            for _, entry in ipairs(stacks or {}) do
-                if not placedEntries[entry] and #free < MAX_STACKS then
-                    free[#free + 1] = entry
-                end
-            end
-            local shown = #free
-            if shown > 0 then
-                for index, entry in ipairs(free) do
-                    placedEntries[entry] = true
-                    placeEntry(entry, (index - 1) * ITEM_CELL, y)
-                    buttons[#buttons + 1] = entry.button
-                    first = first or entry.button
-                end
-            elseif not stacks then
-                -- Inget i väskorna: en tom ruta och grå text.
-                placeRegion(acquireGhost(), 3, y + 3)
-            end
-            local hasStacks = shown > 0 or stacks ~= nil
-            local textX = (shown > 0 and shown * ITEM_CELL or ITEM_CELL) + 6
-            local name = acquireText("GameFontHighlight")
-            name:SetWidth(width - textX - 10)
-            name:SetText(hasStacks and objective.name or GRAY_FONT_COLOR:WrapTextInColorCode(objective.name))
-            placeRegion(name, textX, y + 4)
-            local counts = acquireText("GameFontHighlightSmall")
-            counts:SetText(progressText(objective.have, objective.need))
-            counts:SetWidth(60)
-            placeRegion(counts, textX + 0, y + 22)
-            if objective.need > 1 then
-                local bar = acquireBar()
-                local fraction = math.min(1, objective.have / objective.need)
-                bar.fill:ClearAllPoints()
-                bar.fill:SetPoint("TOPLEFT", bar.background, "TOPLEFT")
-                bar.fill:SetPoint("BOTTOMLEFT", bar.background, "BOTTOMLEFT")
-                bar.fill:SetWidth(math.max(1, BAR_WIDTH * fraction))
-                if objective.have >= objective.need then
-                    bar.fill:SetColorTexture(0.23, 0.82, 0.23, 1)
-                else
-                    bar.fill:SetColorTexture(0.79, 0.64, 0.15, 1)
-                end
-                placeRegion(bar.background, textX + 50, y + 27)
-            end
-            y = y + ROW_HEIGHT
-        end
         firsts[#firsts + 1] = first
-        y = y + QUEST_GAP
+        y = y + ROW_HEIGHT
     end
 
-    local function placeList(quests)
-        for _, quest in ipairs(quests) do
-            if fits(questHeight(quest) + SECTION_HEIGHT) then
-                placeQuest(quest)
-            else
-                hidden = hidden + 1
+    local function placeSection(key, label, quests, color, defaultOpen)
+        if #quests == 0 then
+            return
+        end
+        if not fits(HEADER_HEIGHT) then
+            hidden = hidden + #quests
+            return
+        end
+        local open = isOpen(key, defaultOpen)
+        section(key, label, #quests, open, color)
+        if open then
+            for _, quest in ipairs(quests) do
+                if fits(ROW_HEIGHT) then
+                    placeQuest(quest)
+                else
+                    hidden = hidden + 1
+                end
             end
         end
+        y = y + SECTION_GAP
     end
 
-    if #ready > 0 then
-        section(L["Ready to turn in"], GREEN_FONT_COLOR)
-        placeList(ready)
-    end
-    if #progress > 0 then
-        if #ready > 0 then
-            section(L["In progress"], GRAY_FONT_COLOR)
-        end
-        placeList(progress)
-    end
+    placeSection("ready", L["Ready to turn in"], ready, GREEN_FONT_COLOR, true)
+    placeSection("progress", L["In progress"], progress, NORMAL_FONT_COLOR, false)
 
     -- Quest-saker utan quest ovan, i ett rutnät.
-    if #others > 0 and fits(SECTION_HEIGHT + ROW_HEIGHT) then
-        section(L["Other quest items"], GRAY_FONT_COLOR)
-        local columns = math.max(1, math.floor((width + 5) / ITEM_CELL))
-        for index, entry in ipairs(others) do
-            local column = (index - 1) % columns
-            local row = math.floor((index - 1) / columns)
-            placeEntry(entry, column * ITEM_CELL, y + row * ITEM_CELL)
-            buttons[#buttons + 1] = entry.button
-            if index == 1 then
-                firsts[#firsts + 1] = entry.button
+    if #others > 0 and fits(HEADER_HEIGHT) then
+        local open = isOpen("other", false)
+        section("other", L["Other quest items"], #others, open, GRAY_FONT_COLOR)
+        if open then
+            local columns = math.max(1, math.floor((width + 5) / ITEM_CELL))
+            for index, entry in ipairs(others) do
+                local column = (index - 1) % columns
+                local row = math.floor((index - 1) / columns)
+                placeEntry(entry, column * ITEM_CELL, y + row * ITEM_CELL)
+                buttons[#buttons + 1] = entry.button
+                if index == 1 then
+                    firsts[#firsts + 1] = entry.button
+                end
             end
+            y = y + math.ceil(#others / columns) * ITEM_CELL
         end
-        y = y + math.ceil(#others / columns) * ITEM_CELL + QUEST_GAP
+        y = y + SECTION_GAP
     end
 
     if hidden > 0 then
         local more = acquireText("GameFontDisableSmall")
         more:SetWidth(width)
-        more:SetText(L["...and %d more quests – see your quest log."]:format(hidden))
+        more:SetText(L["...and %d more quests – fold a section above or see your quest log."]:format(hidden))
         placeRegion(more, 0, y)
-        y = y + SECTION_HEIGHT
+        y = y + HEADER_HEIGHT
     end
     if #list == 0 and #others == 0 then
         local empty = acquireText("GameFontHighlight")

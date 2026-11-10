@@ -16,6 +16,7 @@ ns.defaults = {
     -- Skräplistan: itemID → true (se Marks.lua).
     junk = {},
     -- Spelarens egna grupper (se Groups.lua) och numret nästa grupp får.
+    questOpen = {},           -- vilka avsnitt i fliken Quests som är öppna (QuestsView.lua)
     groups = {},
     nextGroupID = 1,
     -- Blir sant när Tidy Pack en gång har berättat att Questie låser upp "Needed later"

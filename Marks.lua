@@ -186,6 +186,22 @@ local function buildMenu(_, rootDescription)
         rootDescription:CreateButton(L["Settings..."], function()
             ns.OpenSettings()
         end)
+        -- De vanligaste valen direkt i menyn (samma värden som på inställningssidan).
+        rootDescription:CreateDivider()
+        for _, option in ipairs({
+            { "showQuestItemsInBags", L["Show quest items in Bags"] },
+            { "lockAtMerchant", L["Lock quest and set items"] },
+        }) do
+            local key = option[1]
+            rootDescription:CreateCheckbox(option[2], function()
+                return ns.db[key] == true
+            end, function()
+                ns.db[key] = not ns.db[key]
+                if ns.Refresh then
+                    ns.Refresh()
+                end
+            end)
+        end
     end
 end
 
@@ -215,12 +231,16 @@ ns.OnLoad(function()
         return
     end
 
-    -- Kugghjulet sitter där spelets sorteringsknapp satt (TOPRIGHT -9, -34, i höjd med sökrutan). Den
-    -- är spelets egen menyknapp (DropdownButton), så menyn öppnas under den och fungerar
+    -- Kugghjulet är Tidy Packs enda knapp i fönstret. Det är spelets egen menyknapp (DropdownButton), så menyn öppnas under den och fungerar
     -- med handkontroll som spelets egna menyer.
     gearButton = CreateFrame("DropdownButton", nil, bagFrame)
     gearButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
-    gearButton:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9, -34)
+    -- Sitter i fönsterhuvudet, till vänster om stängknappen (finns den inte: nära hörnet).
+    if bagFrame.CloseButton then
+        gearButton:SetPoint("RIGHT", bagFrame.CloseButton, "LEFT", -2, 0)
+    else
+        gearButton:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -30, -3)
+    end
     gearButton:SetNormalAtlas(BUTTON_ATLAS)
     gearButton:SetHighlightAtlas(BUTTON_ATLAS, "ADD")
     -- Bilden lite mindre än knappen, så att kugghjulet inte blir suddigt.
@@ -258,6 +278,6 @@ ns.OnLoad(function()
     hooksecurefunc(bagFrame, "SetSearchBoxPoint", function(_, searchBox)
         searchBox:ClearAllPoints()
         searchBox:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", ns.SEARCH_BOX_LEFT or 62, -37)
-        searchBox:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9 - BUTTON_SIZE - 9, -37)
+        searchBox:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9, -37)
     end)
 end)

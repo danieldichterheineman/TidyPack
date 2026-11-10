@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8"><title>Tidy Pack – skiss: kugghjul, radmeny och kompakt Quests</title>
+<style>
+:root{--g:#ffd100;--w:#fff;--gr:#808080;--ok:#3bd13b}
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 -apple-system,Arial,sans-serif;width:1500px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px}
+.row{display:flex;gap:24px;align-items:flex-start}
+.col h2{font-size:14px;color:#ffd100;margin:0 0 6px}
+.bag{position:relative;width:440px;background:linear-gradient(160deg,#24221f,#141311);border:2px solid #6e6252;border-radius:6px;box-shadow:0 0 0 1px #000;padding:30px 12px 12px}
+.tabs{display:flex;gap:6px;position:absolute;top:-24px;left:14px}
+.tab{padding:2px 16px;background:#2a2622;border:1px solid #6e6252;border-bottom:0;border-radius:4px 4px 0 0;font:12px Georgia,serif;color:#c9b27a}
+.tab.on{background:#3a3228;color:#ffd100;position:relative;top:0}
+.title{position:absolute;left:0;right:0;top:0;height:24px;border-bottom:1px solid #000;background:linear-gradient(#3a3631,#24221f);font:13px/24px Georgia,serif;color:#ffd100;text-align:center}
+.close{position:absolute;top:2px;right:3px;width:20px;height:20px;border-radius:50%;background:radial-gradient(#b22219,#5b0d08);border:1px solid #d4af37;color:#ffd9a0;font:bold 12px/18px Arial;text-align:center}
+.gear{position:absolute;top:2px;right:28px;width:20px;height:20px;border-radius:3px;border:1px solid #d4af37;background:#2a2218;color:#ffd100;font:14px/17px Arial;text-align:center}
+.hl{outline:2px solid #4aa3ff;outline-offset:2px}
+.callout{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:12px/1.3 Arial;padding:4px 8px;border-radius:4px;white-space:nowrap;z-index:5}
+.sl{display:inline-block;width:34px;height:34px;border:1px solid #555;background:#0a0a0a;margin:0 4px 4px 0;vertical-align:top;position:relative;border-radius:3px}
+.sl i{position:absolute;inset:3px;border-radius:3px}
+.sl b{position:absolute;right:2px;bottom:0;font:11px Arial;color:#fff}
+.sl.q{border-color:#555}.sl.q em{position:absolute;left:2px;top:0;font:bold 10px Arial;font-style:normal;color:#fff;text-shadow:1px 1px 0 #000}
+.ghost{background:#0a0a0a;border:1px dashed #444;opacity:.6}
+.set{background:#0f0e0d;border:1px solid #2a2622;padding:8px;position:relative;margin-bottom:8px}
+.dots{position:absolute;right:8px;top:8px;width:22px;height:20px;border:1px solid #4a4030;border-radius:3px;color:#d9c48a;text-align:center;font:bold 14px/14px Arial;letter-spacing:1px}
+.sec{font:12px Arial;color:#9a9a9a;margin:6px 0 4px;display:flex;justify-content:space-between;cursor:pointer}
+.sec .arrow{color:#ffd100}.sec.ready{color:#3bd13b}
+.qr{display:flex;align-items:center;gap:6px;height:38px;border-top:1px solid #1d1b19}
+.qr .name{flex:1;font:12px Arial;color:#ffd100;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qr .name small{color:#bbb;font-size:11px}
+.qr .cnt{font:12px Arial;color:#fff;width:34px;text-align:right}.qr .cnt.ok{color:var(--ok)}
+.sb{position:absolute;right:-2px;top:70px;bottom:46px;width:8px;background:#0a0a0a;border:1px solid #333;border-radius:4px}
+.sb i{position:absolute;left:0;right:0;top:0;height:55%;background:#6e6252;border-radius:4px}
+.menu{position:absolute;background:#0c0c0c;border:1px solid #666;padding:4px 8px;font:12px Arial;color:#ffd100;line-height:1.7;z-index:6;white-space:nowrap}
+.menu span{display:block;color:#fff}.menu hr{border:0;border-top:1px solid #333;margin:3px 0}
+.ft{position:absolute;bottom:4px;right:12px;font:11px Arial;color:#fff}
+.wrap{position:relative;padding-top:26px}
+</style></head><body>
+<h1>Tidy Pack – ett kugghjul, ⋯ på raderna och kompakt Quests</h1>
+<p class="n">Skiss, inte spelet. Blå markeringar visar det som är nytt. Samma fönsterbredd som i dag; Quests är en rad per quest.</p>
+<div class="row">
+
+<div class="col"><h2>1. Bags: ett kugghjul vid stängknappen</h2><div class="wrap"><div class="bag" style="height:330px">
+<div class="tabs"><div class="tab on">Bags</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+<div class="title">Backpack</div><div class="gear hl">⚙</div><div class="close">✕</div>
+<div class="callout" style="right:-8px;top:-30px">Tidy Pack-menyn (ersätter kugghjulet inne i fönstret)</div>
+<div class="menu" style="right:6px;top:30px"><b style="color:#ffd100">Tidy Pack</b><span>Junk List…</span><span>Groups…</span><span>Settings…</span><hr><span>☑ Show quest items in Bags</span><span>☑ Lock sets at merchants</span></div>
+<div style="margin-top:6px;border:1px solid #444;height:20px;border-radius:3px;background:#050505;color:#666;font:11px Arial;padding:2px 6px;width:300px">Search</div>
+<div style="margin-top:10px;color:#ffd100;font:12px Arial">Favorites&nbsp;&nbsp;&nbsp;Add to bag&nbsp;&nbsp;&nbsp;Potions</div>
+<div class="sl"><i style="background:#6aa"></i></div><div class="sl"><i style="background:#555"></i></div><div class="sl"><i style="background:#c44"></i></div>
+<div style="margin-top:6px;color:#ffd100;font:12px Arial">Consumables</div>
+<div class="sl"><i style="background:#999"></i></div><div class="sl"><i style="background:#cb4"></i></div><div class="sl"><i style="background:#d82"></i></div>
+<div class="ft">28 ● 35 ●</div></div></div></div>
+
+<div class="col"><h2>2. Sets: ⋯ på raden i stället för kugghjul</h2><div class="wrap"><div class="bag" style="height:330px">
+<div class="tabs"><div class="tab">Bags</div><div class="tab on">Sets</div><div class="tab">Quests</div></div>
+<div class="title">Backpack</div><div class="gear">⚙</div><div class="close">✕</div>
+<div style="height:26px"><span style="background:#a01010;border:1px solid #d4af37;color:#ffd9a0;padding:2px 22px;font:12px Arial;border-radius:3px">New Set</span></div>
+<div class="set" style="margin-top:10px"><b style="color:#fff;font:13px Arial">Normal</b> <span style="color:#3bd13b;font:11px Arial">✓ Equipped</span><br>
+<div class="sl" style="margin-top:6px"><i style="background:#a44"></i></div><div class="sl" style="margin-top:6px"><i style="background:#687"></i></div><div class="sl" style="margin-top:6px"><i style="background:#889"></i></div><div class="sl" style="margin-top:6px"><i style="background:#9a8"></i></div>
+<div class="dots hl">⋯</div>
+<div class="callout" style="right:-8px;top:-26px">⋯ = val för just den här raden</div></div>
+<div style="color:#999;font:11px Arial">Tip: drop an item on a set to add it. The ⋯ button has more options.</div>
+</div></div></div>
+
+<div class="col"><h2>3. Quests: kompakt, hopfällbart, scroll vid behov</h2><div class="wrap"><div class="bag" style="height:330px">
+<div class="tabs"><div class="tab">Bags</div><div class="tab">Sets</div><div class="tab on">Quests <span style="color:#3bd13b">●</span></div></div>
+<div class="title">Backpack</div><div class="gear">⚙</div><div class="close">✕</div>
+<div class="sec ready hl"><span>▼ Ready to turn in (1)</span></div>
+<div class="qr"><div class="sl q" style="margin:0"><i style="background:#c55"></i><em>4/8</em></div><div class="name">[12] Goretusk Liver Pie<br><small>Goretusk Liver</small></div><div class="cnt ok">4/8</div></div>
+<div class="sec hl"><span>▶ In progress (7) – click to expand</span></div>
+<div class="qr"><div class="sl q" style="margin:0"><i style="background:#c83"></i><em>3</em></div><div class="sl q" style="margin:0"><i style="background:#ccc"></i><em>3</em></div><div class="sl ghost" style="margin:0"></div><div class="name" style="padding-left:4px">[13] Westfall Stew</div><div class="cnt" style="margin-right:10px">3/4</div></div>
+<div class="qr"><div class="sl ghost" style="margin:0"></div><div class="sl ghost" style="margin:0"></div><div class="sl ghost" style="margin:0"></div><div class="sl ghost" style="margin:0"></div><div class="name" style="padding-left:4px">[15] Dry Times</div><div class="cnt" style="margin-right:10px">0/4</div></div>
+<div class="sb hl"><i></i></div>
+<div class="callout" style="right:-8px;top:206px">Rullist bara om det inte ryms</div>
+<div class="ft">28 ● 35 ●</div></div></div></div>
+
+</div>
+<p class="n" style="margin-top:16px;max-width:1400px">Quests-raden: rutorna som saknas är tomma (grå), namnet och totalen står på samma rad. Håller du musen över en ruta ser du föremålets namn, antal och vilken quest det hör till. "In progress" kan fällas ihop med ett klick, och valet kommer ihåg till nästa gång. Utan föremål-quests syns de inte alls.</p>
+</body></html>

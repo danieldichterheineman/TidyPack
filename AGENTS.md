@@ -434,6 +434,14 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+36. Kugghjul och ⋯ (2026-11-10): ett kugghjul i fönsterhuvudet, till vänster om stängknappen, på alla
+    flikar: meny med Junk List, Groups, Settings och två kryssrutor (Show quest items in Bags, Lock quest
+    and set items); en sak som släpps på det öppnar menyn för favorit/skräp/set/grupp som förut. Sökrutan
+    går ända fram till kanten. På varje set-rad står "..." (tooltip "More options") i stället för ett
+    kugghjul. Quests: tre rubriker med antal ("Ready to turn in (1)", "In progress (7)", "Other quest
+    items (3)") med plus/minus; allt hopfällt första gången utom "Ready to turn in" när en quest är klar;
+    ett klick fäller ut och valet finns kvar efter /reload. En rad per quest: rutor, namn, vad som behövs,
+    totalen till höger. Ingen rullist (inte byggd): ryms inte allt står "...and N more quests".
 35. Quest-saker: ta en quest som kräver saker (t.ex. fenor, 3 av 7). Bags: Quest Items visar "3/7" på
     rutan, grönt när det räcker; tooltipen säger "Needed for: <quest> (3/7)". Har du två högar av samma sak
     med mer än questen behöver: den största hålls kvar i Quest Items, den andra ligger bland vanliga saker och
