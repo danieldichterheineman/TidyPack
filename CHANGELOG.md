@@ -1,46 +1,42 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 (2026-11-10)
 
-- Fixed: with a special bag (a quiver, ammo pouch, soul bag or profession bag such as a
-  mining bag), sorting could stop working after logging in or reloading, leaving the
-  game's own grid.
-- Cleaner look: a solid, dark background behind your items, so the world no longer shows
-  through, and more room between the groups.
-- The Sets tab explains itself when you have no sets yet.
-- Sets: a gear button on every set opens its menu, also with a controller. The new "Add
-  What I'm Wearing" puts everything you wear into the set in one click.
-- New setting: "Lock quest and set items" turns the locks at merchants on or off.
+New
+
+- Quests tab: a list of the quests that need items, with ready ones first. Open "In progress",
+  then a quest, to see your items and what is still missing. A dot on the tab shows when a quest
+  is ready to turn in, and your open sections are remembered.
+- Quest items show how many you have and how many the quest needs (3/7), and their tooltip names
+  the quest. Stacks beyond what the quest needs are no longer locked at merchants.
+- Your own groups: make up to 8 groups with names you choose, like "Potions". Add a single item,
+  or a whole type at once ("Add all ... items to Group"). They come after Favorites and "Add to
+  bag". Manage them under Esc → Options → AddOns → Tidy Pack → Groups.
+- Alt-click an item for a menu: favorite, junk list, sets and groups. Holding Alt shows a small
+  "..." on every item, and a tip in the Bags tab explains it the first few times.
+- Sets: "Add What I'm Wearing" puts everything you wear into a set in one click. Each set has a
+  "..." button for its options, which also works with a controller.
+- "Add to bag": the slot that shows your free slots now stands next to Favorites, and an item
+  you drop on it goes into your bags. The free-slot count is also shown on the backpack icon.
+- New settings: "Lock items at merchants" and "Show quest items in Bags".
+
+Changed
+
+- The gear button sits next to the close button on every tab. Click it for your junk list,
+  groups and settings, or drop an item on it for the item's menu.
+- Cleaner look: a solid, dark background behind your items and more room between the groups.
+- The window is 14 items wide, and gets wider (up to 20) when your bags are so full that it
+  would otherwise be taller than the screen. It keeps its size when you switch tabs.
+- The settings page is in a clearer order: Bag window, Merchants, Quests, Junk.
+- Alt-click now opens the item's menu instead of marking a favorite directly, and
+  Alt-right-click no longer marks junk. Both are in the menu.
 - Removed the Sell Junk button. Use the merchant's own "Sell All Junk" button instead. Note
   that it sells every grey item and doesn't know about Tidy Pack's locks or junk list.
-- More room between your items and the border of the background, and a lighter background.
-- The window is now 14 items wide, and gets wider (up to 20) when your bags are so full
-  that it would otherwise be taller than the screen.
-- The Sets tab is as tall as the Bags tab, so the window no longer changes size when you
-  switch. With a few sets it also shows a short tip.
-- The number of free slots is shown on the backpack icon, also when you play with a mouse.
-- The slot that shows your free slots is now called "Add to bag" and stands next to Favorites
-  instead of at the bottom. It has a + and a tooltip, and an item you drop on it goes into
-  your bags. Controller: the cursor still starts on an item.
-- Your own groups: make up to 8 groups with names you choose, like "Potions" or "Food &
-  Drink". Drop an item on the gear button and choose "Add to Group" for that item, or "Add all
-  ... items to Group" for the whole type (all potions, all bandages …). They come after
-  Favorites and "Add to bag". Manage them under Esc → Options → AddOns → Tidy Pack → Groups.
-- The Tidy Pack gear button now sits next to the close button on every tab, and its menu also has
-  "Show quest items in Bags" and "Lock quest and set items". Each set has a "..." button for its own
-  options, so the two menus can no longer be mixed up.
-- The settings page is in a clearer order (Bag window, Merchants, Quests, Junk), with a button to your own groups. "Lock quest and set items" is now called "Lock items at merchants".
-- Alt-click an item to open a menu for it (favorite, junk list, sets, groups). Holding Alt shows a small "..." on every item, item tooltips mention it, the gear button says "Drop here for options" while you hold an item, and a tip at the bottom of the Bags tab explains it for the first few times. Alt-right-click no longer marks junk; use the menu.
-- A set's "..." button now sits right after its items, and its menu lists the items you can remove directly (up to 6), so side menus have room to open the right way.
-- The Quests tab is now a list: open "In progress" to see one line per quest, then open a quest to see
-  its items and what is still missing, one quest at a time. The sections (Ready to turn in, In
-  progress, Other quest items) fold open and closed too. Your choices are remembered.
-- Quest items: each quest item shows how many you have and how many the quest needs (3/7), and its
-  tooltip names the quest. A new Quests tab lists every quest that needs items, ready ones first, with
-  your items, a progress bar and what you are still missing. Stacks of an item beyond what the quest
-  needs are no longer locked at merchants. A dot on the tab shows when a quest is ready to turn in.
-  The setting "Show quest items in Bags" can move them out of the Bags tab (a line there says how many
-  slots they use).
+
+Fixed
+
+- With a special bag (a quiver, ammo pouch, soul bag or profession bag such as a mining bag),
+  sorting could stop working after logging in or reloading, leaving the game's own grid.
 - If the game ever blocks something because of Tidy Pack, a line in chat now says what was
   blocked, so you can report it.
 
