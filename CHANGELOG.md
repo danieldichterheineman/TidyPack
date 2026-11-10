@@ -29,7 +29,7 @@
 - The Tidy Pack gear button now sits next to the close button on every tab, and its menu also has
   "Show quest items in Bags" and "Lock quest and set items". Each set has a "..." button for its own
   options, so the two menus can no longer be mixed up.
-- A set's menu lists the items you can remove directly (up to 6) instead of in a side menu that could open on the wrong side.
+- A set's "..." button now sits right after its items, and its menu lists the items you can remove directly (up to 6), so side menus have room to open the right way.
 - The Quests tab is now a list: open "In progress" to see one line per quest, then open a quest to see
   its items and what is still missing, one quest at a time. The sections (Ready to turn in, In
   progress, Other quest items) fold open and closed too. Your choices are remembered.

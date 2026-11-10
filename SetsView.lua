@@ -252,7 +252,7 @@ local function acquireRow(index, parent)
     -- med handkontroll.
     row.menu = CreateFrame("DropdownButton", nil, row)
     row.menu:SetSize(22, 22)
-    row.menu:SetPoint("RIGHT", row.equip, "LEFT", -6, 0)
+    row.menu:SetPoint("RIGHT", row.equip, "LEFT", -6, 0) -- flyttas efter sakerna i fillRow
     -- Tre punkter i stället för ett kugghjul, så att det syns att knappen gäller just den här raden
     -- (kugghjulet i fönsterhuvudet gäller hela Tidy Pack).
     row.menu.dots = row.menu:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
@@ -314,6 +314,10 @@ local function fillRow(row, index, set)
     end
     row.plus:ClearAllPoints()
     row.plus:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", after, -2)
+    -- Menyknappen sitter efter sakerna, inte längst till höger: menyn öppnas under knappen, och
+    -- då får en undermeny plats åt höger (längst ut vid skärmens kant öppnas den åt fel håll).
+    row.menu:ClearAllPoints()
+    row.menu:SetPoint("BOTTOMLEFT", row.icon, "BOTTOMRIGHT", after + MINI_SIZE + 8, -4)
 
     -- Efter namnet: på dig, varning för det som saknas, eller hur många saker setet har.
     local count, missing, worn = ns.GetSetStatus(index)
