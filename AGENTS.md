@@ -261,9 +261,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - Egna grupper är byggda (2026-11-10, se Funktioner). Kompisens förslag (2026-11-10): visa vilken
   quest en sak hör till och antal (3/7), och bara låsa det som behövs. Skiss med tre sätt i
   `.design/sketch-quests.html` (och `.png`): A antal på ikonen och i tooltipen (rekommenderas
-  först), B en grupp med rubrik per quest, C en flik "Quests". Spelet ger `numFulfilled` och
+  först), B en grupp med rubrik per quest, C en flik "Quests". Planen: A, sedan C som en översikt, med Quest Items kvar i väskan (B behövs troligen inte); skiss i `.design/sketch-quests-tab.html` (och `.png`): klara quests överst, grön prick på fliken, och ett valfritt val "Show quest items in the Bags tab" (påslaget från början; avstängt ersätts gruppen av en rad "N slots hold quest items – see Quests"). Samma rutor flyttas mellan flikarna, aldrig i båda samtidigt. Spelet ger `numFulfilled` och
   `numRequired` per mål (`C_QuestLog.GetQuestObjectives`, kontrollerat i forever). En hög är en
-  ruta och kan inte delas i visningen, men överblivna högar kan bli säljbara. Väntar på val.
+  ruta och kan inte delas i visningen, men överblivna högar kan bli säljbara. Väntar på ett ja till planen.
 - Nästa efter första testet: introduktion med sex korta tips i spelets tipsruta (välkommen,
   stjärnan, LB/RB, låsta saker, större väska), ett i taget och en gång per konto.
   Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
