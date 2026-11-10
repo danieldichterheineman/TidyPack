@@ -512,6 +512,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   `TidyPack-v1.0.1-forever.zip`, laddade upp den till CurseForge ("Success!", spelversion 1.60.1, typ
   release) och skapade en release på GitHub. Det var första uppladdningen via Upload API:t, så nyckeln
   `CF_API_TOKEN` fungerar. Kontrollera på CurseForge att filen blir godkänd och synlig.
+- Filen fick visningsnamnet "v1.0.1-forever" på CurseForge (packagerns standard: taggen och speltypen).
+  Från nästa version sätter arbetsflödet namnet med `-n "TidyPack-<version>:TidyPack <version>"` (filnamn:
+  visningsnamn), med versionen ur TOC-filen.
 - 1.0.0 laddades upp för hand 2026-11-09 med "publish manually once approved" och står som "Pending
   Release". Den har kraschen med specialväskor och knappen Sell Junk och ska **aldrig publiceras** –
   användaren tar bort den eller låter den stå orörd.

@@ -34,16 +34,20 @@ jobs:
       # Versionen i TidyPack.toc är ett fast nummer. Stämmer den inte med taggen stoppas
       # körningen innan något laddas upp, så att spelare aldrig får fel versionsnummer.
       - name: Check that the tag matches the version in the TOC file
+        id: version
         run: |
           toc_version=$(grep -m1 '^## Version:' TidyPack.toc | sed 's/^## Version:[[:space:]]*//' | tr -d '\r')
           if [ "v${toc_version}" != "${GITHUB_REF_NAME}" ]; then
             echo "::error::The tag is ${GITHUB_REF_NAME}, but TidyPack.toc says version ${toc_version}. Nothing was uploaded."
             exit 1
           fi
+          echo "version=${toc_version}" >> "$GITHUB_OUTPUT"
 
       # -u: Unix-radslut (LF), samma som filerna du provar i spelet. Packagern skriver annars
       # Windows-radslut (CRLF), vilket spelet också läser men som gör filerna annorlunda.
+      # -n "filnamn:visningsnamn": zip-filen heter TidyPack-1.0.1.zip och filen visas som
+      # "TidyPack 1.0.1" på CurseForge. Utan -n blir namnet taggen och speltypen ("v1.0.1-forever").
       - name: Package and release
         uses: BigWigsMods/packager@v2
         with:
-          args: -u
+          args: -u -n "TidyPack-${{ steps.version.outputs.version }}:TidyPack ${{ steps.version.outputs.version }}"

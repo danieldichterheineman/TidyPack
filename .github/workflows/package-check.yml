@@ -20,10 +20,17 @@ jobs:
         with:
           fetch-depth: 0 # hela historiken, som i det riktiga arbetsflödet
 
+      - name: Read the version from the TOC file
+        id: version
+        run: |
+          toc_version=$(grep -m1 '^## Version:' TidyPack.toc | sed 's/^## Version:[[:space:]]*//' | tr -d '\r')
+          echo "version=${toc_version}" >> "$GITHUB_OUTPUT"
+
+      # -d: ingen uppladdning, -u: Unix-radslut (LF), -n: samma namn som i releasen.
       - name: Build the package without uploading
         uses: BigWigsMods/packager@v2
         with:
-          args: -d -u # -d: ingen uppladdning, -u: Unix-radslut (LF) som releasen
+          args: -d -u -n "TidyPack-${{ steps.version.outputs.version }}:TidyPack ${{ steps.version.outputs.version }}"
 
       - name: List what is in the package
         run: |
