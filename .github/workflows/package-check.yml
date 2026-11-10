@@ -23,7 +23,7 @@ jobs:
       - name: Build the package without uploading
         uses: BigWigsMods/packager@v2
         with:
-          args: -d
+          args: -d -u # -d: ingen uppladdning, -u: Unix-radslut (LF) som releasen
 
       - name: List what is in the package
         run: |

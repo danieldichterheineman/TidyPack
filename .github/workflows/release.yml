@@ -41,5 +41,9 @@ jobs:
             exit 1
           fi
 
+      # -u: Unix-radslut (LF), samma som filerna du provar i spelet. Packagern skriver annars
+      # Windows-radslut (CRLF), vilket spelet också läser men som gör filerna annorlunda.
       - name: Package and release
         uses: BigWigsMods/packager@v2
+        with:
+          args: -u
