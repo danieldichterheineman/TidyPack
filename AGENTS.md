@@ -513,7 +513,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   release) och skapade en release på GitHub. Det var första uppladdningen via Upload API:t, så nyckeln
   `CF_API_TOKEN` fungerar. Kontrollera på CurseForge att filen blir godkänd och synlig.
 - Filen fick visningsnamnet "v1.0.1-forever" på CurseForge (packagerns standard: taggen och speltypen).
-  Från nästa version sätter arbetsflödet namnet med `-n "TidyPack-<version>:TidyPack <version>"` (filnamn:
+  Från nästa version sätter arbetsflödet namnet med `-n "TidyPack-<version>:TidyPack-<version>"` (filnamn:
   visningsnamn), med versionen ur TOC-filen.
 - 1.0.0 laddades upp för hand 2026-11-09 med "publish manually once approved" och står som "Pending
   Release". Den har kraschen med specialväskor och knappen Sell Junk och ska **aldrig publiceras** –
