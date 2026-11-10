@@ -14,6 +14,8 @@ local L = ns.L
 
 local ROW_HEIGHT = 50
 local ROW_GAP = 4
+local HINT_MAX_SETS = 3  -- hjälptexten under raderna visas när du har så här få set
+local HINT_INSET, HINT_GAP = 6, 12
 local EMPTY_TOP = 24     -- tomt läge: luft ovanför texten och under knappen
 local EMPTY_INSET = 30   -- tomt läge: textens marginal på var sida
 local NEW_SET_LEFT, NEW_SET_TOP = 62, -36 -- knappen New Set på sökrutans plats
@@ -27,7 +29,7 @@ ns.SEARCH_BOX_LEFT = TAB_LEFT
 local WARNING_ICON = "Interface\\DialogFrame\\UI-Dialog-Icon-AlertNew"
 
 local view = "bags"
-local tabSystem, tabHost, emptyText, newSetButton
+local tabSystem, tabHost, emptyText, hintText, newSetButton
 local rows = {}
 
 function ns.IsSetsView()
@@ -59,6 +61,9 @@ function ns.SetView(newView)
     end
     for _, row in ipairs(rows) do
         row:Hide()
+    end
+    if hintText then
+        hintText:Hide() -- visas av ns.LayoutSetsView när fliken Sets ritas
     end
     if newSetButton then
         newSetButton:SetShown(view == "sets")
@@ -338,6 +343,16 @@ function ns.LayoutSetsView(place, width)
     for index = #sets + 1, #rows do
         rows[index]:Hide()
     end
+    -- Med få set förklaras hur man lägger till saker, så att den tomma ytan under raderna
+    -- inte ser ofärdig ut.
+    if #sets >= 1 and #sets <= HINT_MAX_SETS then
+        hintText:SetWidth(width - 2 * HINT_INSET)
+        place(hintText, HINT_INSET, y + HINT_GAP)
+        hintText:Show()
+        y = y + HINT_GAP + math.ceil(hintText:GetStringHeight())
+    else
+        hintText:Hide()
+    end
     return math.max(y, MIN_HEIGHT), shown
 end
 
@@ -379,6 +394,12 @@ ns.OnLoad(function()
         tab:UpdateTabWidth()
     end
     tabSystem:SetTabVisuallySelected(1)
+
+    hintText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    hintText:SetJustifyH("LEFT")
+    hintText:SetAlpha(0.75)
+    hintText:SetText(L["Tip: drop an item on a set to add it. The gear button has more options."])
+    hintText:Hide()
 
     emptyText = tabHost:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     emptyText:SetJustifyH("CENTER")

@@ -28,7 +28,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 ## Funktioner
 - ✅ Elva grupper i fast ordning: Favorites, New, Consumables, Equipment, Trade Goods,
   Quest Items, Keys, Bags, Miscellaneous, Junk, Empty. Tomma grupper visas inte.
-  Indelningen står i `Categories.lua`. Mer luft mot ramen än spelets rutnät (6 enheter på
+  Indelningen står i `Categories.lua`. Mer luft mot ramen än spelets rutnät (se Layout.lua; ursprungligen 6 enheter på
   var sida, 4 under sökrutan, 9 ovanför pengarna).
 - ✅ Specialväskor (`Layout.lua`): koger, ammunitionspåsar, själsväskor, yrkesväskor
   (`bagFamily` ≠ 0) och reagensväskan får varsin grupp längst ned, under spelets linje
@@ -50,13 +50,30 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ⚠️ Set tas bara på utanför strid (spelet låter ingen byta rustning i strid). Flikarna
   och raderna med handkontroll är inte provade; kugghjulets meny har "Show Sets"/"Show
   Bags" som reserv, bara med handkontroll.
-- ✅ Hel, mörk bakgrund bakom sakerna (`inset` i `Layout.lua`, spelets `InsetFrameTemplate`
-  med mörkare marmor), så att världen och questlistan inte lyser igenom när de tomma rutorna
-  döljs, och mer luft mellan grupperna (`SHELF_GAP`). Inte provat i spelet än – färgen
-  justeras efter en skärmbild.
+- ✅ Hel bakgrund bakom sakerna (`inset` i `Layout.lua`, spelets `InsetFrameTemplate` med
+  marmorn tonad till 0,7), så att världen och questlistan inte lyser igenom när de tomma
+  rutorna döljs. Provat i spelet 2026-11-10 (1.0.1-testet): fungerar, men var nästan svart
+  (0,4) och sakerna låg bara 4 enheter från bakgrundens kant. Nu: 12 enheters luft innanför
+  bakgrunden (`INSET_PAD`, `PADDING_SIDE` 14, `PADDING_TOP` 16, `MONEY_GAP` 16) och färgen
+  0,7. Inte provat i spelet.
+- ✅ Antal kolumner (`chooseColumns`, `flow` i `Layout.lua`): 14 som standard och upp till 20
+  när sakerna annars skulle göra fönstret högre än skärmen. Skälet: spelet krymper
+  väskfönstret till högst 75 % (`GetContainerScale`, `CONTAINER_SCALE` i
+  `Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua`, nedre marginal `CONTAINER_OFFSET_Y`
+  85) men räknar bara om skalan när fönstret öppnas. Tidy Pack siktar på skala 0,85
+  (`TARGET_SCALE`). Egen uträkning (inte provad i spelet, 36 platser antagen som största
+  väska, skärmhöjd 768): med 12 kolumner blev 160 fyllda platser ca 1050 enheter höga och
+  fick inte plats ens vid 75 %; med 20 kolumner ca 770. Bredden begränsas till 75 % av
+  skärmen. 14 kolumner gör också att grupper med 13 saker får plats på en rad.
+- ✅ Fönstret är lika högt i fliken Sets som i Bags (`bagsContentHeight`), och växer bara om
+  setlistan är längre. Med 1–3 set förklarar en hjälptext hur man lägger till saker
+  (`hintText` i `SetsView.lua`).
+- ✅ Lediga platser i väskikonen uppe till vänster, som spelet visar med handkontroll
+  (`CountContainer.Count`; spelet visar den bara då): `updatePortraitCount` visar den också
+  med mus. Gruppen Free och dess ruta är kvar (släppplats för saker).
 - ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
   vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
-  bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 12 rutor brett.
+  bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 14 rutor brett, och bredare (upp till 20) när sakerna annars skulle bli för höga.
 - ✅ Kugghjulet (`Marks.lua`) är den enda knapp Tidy Pack lägger i väskfönstret, på
   sorteringsknappens plats. Det är spelets egen menyknapp (`DropdownButton`): med en sak på
   markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List" /
@@ -360,6 +377,11 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 30. Set: kugghjulet på en rad öppnar setets meny, också med handkontroll. "Add What I'm
     Wearing" lägger det du har på dig i setet (inte skjorta och tabard). Fliken Sets utan
     set visar en förklaring med New Set under.
+32. Stora väskor: med så många saker att fönstret annars skulle bli högre än skärmen blir
+    fönstret bredare (upp till 20 kolumner) och ryms. Fyll gärna alla väskplatser och kontrollera
+    att sökrutan, kugghjulet och flikarna syns och går att nå. Byt flik Bags ↔ Sets: fönstret
+    ändrar inte storlek. Med mus syns antalet lediga platser i väskikonen uppe till vänster,
+    och hjälptexten under setlistan syns med 1–3 set.
 31. Bakgrund och lås: bakgrunden bakom sakerna är mörk och hel i båda flikarna. Med "Lock
     quest and set items" avstängd går låsta saker att klicka på hos handlaren.
 
@@ -597,6 +619,12 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   bara `ns.GetJunkKind` kvar, inställningen `sellJunkButton` används inte längre): spelet har
   `MerchantSellAllJunkButton`. Den säljer alla grå saker och känner inte till låsen eller
   skräplistan. Funktioner och testlistan ovan är rättade efter det. Inte provat i spelet.
+
+- 2026-11-10 (efter test av 1.0.1 med skärmbilder, användarens val A–G): mer luft innanför
+  bakgrunden, ljusare bakgrund, samma storlek i båda flikarna, fler kolumner efter behov,
+  14 som standard, hjälptext i Sets och siffran i väskikonen. Siffran i gruppen Free är kvar:
+  rutan är släppplatsen för saker. Tänkbart senare (kompisens förslag, se nedan): dela upp
+  quest-saker efter quest med antal (3/7) och bara låsa det antal som behövs.
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1

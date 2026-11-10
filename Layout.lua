@@ -20,9 +20,13 @@ local L = ns.L
 -- Mått i enheter, samma som i skissen.
 local BUTTON = 37          -- en ruta, samma som spelets mall ContainerFrameItemButtonTemplate
 local SPACING = 5          -- avstånd mellan rutor, samma som i spelets eget rutnät
-local COLUMNS = 12
+-- Antal kolumner: 14 som standard, och fler (upp till 20) när sakerna annars skulle göra
+-- fönstret högre än skärmen (se chooseColumns). Fönstret blir då bredare i stället för högre.
+local MIN_COLUMNS, MAX_COLUMNS, COLUMN_STEP = 14, 20, 2
 local CELL = BUTTON + SPACING
-local GRID_WIDTH = COLUMNS * BUTTON + (COLUMNS - 1) * SPACING -- 499
+local function widthOf(cols)
+    return cols * BUTTON + (cols - 1) * SPACING
+end
 local HEADER = 18          -- gruppens rubrik, inklusive luft under den
 local GROUP_GAP = 12       -- avstånd mellan grupper som delar rad
 local SHELF_GAP = 10       -- avstånd mellan rader av grupper (luft ovanför nästa rubrik)
@@ -30,10 +34,14 @@ local SHELF_GAP = 10       -- avstånd mellan rader av grupper (luft ovanför n�
 -- och 4 enheter ovanför pengarna. Tidy Pack lägger till lite mer, så att grupperna inte
 -- trängs mot kanterna (användarens önskan 2026-11-09).
 local BLIZZARD_MONEY_GAP = 4 -- spelets avstånd mellan rutorna och raden med pengar
-local PADDING_SIDE = 6       -- extra på var sida
-local PADDING_TOP = 8        -- extra mellan sökrutan och första rubriken
-local INSET_PAD = 4          -- så långt utanför rutorna går den mörka bakgrunden
-local MONEY_GAP = 9          -- mellan sista raden rutor och raden med pengar
+-- Den mörka bakgrunden ligger nära fönstrets kant, och sakerna har INSET_PAD luft innanför
+-- den (användarens önskan 2026-11-10: luften hade försvunnit).
+local PADDING_SIDE = 14      -- från fönstrets inre kant till sakerna (inklusive luften)
+local INSET_PAD = 12         -- luft mellan bakgrundens kant och sakerna
+local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till bakgrunden + luften)
+local MONEY_GAP = 16         -- mellan sista raden rutor och raden med pengar
+local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
+local TAB_ROOM = 30          -- flikarna ovanför fönstret
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
 local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
 local DIVIDER_GAP = 6      -- luft ovanför och under linjen före specialväskorna
@@ -51,6 +59,10 @@ local bagFrame                    -- spelets fönster med alla väskor i ett
 local overlay                     -- vår egen ram i spelets fönster, för rubrikerna
 local inset                       -- den mörka, infällda bakgrunden bakom sakerna
 local contentHeight               -- höjden på det Tidy Pack lägger ut
+local bagsContentHeight           -- höjden i fliken Bags, som fliken Sets minst får
+local gridCols = MIN_COLUMNS      -- antal kolumner just nu
+local gridWidth = widthOf(MIN_COLUMNS) -- rutnätets bredd just nu
+local measurer                    -- osynlig text som mäter hur breda rubrikerna är
 local chromeWidth, chromeHeight   -- fönstrets kanter, titelrad, sökruta och pengar
 local location = ItemLocation:CreateEmpty() -- återanvänds för att läsa en saks nivå
 
@@ -279,7 +291,7 @@ end
 -- rutnät, så att sökrutan, pengarna och spelets andra delar hamnar där de brukar.
 local function anchor(region, x, y)
     region:ClearAllPoints()
-    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", x - GRID_WIDTH - PADDING_SIDE,
+    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", x - gridWidth - PADDING_SIDE,
         MONEY_GAP + contentHeight - y)
 end
 
@@ -290,11 +302,11 @@ local function applySize()
         return
     end
     local height = contentHeight + chromeHeight + PADDING_TOP + (MONEY_GAP - BLIZZARD_MONEY_GAP)
-    bagFrame:SetSize(GRID_WIDTH + chromeWidth + 2 * PADDING_SIDE, height)
+    bagFrame:SetSize(gridWidth + chromeWidth + 2 * PADDING_SIDE, height)
     -- Bakgrunden följer det Tidy Pack lägger ut, och hänger i raden med pengar som allt annat.
     if inset then
         inset:ClearAllPoints()
-        inset:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", -GRID_WIDTH - PADDING_SIDE - INSET_PAD,
+        inset:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", -gridWidth - PADDING_SIDE - INSET_PAD,
             MONEY_GAP + contentHeight + INSET_PAD)
         inset:SetPoint("BOTTOMRIGHT", bagFrame.MoneyFrame, "TOPRIGHT", -PADDING_SIDE + INSET_PAD,
             MONEY_GAP - INSET_PAD)
@@ -344,6 +356,18 @@ local function isSpecialBag(bagID)
     return family ~= nil and family ~= 0
 end
 
+-- Antalet lediga platser i väskikonen uppe till vänster, som spelet gör med handkontroll
+-- (spelet visar siffran bara då). Spelets egen text, så den följer med fönstret.
+local function updatePortraitCount()
+    local container = bagFrame.CountContainer
+    local count = container and container.Count
+    if not count or InputUtil.IsGamepadUIEnabled() then
+        return -- med handkontroll sköter spelet siffran själv
+    end
+    count:SetText(("(%d)"):format(C_Container.CalculateTotalNumberOfFreeBagSlots()))
+    count:Show()
+end
+
 -- Listan med set i fliken Sets (SetsView.lua) i stället för sakerna.
 local function layoutSetsView(atMerchant)
     -- Spelet visar sökrutan igen när fönstret uppdateras; i fliken Sets behövs den inte.
@@ -367,10 +391,11 @@ local function layoutSetsView(atMerchant)
     -- Allt hänger i raden med pengar och räknas uppifrån, så höjden måste vara känd innan
     -- något placeras. Därför samlas platserna först och sätts sedan.
     local placements = {}
-    local rows
-    contentHeight, rows = ns.LayoutSetsView(function(region, x, y)
+    local setsHeight, rows = ns.LayoutSetsView(function(region, x, y)
         placements[#placements + 1] = { region, x, y }
-    end, GRID_WIDTH)
+    end, gridWidth)
+    -- Fönstret är lika högt i båda flikarna: fliken Sets är minst lika hög som fliken Bags.
+    contentHeight = math.max(setsHeight, bagsContentHeight or 0)
     for _, placement in ipairs(placements) do
         anchor(placement[1], placement[2], placement[3])
     end
@@ -383,9 +408,104 @@ local function layoutSetsView(atMerchant)
         ns.UpdateSetsNotice()
     end
     applySize()
+    updatePortraitCount()
     if ns.OnLayoutChanged then
         ns.OnLayoutChanged()
     end
+end
+
+-- Lägger ut grupperna rad för rad med cols kolumner: en grupp delar rad med föregående om
+-- den får plats, annars börjar en ny rad. Med apply = false räknas bara höjden ut (för att
+-- välja antal kolumner), med apply = true sätts också platserna. Returnerar höjden och var
+-- linjen ovanför specialväskorna ska ligga (nil om det inte finns någon).
+local function flow(cols, apply, junkValue)
+    local width = widthOf(cols)
+    local x, y, shelfHeight = 0, 0, 0
+    local dividerY
+    local function place(group, text)
+        local list = groupLists[group]
+        if not (list and #list > 0) then
+            return
+        end
+        measurer:SetText(text)
+        local groupCols = math.min(#list, cols)
+        local rows = math.ceil(#list / cols)
+        -- Gruppen är minst lika bred som sin rubrik, så att rubrikerna inte krockar.
+        local groupWidth = math.max(widthOf(groupCols), math.ceil(measurer:GetStringWidth()))
+        local height = HEADER + rows * BUTTON + (rows - 1) * SPACING
+        local left = (x == 0) and 0 or (x + GROUP_GAP)
+        if x > 0 and left + groupWidth > width then
+            -- Får inte plats på raden: börja en ny.
+            y = y + shelfHeight + SHELF_GAP
+            left, shelfHeight = 0, 0
+        end
+        if apply then
+            local groupIndex = #groupFirst + 1
+            groupFirst[groupIndex] = list[1].button
+            if group == "New" then
+                newGroupIndex = groupIndex
+            end
+            local header = acquireHeader()
+            header:SetText(text)
+            headerX[headers.used], headerY[headers.used] = left, y
+            for index, entry in ipairs(list) do
+                entry.x = left + ((index - 1) % cols) * CELL
+                entry.y = y + HEADER + math.floor((index - 1) / cols) * CELL
+                entry.placed = true
+                groupOfButton[entry.button] = groupIndex
+            end
+        end
+        x = left + groupWidth
+        shelfHeight = math.max(shelfHeight, height)
+    end
+    for _, group in ipairs(ns.groupOrder) do
+        place(group, headerText(group, junkValue))
+    end
+
+    -- Specialväskorna längst ned, under spelets linje, i väskplatsernas ordning.
+    for bagID = 1, LAST_BAG do
+        local list = specialBags[bagID] and groupLists["bag" .. bagID]
+        if list and #list > 0 then
+            if not dividerY then
+                y = y + shelfHeight + DIVIDER_GAP
+                dividerY = y
+                y = y + divider:GetHeight() + DIVIDER_GAP
+                x, shelfHeight = 0, 0
+            end
+            place("bag" .. bagID, bagHeaderText(bagID))
+        end
+    end
+    return y + shelfHeight, dividerY
+end
+
+-- Så hög får det Tidy Pack lägger ut vara. Spelet krymper fönstret (högst till 75 %) så att
+-- det får plats på skärmen, men Tidy Pack håller sig hellre till TARGET_SCALE och gör fönstret
+-- bredare i stället (se chooseColumns). Nil om fönstrets mått inte är kända än.
+local function maxContentHeight()
+    if not chromeHeight then
+        return nil
+    end
+    -- Under fönstret ligger spelets egen marginal (CONTAINER_OFFSET_Y), ovanför flikarna.
+    local room = (GetScreenHeight() - (CONTAINER_OFFSET_Y or 85) - TAB_ROOM) / TARGET_SCALE
+    return room - (chromeHeight + PADDING_TOP + (MONEY_GAP - BLIZZARD_MONEY_GAP))
+end
+
+-- Antal kolumner: så få som möjligt, men fönstret ska inte bli för högt för skärmen och inte
+-- för brett (högst tre fjärdedelar av skärmens bredd).
+local function chooseColumns(junkValue)
+    local limit = maxContentHeight()
+    local maxWidth = GetScreenWidth() * 0.75
+    local chosen = MIN_COLUMNS
+    for cols = MIN_COLUMNS, MAX_COLUMNS, COLUMN_STEP do
+        if cols > MIN_COLUMNS and widthOf(cols) > maxWidth then
+            break
+        end
+        chosen = cols
+        if not limit or flow(cols, false, junkValue) <= limit then
+            break
+        end
+    end
+    return chosen
 end
 
 -- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
@@ -472,71 +592,23 @@ local function relayout()
         table.sort(list, ns.CompareEntries)
     end
 
-    -- 2. Lägg ut grupperna rad för rad: en grupp delar rad med föregående om den får
-    --    plats, annars börjar en ny rad.
+    -- 2. Välj antal kolumner och lägg ut grupperna (se flow).
     releaseHeaders()
     wipe(groupFirst)
     wipe(groupOfButton)
     newGroupIndex = nil
-    local x, y, shelfHeight = 0, 0, 0
-    -- Lägger ut en grupp med rubriken text. Körs för vanliga grupper och specialväskor.
-    local function placeGroup(group, text)
-        local list = groupLists[group]
-        if list and #list > 0 then
-            local groupIndex = #groupFirst + 1
-            groupFirst[groupIndex] = list[1].button
-            if group == "New" then
-                newGroupIndex = groupIndex
-            end
-            local header = acquireHeader()
-            header:SetText(text)
-            local columns = math.min(#list, COLUMNS)
-            local rows = math.ceil(#list / COLUMNS)
-            -- Gruppen är minst lika bred som sin rubrik, så att rubrikerna inte krockar.
-            local width = math.max(columns * BUTTON + (columns - 1) * SPACING, math.ceil(header:GetStringWidth()))
-            local height = HEADER + rows * BUTTON + (rows - 1) * SPACING
-            local left = (x == 0) and 0 or (x + GROUP_GAP)
-            if x > 0 and left + width > GRID_WIDTH then
-                -- Får inte plats på raden: börja en ny.
-                y = y + shelfHeight + SHELF_GAP
-                left, shelfHeight = 0, 0
-            end
-            headerX[headers.used], headerY[headers.used] = left, y
-            for index, entry in ipairs(list) do
-                entry.x = left + ((index - 1) % COLUMNS) * CELL
-                entry.y = y + HEADER + math.floor((index - 1) / COLUMNS) * CELL
-                entry.placed = true
-                groupOfButton[entry.button] = groupIndex
-            end
-            x = left + width
-            shelfHeight = math.max(shelfHeight, height)
-        end
-    end
-    for _, group in ipairs(ns.groupOrder) do
-        placeGroup(group, headerText(group, junkValue))
-    end
-
-    -- Specialväskorna längst ned, under spelets linje, i väskplatsernas ordning.
+    gridCols = chooseColumns(junkValue)
+    gridWidth = widthOf(gridCols)
     local dividerY
-    for bagID = 1, LAST_BAG do
-        local list = specialBags[bagID] and groupLists["bag" .. bagID]
-        if list and #list > 0 then
-            if not dividerY then
-                y = y + shelfHeight + DIVIDER_GAP
-                dividerY = y
-                y = y + divider:GetHeight() + DIVIDER_GAP
-                x, shelfHeight = 0, 0
-            end
-            placeGroup("bag" .. bagID, bagHeaderText(bagID))
-        end
-    end
     -- Höjden måste vara känd innan något placeras, eftersom allt räknas uppifrån men hänger
-    -- i raden med pengar (se anchor). Linjen placerades tidigare före den här raden: direkt
-    -- efter inloggning eller /reload var höjden då okänd (nil) och genomgången stannade med
-    -- ett fel när du bar en specialväska, och annars hamnade linjen efter förra höjden.
-    contentHeight = y + shelfHeight
+    -- i raden med pengar (se anchor). Linjen placerades tidigare före höjden: direkt efter
+    -- inloggning eller /reload var höjden då okänd (nil) och genomgången stannade med ett fel
+    -- när du bar en specialväska.
+    contentHeight, dividerY = flow(gridCols, true, junkValue)
+    bagsContentHeight = contentHeight
     if dividerY then
         anchor(divider, -6, dividerY)
+        divider:SetWidth(gridWidth + 12)
         divider:Show()
     else
         divider:Hide()
@@ -570,6 +642,7 @@ local function relayout()
     end
 
     applySize()
+    updatePortraitCount()
     if ns.UpdateSetsNotice then
         ns.UpdateSetsNotice()
     end
@@ -682,15 +755,21 @@ ns.OnLoad(function()
     -- fönster), med sin marmor mörkare. Den ritas på fönstrets egen nivå, under rutorna.
     inset = CreateFrame("Frame", nil, bagFrame, "InsetFrameTemplate")
     if inset.Bg then
-        inset.Bg:SetVertexColor(0.4, 0.4, 0.4)
+        inset.Bg:SetVertexColor(0.7, 0.7, 0.7)
     end
     inset:Hide()
 
-    -- Linjen ovanför specialväskorna, lika bred som rutorna och lite till.
+    -- Osynlig text som mäter hur breda rubrikerna är, för att kunna räkna ut höjden utan att
+    -- lägga ut något (se flow).
+    measurer = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    measurer:SetAlpha(0)
+
+    -- Linjen ovanför specialväskorna, lika bred som rutorna och lite till (bredden sätts vid
+    -- varje utläggning, eftersom antalet kolumner kan ändras).
     divider = overlay:CreateTexture(nil, "ARTWORK")
     divider:SetAtlas(DIVIDER_ATLAS)
     local atlasInfo = C_Texture.GetAtlasInfo(DIVIDER_ATLAS)
-    local dividerWidth = GRID_WIDTH + 12
+    local dividerWidth = gridWidth + 12
     divider:SetSize(dividerWidth, atlasInfo and atlasInfo.width > 0
         and math.max(2, math.floor(atlasInfo.height * dividerWidth / atlasInfo.width + 0.5)) or 8)
     divider:Hide()

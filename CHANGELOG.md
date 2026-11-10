@@ -13,6 +13,12 @@
 - New setting: "Lock quest and set items" turns the locks at merchants on or off.
 - Removed the Sell Junk button. Use the merchant's own "Sell All Junk" button instead. Note
   that it sells every grey item and doesn't know about Tidy Pack's locks or junk list.
+- More room between your items and the border of the background, and a lighter background.
+- The window is now 14 items wide, and gets wider (up to 20) when your bags are so full
+  that it would otherwise be taller than the screen.
+- The Sets tab is as tall as the Bags tab, so the window no longer changes size when you
+  switch. With a few sets it also shows a short tip.
+- The number of free slots is shown on the backpack icon, also when you play with a mouse.
 - If the game ever blocks something because of Tidy Pack, a line in chat now says what was
   blocked, so you can report it.
 
