@@ -507,13 +507,20 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   släppt version) och committa med git.
 
 ## Publicering
-- Status: projektet "Tidy Pack" är skapat på CurseForge och 1.0.0 uppladdad för hand
-  (2026-11-09), väntar på granskning (inte godkänt 2026-11-10). Den innehåller kraschen med
-  specialväskor och knappen Sell Junk; rättat i 1.0.1 (ännu inte på CurseForge). Version 1.0.0 förbereddes så: LICENSE (MIT),
-  README.md (projektbeskrivningen), CHANGELOG.md med `## 1.0.0`, zip-filen i `.release/` och
-  texterna till projektsidan i `.design/curseforge-page.md`. Kategori Bags & Inventory,
-  spelversion WoW Forever 1.60.1, Questie som valfritt beroende. Loggan är `.design/logo.png` (egen teckning, källa `logo.svg`). Väntar på test i
-  spelet och att användaren skapar projektet.
+- Status: projektet "Tidy Pack" (CurseForge-id 1794643) godkändes av CurseForge 2026-11-10. **1.0.1
+  släpptes 2026-11-10** med taggen `v1.0.1`: arbetsflödet `.github/workflows/release.yml` byggde
+  `TidyPack-v1.0.1-forever.zip`, laddade upp den till CurseForge ("Success!", spelversion 1.60.1, typ
+  release) och skapade en release på GitHub. Det var första uppladdningen via Upload API:t, så nyckeln
+  `CF_API_TOKEN` fungerar. Kontrollera på CurseForge att filen blir godkänd och synlig.
+- 1.0.0 laddades upp för hand 2026-11-09 med "publish manually once approved" och står som "Pending
+  Release". Den har kraschen med specialväskor och knappen Sell Junk och ska **aldrig publiceras** –
+  användaren tar bort den eller låter den stå orörd.
+- Version 1.0.0 förbereddes så: LICENSE (MIT), README.md (projektbeskrivningen), CHANGELOG.md, zip-filen i
+  `.release/` och texterna till projektsidan i `.design/curseforge-page.md`. Kategori Bags & Inventory,
+  spelversion WoW Forever 1.60.1, Questie som valfritt beroende. Loggan är `.design/logo.png` (egen
+  teckning, källa `logo.svg`).
+- 1.0.1 släpptes utan att användaren hade bekräftat den sista zip-filen i spelet (gult kugghjul, omordnad
+  inställningssida, raden under titeln i Quests). Nästa version: börja med de punkterna i testlistan.
 - GitHub-sidan: `.github/README.md` är förstasidan på GitHub (logga, installation, kort
   funktionslista, länk till feedback). GitHub visar den före `README.md` i roten, som i stället
   är CurseForge-beskrivningen och också följer med i zip-filen. Håll funktionerna lika i
