@@ -12,7 +12,7 @@ local L = ns.L
 local ROW_HEIGHT = 30
 local HINT_TEXT -- sätts när L är klar, se createJunkPage
 
-local category, junkCategory
+local category, junkCategory, groupsCategory
 local junkPage, junkScrollBox, junkEmptyText, junkInput, junkHint
 
 -- Öppnar Tidy Packs sida, eller skräplistans sida med page = "junk".
@@ -21,7 +21,7 @@ function ns.OpenSettings(page)
         ns.Print(L["The settings can't be opened in combat."])
         return
     end
-    local target = page == "junk" and junkCategory or category
+    local target = (page == "junk" and junkCategory) or (page == "groups" and groupsCategory) or category
     if target then
         Settings.OpenToCategory(target:GetID())
     end
@@ -125,6 +125,9 @@ local function itemIDFromText(text)
     end
     return nil
 end
+
+-- Groups-sidan (GroupsPage.lua) använder samma tolkning av länkar, namn och nummer.
+ns.ItemIDFromText = itemIDFromText
 
 local function setHint(text, color)
     junkHint:SetText(text)
@@ -286,6 +289,10 @@ ns.OnLoad(function()
 
     junkPage = createJunkPage()
     junkCategory = Settings.RegisterCanvasLayoutSubcategory(category, junkPage, L["Junk List"])
+    -- Sidan för egna grupper (GroupsPage.lua).
+    if ns.CreateGroupsPage then
+        groupsCategory = Settings.RegisterCanvasLayoutSubcategory(category, ns.CreateGroupsPage(), L["Groups"])
+    end
     Settings.RegisterAddOnCategory(category)
 end)
 

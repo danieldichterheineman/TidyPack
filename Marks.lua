@@ -156,6 +156,10 @@ local function buildMenu(_, rootDescription)
             ClearCursor()
             ns.AskNewSet(itemID)
         end)
+        -- Egna grupper (Groups.lua): den här saken, eller hela typen.
+        if ns.AddGroupMenus then
+            ns.AddGroupMenus(rootDescription, itemID)
+        end
     else
         rootDescription:CreateTitle(L["Tidy Pack"])
         -- Med handkontroll är flikarna kanske inte nåbara, så där finns samma val här.
@@ -173,6 +177,9 @@ local function buildMenu(_, rootDescription)
         end
         rootDescription:CreateButton(L["Junk List..."], function()
             ns.OpenSettings("junk")
+        end)
+        rootDescription:CreateButton(L["Groups..."], function()
+            ns.OpenSettings("groups")
         end)
         rootDescription:CreateButton(L["Settings..."], function()
             ns.OpenSettings()

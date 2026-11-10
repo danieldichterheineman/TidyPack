@@ -14,6 +14,7 @@
 Locales.lua
 Core.lua
 Categories.lua
+Groups.lua
 QuestLock.lua
 Sets.lua
 QuestHints.lua
@@ -23,5 +24,6 @@ SetsView.lua
 Marks.lua
 Junk.lua
 MakeRoom.lua
+GroupsPage.lua
 Options.lua
 Gamepad.lua

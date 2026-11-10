@@ -25,6 +25,8 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
   Bags, Miscellaneous and Junk. An "Add to bag" slot shows your free slots and takes dropped
   items. Special bags (quivers, soul bags, profession bags, the reagent bag) get their own
   groups at the bottom.
+- **Your own groups:** make groups like "Potions", and put single items or whole item types
+  in them from the gear button's menu.
 - **Sets:** collect items under a name and icon, like "Fishing", in the Sets tab. Click a set
   to put it on, or use its gear button and choose "Add What I'm Wearing". Missing items are
   greyed out.

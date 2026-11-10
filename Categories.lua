@@ -8,10 +8,13 @@ local L = ns.L
 -- Grupperna, i den ordning de visas. Grupper utan saker visas inte. Empty (rutan där du
 -- släpper en sak för att lägga den i väskorna) står näst först, så att den delar översta
 -- raden med Favorites i stället för att ta en egen rad längst ned.
-ns.groupOrder = {
+ns.baseGroupOrder = {
     "Favorites", "Empty", "New", "Consumables", "Equipment", "TradeGoods",
     "QuestItems", "Keys", "Bags", "Miscellaneous", "Junk",
 }
+-- Det som visas: spelets grupper med spelarens egna grupper insatta efter Empty ("Add to
+-- bag"). Groups.lua bygger om den när grupperna ändras (ns.RebuildGroupOrder).
+ns.groupOrder = ns.baseGroupOrder
 
 -- Gruppernas rubriker i spelet.
 ns.groupNames = {
@@ -88,6 +91,11 @@ function ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
     -- Allt på nyckelringen är nycklar.
     if bagID == KEYRING_CONTAINER then
         return "Keys", 0
+    end
+    -- Spelarens egna grupper (Groups.lua) går före spelets vanliga typer.
+    local custom = ns.GetCustomGroupFor and ns.GetCustomGroupFor(info.itemID, classID, subClassID)
+    if custom then
+        return custom, 0
     end
     if classID == ItemClass.Consumable then
         return "Consumables", consumableOrder[subClassID] or 5

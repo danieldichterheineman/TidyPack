@@ -22,6 +22,10 @@
 - The slot that shows your free slots is now called "Add to bag" and stands next to Favorites
   instead of at the bottom. It has a + and a tooltip, and an item you drop on it goes into
   your bags. Controller: the cursor still starts on an item.
+- Your own groups: make up to 8 groups with names you choose, like "Potions" or "Food &
+  Drink". Drop an item on the gear button and choose "Add to Group" for that item, or "Add all
+  ... items to Group" for the whole type (all potions, all bandages …). They come after
+  Favorites and "Add to bag". Manage them under Esc → Options → AddOns → Tidy Pack → Groups.
 - If the game ever blocks something because of Tidy Pack, a line in chat now says what was
   blocked, so you can report it.
 

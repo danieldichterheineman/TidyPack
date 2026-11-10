@@ -77,6 +77,18 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   till höger och en tooltip ("Free slots: N / Drop an item here to put it in your bags").
   Handkontrollens markör börjar på första riktiga sak (`startGroupIndex`), inte på rutan.
   Inte provat i spelet.
+- ✅ Egna grupper (`Groups.lua`, `GroupsPage.lua`, byggda 2026-11-10 efter skissen
+  `.design/sketch-groups.html`): upp till 8 per konto, efter Favorites och "Add to bag". En sak
+  läggs dit med kugghjulets meny ("Add to Group ▸", med en bockruta per grupp och "New
+  Group...") eller en hel typ ("Add all "<typ>" items to Group ▸": klass och undertyp ur
+  `C_Item.GetItemInfoInstant`, typens namn ur `C_Item.GetItemSubClassInfo`). En sak eller
+  typ ligger i högst en grupp (en bockruta flyttar den). Företräde i `ns.GetGroup`: Favorites,
+  New, Quest Items och Junk först, sedan de egna grupperna (enskild sak före typregel, sedan
+  den grupp som står högst), sedan spelets typer. Sidan "Groups" i inställningarna: välj en
+  grupp, ändra ordning (▲▼), byt namn, ta bort, och se och ändra vad den innehåller (länk,
+  namn, nummer eller släpp en sak). Tooltipen visar "Tidy Pack group: …". Rubrikerna kommer ur
+  `ns.groupNames`, ordningen ur `ns.groupOrder`, som `ns.RebuildGroupOrder` bygger om. Inte
+  provat i spelet.
 - ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
   vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
   bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 14 rutor brett, och bredare (upp till 20) när sakerna annars skulle bli för höga.
@@ -235,7 +247,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   "Combined Bags" en gång), `favorites` (itemID → true), `junk` (skräplistan, itemID →
   true), `questieNoticeShown` (sant när raden om Questie har visats), inställningarna
   `suggestOnLoot`, `suggestWhenFull`, `lockAtMerchant`, `questHints` och `itemLevelAndBoE`
-  (alla sanna från början) och `dataVersion`
+  (alla sanna från början), `groups` (egna grupper, ny 2026-11-10: lista med
+  `{ id, name, items = { [itemID] = true }, types = { ["klass:undertyp"] = true } }` i visningsordning)
+  och `nextGroupID`, och `dataVersion`. De nya nycklarna har standardvärden, så ingen migrering behövdes.
 - `TidyPackCharDB` (per karaktär, ny 2026-11-09): `sets` = lista med
   `{ name = "...", items = { itemID, ... } }` i den ordning seten skapades. Kräver omstart
   av spelet första gången, eftersom TOC-filen fick en ny rad.
@@ -243,14 +257,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   nya nycklar med standardvärden, så ingen migrering behövdes.
 
 ## Idéer och önskemål
-- Förslag (2026-11-10, väntar på godkännande): egna grupper. Skiss i `.design/sketch-groups.html`
-  (och `.png`). Kort: upp till 8 egna grupper per konto, efter Favorites och "Add to bag";
-  enskilda saker (kugghjulets meny, "Add to Group") och hela typer ("Add all Potions to Group",
-  regel på klass och undertyp ur `C_Item.GetItemInfoInstant`, namn ur `C_Item.GetItemSubClassInfo`,
-  båda kontrollerade i live och forever); hanteras på en egen sida i inställningarna.
-  Favorites, New, Quest Items och Junk går före, enskild sak går före typregel, och högst
-  upp bland grupperna vinner. Kompisens förslag (dela quest-saker per quest med antal 3/7 och
-  bara låsa det som behövs) tas efter detta.
+- Egna grupper är byggda (2026-11-10, se Funktioner). Kompisens förslag (2026-11-10) tas härnäst:
+  dela quest-saker per quest med antal (3/7) i rubriken, och bara låsa det antal som behövs
+  (en hög är en ruta och kan inte delas, men överblivna högar kan bli säljbara).
 - Nästa efter första testet: introduktion med sex korta tips i spelets tipsruta (välkommen,
   stjärnan, LB/RB, låsta saker, större väska), ett i taget och en gång per konto.
   Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
@@ -268,6 +277,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `Locales.lua`: all text som visas i spelet (engelska)
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
+- `Groups.lua`: egna grupper – data, regler, ordning, frågor, kugghjulets menyer och tooltipen
+- `GroupsPage.lua`: sidan "Groups" i inställningarna
 - `QuestLock.lua`: vilka saker som är låsta (quest, utrustningsset och egna set),
   handlarläget och raden i tooltipen
 - `Sets.lua`: egna set – data, ta på ett set, rutan för namn och frågor, raden i tooltipen
@@ -395,6 +406,15 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     + och antalet lediga platser, och en tooltip. Släpp en sak på den – saken hamnar i väskorna.
     Prova också med handkontroll: markören börjar på en riktig sak, och en sak du plockat upp
     med A kan läggas ner på rutan.
+34. Egna grupper: släpp en dryck på kugghjulet → "Add to Group ▸ New Group..." → namnet "Potions"
+    → saken hamnar i gruppen Potions (efter Favorites och "Add to bag"). Släpp en annan dryck →
+    "Add all "Potion" items to Group ▸ Potions": alla drycker flyttar dit och lämnar Consumables.
+    Kontrollera: tooltipen visar "Tidy Pack group: Potions"; en favorit och en skräpmarkerad sak
+    ligger kvar i Favorites och Junk; en ny dryck du lootar ligger i New tills du stänger väskan
+    och sedan i Potions. Esc → Options → AddOns → Tidy Pack → Groups: välj gruppen, ▲▼ ändrar
+    ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
+    namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
+    menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
 32. Stora väskor: med så många saker att fönstret annars skulle bli högre än skärmen blir
     fönstret bredare (upp till 20 kolumner) och ryms. Fyll gärna alla väskplatser och kontrollera
     att sökrutan, kugghjulet och flikarna syns och går att nå. Byt flik Bags ↔ Sets: fönstret
@@ -647,6 +667,12 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   14 som standard, hjälptext i Sets och siffran i väskikonen. Siffran i gruppen Free är kvar:
   rutan är släppplatsen för saker. Tänkbart senare (kompisens förslag, se nedan): dela upp
   quest-saker efter quest med antal (3/7) och bara låsa det antal som behövs.
+
+- 2026-11-10: egna grupper byggda enligt det godkända förslaget (användaren svarade "Ja, bygg";
+  frågorna om konto/karaktär, antal och placering besvarades med mina rekommendationer: per konto,
+  högst 8, efter Favorites och "Add to bag"). Två avvikelser från skissen: en sak eller typ ligger i
+  högst en grupp (bockrutan flyttar den i stället för att lägga den i flera), och raden om att en
+  favorit eller skräpmarkerad sak ligger kvar i sin grupp är en rubrikrad i menyn (guld), inte grå.
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1

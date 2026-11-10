@@ -365,6 +365,8 @@ local function showDialog(text, acceptLabel, withInput, defaultText, onAccept)
         dialog.input:HighlightText()
     end
 end
+-- Samma ruta används för namnet på en egen grupp (Groups.lua).
+ns.ShowDialog = showDialog
 
 ---------------------------------------------------------------------------
 -- Rutan för namn och ikon

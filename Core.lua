@@ -15,6 +15,9 @@ ns.defaults = {
     favorites = {},
     -- Skräplistan: itemID → true (se Marks.lua).
     junk = {},
+    -- Spelarens egna grupper (se Groups.lua) och numret nästa grupp får.
+    groups = {},
+    nextGroupID = 1,
     -- Blir sant när Tidy Pack en gång har berättat att Questie låser upp "Needed later"
     -- (se QuestHints.lua).
     questieNoticeShown = false,

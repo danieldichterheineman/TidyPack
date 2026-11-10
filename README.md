@@ -13,6 +13,9 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   Bags, Miscellaneous and Junk. Empty groups are hidden, and similar items sit side by side.
   The "Add to bag" slot next to Favorites shows how many slots are free – drop an item on it
   to put it in your bags.
+- **Your own groups**: make groups like "Potions" or "Food & Drink" – put single items in them
+  with the gear button, or a whole type at once ("Add all Potion items to Group"). Manage them
+  under Esc → Options → AddOns → Tidy Pack → Groups.
 - **Special bags** – quivers, ammo pouches, soul bags, profession bags and the reagent bag –
   get their own groups at the bottom, with the bag's icon, name and free slots.
 - **New loot** is shown at the top until you close your bags.
