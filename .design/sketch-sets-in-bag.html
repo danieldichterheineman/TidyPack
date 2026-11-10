@@ -1,0 +1,70 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tidy Pack – skiss: allt för set i väskan</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1560px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1450px}
+.row{display:flex;gap:18px;align-items:flex-start}.col{width:500px}.col h2{font-size:13px;color:#ffd100;margin:0 0 6px;min-height:34px}
+.bag{position:relative;width:500px;height:330px;background:#1a1816;border:2px solid #6e6252;border-radius:5px;margin-top:24px}
+.tabs{position:absolute;top:-23px;left:10px;display:flex;gap:6px}.tab{padding:2px 16px;background:#2a2622;border:1px solid #6e6252;border-bottom:0;border-radius:4px 4px 0 0;font:12px Georgia;color:#c9b27a}.tab.on{background:#3a3228;color:#ffd100}
+.t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000;position:relative}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;border:1px solid #ffd100;border-radius:3px;background:#1a140c;color:#ffd100;text-align:center;font:12px/16px Arial}
+.in{position:absolute;left:8px;right:8px;top:24px;bottom:24px;background:#0a0a0a;border:1px solid #333;padding:6px 8px}
+.set{display:flex;align-items:center;gap:8px;height:46px;border-bottom:1px solid #1d1b19;padding:0 4px;position:relative}.set .num{width:14px;color:#777;font:11px Arial}
+.ic{width:36px;height:36px;border:1px solid #555;border-radius:3px;background:#a44;position:relative}.set.empty .ic{background:#0a0a0a;border-style:dashed;color:#777;text-align:center;font:20px/34px Arial}
+.nm{font:13px Arial;color:#fff}.nm small{color:#3bd13b;font-size:11px}.set.empty .nm{color:#777}
+.mini{display:flex;gap:2px;margin-top:3px}.mini i{width:18px;height:18px;border:1px solid #444;border-radius:2px}
+.dots{color:#ffd100;font:bold 14px Arial}.eq{margin-left:auto;border:1px solid #555;border-radius:3px;padding:2px 12px;font:11px Arial;color:#ccc;background:#222}
+.hl{outline:2px solid #4aa3ff;outline-offset:1px}
+.money{position:absolute;bottom:4px;right:12px;font:11px Arial;color:#fff}
+.call{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:11px/1.3 Arial;padding:3px 8px;border-radius:4px;z-index:5;white-space:nowrap}
+.bar{display:flex;gap:3px;margin-top:14px;padding:6px;background:#111;border:1px solid #333;width:max-content}.bar i{width:36px;height:36px;border:1px solid #555;border-radius:3px;background:#222;display:block}
+.cur{position:absolute;width:30px;height:30px;border:1px solid #ccc;border-radius:3px;background:#a44;opacity:.9;z-index:6}
+.tip{position:absolute;background:#0c0c0c;border:1px solid #777;padding:4px 8px;font:11px/1.5 Arial;color:#fff;z-index:6;white-space:nowrap}.tip .y{color:#ffd100}.tip .bl{color:#6fb5ff}
+.grid{display:grid;grid-template-columns:repeat(11,36px);gap:4px;margin-top:6px}.grid i{width:36px;height:36px;border:1px solid #555;border-radius:3px;display:block}.grid i.sel{outline:2px solid #ffd100}
+.lbl{font:11px Arial;color:#9a9a9a;margin-top:6px}.head{display:flex;align-items:center;gap:8px}.head .nm{font:13px Arial;color:#ffd100}.btn{border:1px solid #d4af37;background:#5a0d08;color:#ffd9a0;padding:2px 14px;font:11px Arial;border-radius:3px;margin-left:auto}
+.sb{position:absolute;right:4px;top:62px;bottom:6px;width:8px;background:#111;border:1px solid #333;border-radius:4px}.sb i{position:absolute;left:0;right:0;top:0;height:30%;background:#6e6252;border-radius:4px}
+</style></head><body>
+<h1>Allt för set i väskan – förslag</h1>
+<p class="n">Skiss, inte spelet. Vänster: dra setets ikon till en knapp på actionbaren. Mitten: klicka på ikonen för att välja en ny direkt i väskan. Höger: samma ikonval när du skapar ett set.</p>
+<div class="row">
+
+<div class="col"><h2>1. Dra setet till actionbaren</h2><div class="bag">
+<div class="tabs"><div class="tab">Bags</div><div class="tab on">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="set"><span class="num">1</span><div class="ic hl"></div><div><div class="nm">Normal <small>✓ Equipped</small></div><div class="mini"><i style="background:#a44"></i><i style="background:#687"></i><i style="background:#889"></i></div></div><span class="dots">...</span><span class="eq">Equip</span></div>
+<div class="set"><span class="num">2</span><div class="ic" style="background:#4a6"></div><div><div class="nm">Fishing <small style="color:#aaa">· 3 items</small></div><div class="mini"><i style="background:#8a6"></i><i style="background:#666"></i></div></div><span class="dots">...</span><span class="eq">Equip</span></div>
+<div class="set empty"><span class="num">3</span><div class="ic">+</div><div class="nm">New set – click, or drop an item here</div></div>
+</div><div class="money">94 ● 73 ●</div>
+<div class="tip" style="left:70px;top:62px"><span class="y">Normal</span><br>Click to put it on.<br><span class="bl">Drag the icon to an action bar.</span><br><span class="bl">Click the icon to change it.</span></div>
+</div>
+<div class="bar"><i></i><i></i><i style="background:#a44;outline:2px solid #ffd100"></i><i></i><i></i><i></i><i></i></div>
+<div style="font:11px Arial;color:#bfe0ff;margin-top:6px">Knappen på actionbaren tar på setet, med setets ikon och namn.<br>Tidy Pack gör ett makro åt dig ("TP Normal") när du drar.</div>
+</div>
+
+<div class="col"><h2>2. Välj ikon direkt i väskan</h2><div class="bag">
+<div class="tabs"><div class="tab">Bags</div><div class="tab on">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="head"><div class="ic"></div><span class="nm">Choose an icon for Normal</span><span class="btn">Done</span></div>
+<div class="lbl">From the set</div>
+<div class="grid"><i style="background:#a44" class="sel"></i><i style="background:#687"></i><i style="background:#889"></i><i style="background:#9a8"></i><i style="background:#875"></i></div>
+<div class="lbl">All icons</div>
+<div class="grid"><i style="background:#456"></i><i style="background:#654"></i><i style="background:#546"></i><i style="background:#465"></i><i style="background:#645"></i><i style="background:#564"></i><i style="background:#357"></i><i style="background:#753"></i><i style="background:#537"></i><i style="background:#375"></i><i style="background:#735"></i><i style="background:#456"></i><i style="background:#654"></i><i style="background:#546"></i><i style="background:#465"></i><i style="background:#645"></i><i style="background:#564"></i><i style="background:#357"></i><i style="background:#753"></i><i style="background:#537"></i><i style="background:#375"></i><i style="background:#735"></i></div>
+<div class="sb"><i></i></div>
+</div><div class="money">94 ● 73 ●</div>
+<div class="call" style="left:150px;top:290px">Ett klick byter ikonen direkt. Done går tillbaka.</div>
+</div></div>
+
+<div class="col"><h2>3. Nytt set: namn på raden, sedan ikon</h2><div class="bag">
+<div class="tabs"><div class="tab">Bags</div><div class="tab on">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="set"><span class="num">1</span><div class="ic"></div><div><div class="nm">Normal <small>✓ Equipped</small></div></div><span class="dots">...</span><span class="eq">Equip</span></div>
+<div class="set"><span class="num">2</span><div class="ic hl" style="background:#0a0a0a;border-style:dashed;color:#999;text-align:center;font:11px/34px Arial">?</div><div style="border:1px solid #666;background:#000;width:200px;height:22px;font:12px/20px Arial;padding:0 6px;color:#fff">Mining|</div><span style="font:11px Arial;color:#777">Enter to create</span></div>
+<div class="set empty"><span class="num">3</span><div class="ic">+</div><div class="nm">New set</div></div>
+</div><div class="money">94 ● 73 ●</div>
+<div class="call" style="left:100px;top:200px">Klicka på rutan bredvid namnet för att välja ikon (öppnar vy 2)</div>
+</div></div>
+
+</div></body></html>

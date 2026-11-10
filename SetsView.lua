@@ -24,6 +24,7 @@ local view = "bags"
 local tabSystem, tabHost
 local rows = {}
 local emptyRows = {} -- de tomma platserna med "+"
+local closeIconPicker -- ikonvalet i väskan (längre ner); ns.SetView stänger det
 
 function ns.IsSetsView()
     return view == "sets"
@@ -74,6 +75,7 @@ function ns.SetView(newView)
     for _, row in ipairs(emptyRows) do
         row:Hide()
     end
+    closeIconPicker()
     if ns.Refresh then
         ns.Refresh()
     end
@@ -124,6 +126,22 @@ local function showRowTooltip(row)
     GameTooltip:Show()
 end
 
+-- Tooltipen på setets ikon: dra den till actionbaren, eller klicka för en ny ikon.
+local function showIconTooltip(button)
+    local row = button:GetParent()
+    local set = ns.GetSets()[row.setIndex]
+    if not set then
+        return
+    end
+    GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+    GameTooltip_SetTitle(GameTooltip, set.name)
+    if not InputUtil.IsGamepadUIEnabled() then
+        GameTooltip_AddInstructionLine(GameTooltip, L["Drag the icon to an action bar."])
+    end
+    GameTooltip_AddInstructionLine(GameTooltip, L["Click the icon to change it."])
+    GameTooltip:Show()
+end
+
 -- En sak som släpps på raden hamnar i setet.
 local function dropOnRow(row)
     local itemID = cursorItemID()
@@ -149,9 +167,20 @@ local function buildRowMenu(row, rootDescription)
     rootDescription:CreateButton(L["Add What I'm Wearing"], function()
         ns.AddWornToSet(index)
     end)
-    rootDescription:CreateButton(L["Edit Name and Icon..."], function()
-        ns.AskEditSet(index)
-    end)
+    -- Namn och ikon byts direkt i väskan. Med handkontroll, där man inte skriver på raden, öppnas
+    -- spelets ruta för namn och ikon som förut.
+    if InputUtil.IsGamepadUIEnabled() then
+        rootDescription:CreateButton(L["Edit Name and Icon..."], function()
+            ns.AskEditSet(index)
+        end)
+    else
+        rootDescription:CreateButton(L["Rename"], function()
+            row:StartRename()
+        end)
+        rootDescription:CreateButton(L["Change Icon"], function()
+            ns.OpenIconPicker(index)
+        end)
+    end
     -- Få saker: raderna direkt i menyn. Spelet öppnar en undermeny åt vänster när fönstret står vid
     -- skärmens högra kant, trots att pilen pekar åt höger, så en undermeny undviks när det går.
     -- Många saker: en undermeny, så att menyn inte blir för lång.
@@ -212,8 +241,63 @@ local function acquireRow(index, parent)
     row.icon = row:CreateTexture(nil, "ARTWORK")
     row.icon:SetSize(37, 37)
     row.icon:SetPoint("LEFT", 18, 0)
+    -- En knapp ovanpå ikonen: dra den till actionbaren (setets makro, Sets.lua) eller klicka för att
+    -- välja en ny ikon direkt i väskan.
+    row.iconButton = CreateFrame("Button", nil, row)
+    row.iconButton:SetAllPoints(row.icon)
+    row.iconButton:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    row.iconButton:RegisterForDrag("LeftButton")
+    row.iconButton:SetScript("OnDragStart", function(self)
+        GameTooltip_Hide()
+        ns.PickupSetMacro(self:GetParent().setIndex)
+    end)
+    row.iconButton:SetScript("OnClick", function(self)
+        if not dropOnRow(self:GetParent()) then
+            ns.OpenIconPicker(self:GetParent().setIndex)
+        end
+    end)
+    row.iconButton:SetScript("OnReceiveDrag", function(self)
+        dropOnRow(self:GetParent())
+    end)
+    row.iconButton:SetScript("OnEnter", showIconTooltip)
+    row.iconButton:SetScript("OnLeave", GameTooltip_Hide)
     row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     row.name:SetPoint("TOPLEFT", row.icon, "TOPRIGHT", 9, -1)
+    -- Nytt namn skrivs direkt på raden: Enter sparar, Esc avbryter.
+    row.rename = CreateFrame("EditBox", nil, row, "InputBoxTemplate")
+    row.rename:SetSize(200, 20)
+    row.rename:SetPoint("LEFT", row.name, "LEFT", 4, 0)
+    row.rename:SetAutoFocus(false)
+    row.rename:SetMaxLetters(32)
+    row.rename:SetFrameLevel(row:GetFrameLevel() + 5)
+    row.rename:Hide()
+    local function endRename()
+        row.rename:ClearFocus()
+        row.rename:Hide()
+        row.name:Show()
+    end
+    row.rename:SetScript("OnEnterPressed", function(self)
+        local ok, problem = ns.EditSet(row.setIndex, self:GetText())
+        if ok then
+            endRename()
+        elseif problem then
+            UIErrorsFrame:AddMessage(problem, 1.0, 0.1, 0.1, 1.0)
+        end
+    end)
+    row.rename:SetScript("OnEscapePressed", endRename)
+    row.rename:SetScript("OnEditFocusLost", endRename)
+    row:HookScript("OnHide", endRename)
+    function row:StartRename()
+        local set = ns.GetSets()[self.setIndex]
+        if not set then
+            return
+        end
+        self.name:Hide()
+        self.rename:SetText(set.name)
+        self.rename:Show()
+        self.rename:SetFocus()
+        self.rename:HighlightText()
+    end
     -- Läget direkt efter namnet: "· 1 item", "✔ Equipped" eller "⚠ 1 missing".
     row.status = row:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
     row.status:SetPoint("LEFT", row.name, "RIGHT", 8, 0)
@@ -459,6 +543,130 @@ local function acquireEmptyRow(index, parent)
     return row
 end
 
+---------------------------------------------------------------------------
+-- Ikonval i väskan
+---------------------------------------------------------------------------
+-- Ett klick på setets ikon visar ett rutnät med ikoner i fliken Sets i stället för raderna
+-- (användarens önskan 2026-11-10: allt för set i väskan). Setets egna saker står först, sedan alla
+-- spelets ikoner. Ett klick byter ikonen direkt, Done går tillbaka. Rutnätet är spelets eget
+-- (ScrollBoxSelectorTemplate och IconDataProviderMixin, samma som i spelets ruta för ikoner).
+local PICKER_HEAD = 46
+local PICKER_CELL = 42
+local pickerIndex       -- setet vars ikon väljs, eller nil
+local picker            -- delarna: head, icon, title, done, selector
+local iconData          -- spelets lista med ikoner, medan väljaren visas
+local ownIcons = {}     -- setets egna sakers ikoner, först i rutnätet
+
+closeIconPicker = function()
+    if not pickerIndex then
+        return
+    end
+    pickerIndex = nil
+    if picker then
+        picker.loadedFor = nil
+        picker.head:Hide()
+        picker.selector:Hide()
+    end
+    if iconData then
+        iconData:Release()
+        iconData = nil
+    end
+end
+
+function ns.OpenIconPicker(index)
+    if not ns.GetSets()[index] then
+        return
+    end
+    pickerIndex = index
+    if ns.Refresh then
+        ns.Refresh()
+    end
+end
+
+local function iconAt(position)
+    if position <= #ownIcons then
+        return ownIcons[position]
+    end
+    return iconData and iconData:GetIconByIndex(position - #ownIcons) or 134400
+end
+
+local function iconCount()
+    return #ownIcons + (iconData and iconData:GetNumIcons() or 0)
+end
+
+local function createPicker(width)
+    picker = {}
+    picker.head = CreateFrame("Frame", nil, tabHost)
+    picker.head:SetSize(width, PICKER_HEAD)
+    picker.icon = picker.head:CreateTexture(nil, "ARTWORK")
+    picker.icon:SetSize(37, 37)
+    picker.icon:SetPoint("LEFT", 4, 0)
+    picker.title = picker.head:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    picker.title:SetPoint("LEFT", picker.icon, "RIGHT", 10, 0)
+    picker.done = CreateFrame("Button", nil, picker.head, "UIPanelButtonTemplate")
+    picker.done:SetSize(90, 22)
+    picker.done:SetPoint("RIGHT", -4, 0)
+    picker.done:SetText(L["Done"])
+    picker.done:SetScript("OnClick", function()
+        closeIconPicker()
+        if ns.Refresh then
+            ns.Refresh()
+        end
+    end)
+    picker.selector = CreateFrame("Frame", nil, tabHost, "ScrollBoxSelectorTemplate")
+    -- Rutor lika stora som väskans, och så många per rad som ryms i fönstrets minsta bredd.
+    picker.selector:SetCustomButtonHeight(36)
+    picker.selector:SetCustomPadding(4, 4, 4, 4, PICKER_CELL - 36, PICKER_CELL - 36)
+    picker.selector:SetCustomStride(math.max(1, math.floor((width - 24) / PICKER_CELL)))
+    picker.selector:SetSetupCallback(function(button, _, icon)
+        button:SetIconTexture(icon)
+    end)
+    picker.selector:SetSelectedCallback(function(_, icon)
+        local set = pickerIndex and ns.GetSets()[pickerIndex]
+        if set and icon then
+            ns.EditSet(pickerIndex, set.name, icon)
+            picker.icon:SetTexture(icon)
+        end
+    end)
+end
+
+-- Lägger ut ikonvalet. Returnerar höjden och knapparna (för handkontrollen).
+local function layoutIconPicker(place, width)
+    local set = ns.GetSets()[pickerIndex]
+    if not picker then
+        createPicker(width)
+    end
+    wipe(ownIcons)
+    local seen = {}
+    for _, itemID in ipairs(set.items) do
+        local icon = C_Item.GetItemIconByID(itemID)
+        if icon and not seen[icon] then
+            seen[icon] = true
+            ownIcons[#ownIcons + 1] = icon
+        end
+    end
+    if not iconData then
+        iconData = CreateAndInitFromMixin(IconDataProviderMixin, IconDataProviderExtraType.Equipment)
+    end
+    picker.icon:SetTexture(ns.GetSetIcon(pickerIndex))
+    picker.title:SetText(L["Choose an icon for %s"]:format(set.name))
+    picker.head:SetWidth(width)
+    place(picker.head, 0, 0)
+    picker.head:Show()
+    local height = ns.SETS_VIEW_HEIGHT
+    picker.selector:SetSize(width, height - PICKER_HEAD)
+    place(picker.selector, 0, PICKER_HEAD)
+    picker.selector:Show()
+    -- Listan fylls bara när väljaren öppnas: ett klick på en ikon ritar om fliken, och då ska
+    -- rutnätet stå kvar där du rullat.
+    if picker.loadedFor ~= pickerIndex then
+        picker.loadedFor = pickerIndex
+        picker.selector:SetSelectionsDataProvider(iconAt, iconCount)
+        picker.selector:UpdateSelections()
+    end
+    return height, { picker.done }
+end
+
 -- Fliken Sets är alltid så här hög: fem platser (Layout.lua ger alla flikar samma höjd).
 ns.SETS_VIEW_HEIGHT = ns.MAX_SETS * (ROW_HEIGHT + ROW_GAP) - ROW_GAP
 
@@ -469,6 +677,18 @@ function ns.LayoutSetsView(place, width)
     local shown = {}
     local sets = ns.GetSets()
     local y = 0
+    if pickerIndex and not sets[pickerIndex] then
+        closeIconPicker()
+    end
+    if pickerIndex then
+        for _, row in ipairs(rows) do
+            row:Hide()
+        end
+        for _, row in ipairs(emptyRows) do
+            row:Hide()
+        end
+        return layoutIconPicker(place, width)
+    end
     for index, set in ipairs(sets) do
         local row = acquireRow(index, tabHost)
         fillRow(row, index, set)

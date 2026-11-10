@@ -307,7 +307,13 @@ end)
 ---------------------------------------------------------------------------
 
 SLASH_TIDYPACK1 = "/tidypack"
-SlashCmdList.TIDYPACK = function()
+-- "/tidypack equip <namn>" tar på ett set (så fungerar setets makro på actionbaren).
+SlashCmdList.TIDYPACK = function(message)
+    local command, rest = (message or ""):match("^%s*(%S+)%s*(.-)%s*$")
+    if command and command:lower() == "equip" and ns.EquipSetByName then
+        ns.EquipSetByName(rest)
+        return
+    end
     ns.OpenSettings()
 end
 

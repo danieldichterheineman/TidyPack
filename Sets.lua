@@ -90,6 +90,83 @@ function ns.CreateSet(name, icon)
     return #list
 end
 
+---------------------------------------------------------------------------
+-- Makron: ett set på actionbaren
+---------------------------------------------------------------------------
+-- Actionbaren tar bara emot spelets egna saker, så ett set läggs dit som ett makro med
+-- "/tidypack equip <namn>" (användarens önskan 2026-11-10). Makrot är kontots (inte karaktärens),
+-- heter "TP <setets namn>" och har setets ikon. Funktionerna är spelets egna (CreateMacro,
+-- EditMacro, PickupMacro, GetNumMacros och C_Macro.GetMacroName, som spelets makrofönster använder).
+-- ⚠️ Makron kan inte skapas eller ändras i strid, och kontot har högst 120 makron.
+local MACRO_PREFIX = "TP "
+local MACRO_NAME_LENGTH = 16 -- så långt kan ett makros namn vara i spelets makrofönster
+
+local function macroName(setName)
+    return (MACRO_PREFIX .. setName):sub(1, MACRO_NAME_LENGTH)
+end
+
+local function macroBody(setName)
+    return "/tidypack equip " .. setName
+end
+
+-- Platsen för kontots makro med det här namnet, eller nil.
+local function findMacro(name)
+    local accountCount = GetNumMacros()
+    for macroIndex = 1, accountCount do
+        if C_Macro.GetMacroName(macroIndex) == name then
+            return macroIndex
+        end
+    end
+    return nil
+end
+
+-- Lägger setets makro på markören, så att det kan släppas på actionbaren. Skapar makrot första gången.
+function ns.PickupSetMacro(index)
+    local set = sets()[index]
+    if not set then
+        return
+    end
+    if InCombatLockdown() then
+        ns.Print(L["Sets can't be put on an action bar in combat."])
+        return
+    end
+    local name = macroName(set.name)
+    local macroIndex = findMacro(name)
+    if macroIndex then
+        macroIndex = EditMacro(macroIndex, name, ns.GetSetIcon(index), macroBody(set.name))
+    else
+        if GetNumMacros() >= Constants.MacroConsts.MAX_ACCOUNT_MACROS then
+            ns.Print(L["You have no free macro slots. Delete a macro (Esc → Macros) and try again."])
+            return
+        end
+        macroIndex = CreateMacro(name, ns.GetSetIcon(index), macroBody(set.name), false)
+    end
+    if macroIndex then
+        PickupMacro(macroIndex)
+    end
+end
+
+-- Byter namn, ikon och text på ett sets makro när setet ändras (om makrot finns).
+local function updateMacro(oldName, set, index)
+    if InCombatLockdown() then
+        return
+    end
+    local macroIndex = findMacro(macroName(oldName))
+    if macroIndex then
+        EditMacro(macroIndex, macroName(set.name), ns.GetSetIcon(index), macroBody(set.name))
+    end
+end
+
+-- /tidypack equip <namn> (från makrot): tar på setet med det namnet.
+function ns.EquipSetByName(name)
+    local index = findSet(strtrim(name or ""))
+    if index then
+        ns.EquipSet(index)
+    else
+        ns.Print(L["You have no set called %s."]:format(name or ""))
+    end
+end
+
 -- Byter namn och ikon på ett set.
 function ns.EditSet(index, name, icon)
     local set = sets()[index]
@@ -104,10 +181,12 @@ function ns.EditSet(index, name, icon)
     if other and other ~= index then
         return nil, L["You already have a set with that name."]
     end
+    local oldName = set.name
     set.name = name
     if icon then
         set.icon = icon
     end
+    updateMacro(oldName, set, index)
     changed()
     return index
 end
@@ -394,6 +473,10 @@ local function createIconPopup()
     iconPopup:EnableMouse(true)
     iconPopup.BorderBox.EditBoxHeaderText:SetText(L["Set name:"])
     iconPopup.BorderBox.IconSelectorEditBox:SetMaxLetters(MAX_NAME_LENGTH)
+    -- Spelets mall lägger ikonlistan i lagret HIGH, och rutan här ligger i DIALOG (ovanför väskan).
+    -- Då ritades ikonerna bakom rutans bakgrund och listan såg tom ut (skärmbild 2026-11-10).
+    iconPopup.IconSelector:SetFrameStrata("DIALOG")
+    iconPopup.IconSelector:SetFrameLevel(iconPopup:GetFrameLevel() + 10)
 
     -- Spelets mall anropar de här när rutan visas, döljs och när Okay trycks.
     function iconPopup:OnShow()

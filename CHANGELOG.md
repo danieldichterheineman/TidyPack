@@ -10,6 +10,12 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- Drag a set's icon to an action bar: Tidy Pack makes a macro ("TP <set name>") with the set's
+  icon that puts the set on. It uses one of your account's macro slots, and can't be made in
+  combat. Renaming the set or changing its icon updates the macro.
+- Everything for sets happens in the bag: click a set's icon to choose a new one from a grid
+  (the set's own items first), and rename a set right on its row ("..." → Rename).
+- Fixed: the icon list in the set name window was empty.
 - When quest items are hidden from the Bags tab, they are shown as one slot with their number.
   Click it to open the Quests tab.
 - The Quests tab starts right away, without the summary line.

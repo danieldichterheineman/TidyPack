@@ -439,6 +439,13 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+39. Set i väskan (2026-11-10, skissen `.design/sketch-sets-in-bag.html`): dra setets ikon till en
+    actionbar → makrot "TP <namn>" (kontots, `/tidypack equip <namn>`, setets ikon) skapas eller uppdateras
+    och läggs på markören (`ns.PickupSetMacro`); släpp på en knapp och klicka – setet tas på. Byt namn eller
+    ikon: makrot följer med. I strid: en rad i chatten, inget makro. Klick på ikonen: ett rutnät med ikoner i
+    fliken (setets saker först), ett klick byter ikonen, Done tillbaka, rullningen står kvar efter ett klick.
+    "..." → Rename: namnet skrivs på raden (Enter/Esc). Med handkontroll: spelets ruta som förut, nu med
+    synliga ikoner (listan låg i lagret HIGH under rutans DIALOG). Inte provat i spelet.
 38. Mer plats (2026-11-10, efter 1.0.1, skissen `.design/sketch-more-room.html`): ingen sökruta
     (`BagItemSearchBox` döljs efter varje `Show`), ingen väskikon (`PortraitContainer`, `PortraitButton`
     och `CountContainer` döljs, ramen byts till `ButtonFrameTemplateNoPortrait` med
