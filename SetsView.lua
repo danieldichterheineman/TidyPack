@@ -152,6 +152,8 @@ end
 
 -- Menyn för ett set, i spelets eget menysystem. Den öppnas från radens kugghjul (syns, och
 -- går att nå med handkontroll) och med högerklick på raden.
+local FLAT_REMOVE_MAX = 6 -- så många saker visas direkt i menyn "Remove Item"
+
 local function buildRowMenu(row, rootDescription)
     local index = row.setIndex
     local set = ns.GetSets()[index]
@@ -165,12 +167,20 @@ local function buildRowMenu(row, rootDescription)
     rootDescription:CreateButton(L["Edit Name and Icon..."], function()
         ns.AskEditSet(index)
     end)
+    -- Få saker: raderna direkt i menyn. Spelet öppnar en undermeny åt vänster när fönstret står vid
+    -- skärmens högra kant, trots att pilen pekar åt höger, så en undermeny undviks när det går.
+    -- Många saker: en undermeny, så att menyn inte blir för lång.
     if #set.items > 0 then
-        local removeMenu = rootDescription:CreateButton(L["Remove Item"])
+        local target = rootDescription
+        if #set.items > FLAT_REMOVE_MAX then
+            target = rootDescription:CreateButton(L["Remove Item"])
+        else
+            rootDescription:CreateTitle(L["Remove Item"])
+        end
         for _, itemID in ipairs(set.items) do
             local name = C_Item.GetItemNameByID(itemID) or L["Item %d"]:format(itemID)
             local icon = C_Item.GetItemIconByID(itemID)
-            removeMenu:CreateButton((icon and ("|T%s:14:14|t "):format(icon) or "") .. name, function()
+            target:CreateButton((icon and ("|T%s:14:14|t "):format(icon) or "") .. name, function()
                 ns.SetInSet(index, itemID, false)
             end)
         end
