@@ -442,8 +442,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 38. Mer plats (2026-11-10, efter 1.0.1, skissen `.design/sketch-more-room.html`): ingen sökruta
     (`BagItemSearchBox` döljs efter varje `Show`), ingen väskikon (`PortraitContainer`, `PortraitButton`
     och `CountContainer` döljs, ramen byts till `ButtonFrameTemplateNoPortrait` med
-    `NineSliceUtil.ApplyLayoutByName`), och sakerna börjar direkt under titeln (`searchRoom()`: 40 med
-    mus, 28 med handkontroll – 30/18 lämnade en remsa; justerat efter en
+    `NineSliceUtil.ApplyLayoutByName`), och sakerna börjar direkt under titeln (`searchRoom()`: 55 med
+    mus, 43 med handkontroll – 30 och 40 lämnade ett band; justerat efter en
     skärmbild). Flikarna börjar 14 från kanten. Alla tre flikar har samma höjd (`sharedHeight` i
     `relayout`: den högsta av Bags, `ns.SETS_VIEW_HEIGHT` och `MIN_QUESTS_HEIGHT`); Quests visar "...and N
     more" i stället för att växa. Sets: fem numrerade platser (`ns.MAX_SETS = 5`, samma som Equip set
