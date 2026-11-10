@@ -1,12 +1,12 @@
 -- TidyPack – QuestsView.lua
--- Fliken Quests i väskfönstret: en översikt över quests som kräver saker, kompakt med en rad per
--- quest. Raden har de riktiga rutorna du har (de går att använda, dra och sälja som i väskan,
--- och har samma lås hos en handlare), questens namn och en rad med vad som behövs, och hur långt du
--- kommit till höger. Det du inte har plockat än syns som en tom ruta. Saker som spelet själv
--- markerat som quest-saker men som inte hör till en quest nedan står sist under "Other quest items".
--- Avsnitten "Ready to turn in", "In progress" och "Other quest items" går att fälla ihop med ett klick
--- på rubriken (valet sparas i TidyPackDB.questOpen). Från början är allt hopfällt, utom "Ready to
--- turn in" när någon quest är klar. Samma rutor flyttas mellan flikarna (Layout.lua), så en sak syns
+-- Fliken Quests i väskfönstret: en lista över quests som kräver saker. Avsnitten "Ready to turn in",
+-- "In progress" och "Other quest items" fäller du ut med ett klick på rubriken, och då syns en rad
+-- per quest med namn och hur långt du kommit. Ett klick på en quest fäller ut just den: de riktiga
+-- rutorna du har (de går att använda, dra och sälja som i väskan, och har samma lås hos en
+-- handlare) och vad som behövs. Det du inte har plockat än syns som en tom ruta. Saker som spelet
+-- själv markerat som quest-saker men som inte hör till en quest står sist under "Other quest
+-- items". Valen sparas i TidyPackDB.questOpen. Från början är allt hopfällt, utom "Ready to turn in"
+-- när någon quest är klar. Samma rutor flyttas mellan flikarna (Layout.lua), så en sak syns
 -- aldrig på två ställen.
 -- Layout.lua ger den här filen rutorna och en funktion för att placera dem, och filen lägger ut
 -- rubriker och texter (de delarna återanvänds mellan genomgångarna).
@@ -18,7 +18,9 @@ local _, ns = ...
 local L = ns.L
 
 local ITEM_CELL = 42          -- en ruta och luften efter den
-local ROW_HEIGHT = 44         -- en quest (en ruta hög och lite luft)
+local ROW_HEIGHT = 44         -- en uppfälld quests innehåll (en ruta hög och lite luft)
+local QUEST_HEIGHT = 24       -- en quests rad när den är hopfälld
+local INDENT = 16             -- quests står indragna under sin rubrik
 local HEADER_HEIGHT = 26      -- ett avsnitts rubrik
 local SECTION_GAP = 6
 local MAX_SLOTS = 6           -- så många rutor visas på en rad
@@ -78,7 +80,7 @@ local function isOpen(key, defaultOpen)
 end
 
 -- En rubrik du kan klicka på för att öppna eller fälla ihop avsnittet.
-local function acquireHeader(key, label, count, open, color, width)
+local function acquireHeader(key, text, rightText, open, color, width, indent)
     usedHeaders = usedHeaders + 1
     local header = headers[usedHeaders]
     if not header then
@@ -86,7 +88,11 @@ local function acquireHeader(key, label, count, open, color, width)
         header:SetHeight(HEADER_HEIGHT - 2)
         header:SetHighlightAtlas("Options_List_Hover", "ADD")
         header.text = header:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-        header.text:SetPoint("LEFT", 4, 0)
+        header.text:SetJustifyH("LEFT")
+        header.text:SetWordWrap(false)
+        header.right = header:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+        header.right:SetPoint("RIGHT", -4, 0)
+        header.right:SetJustifyH("RIGHT")
         header:SetScript("OnClick", function(self)
             if ns.db then
                 ns.db.questOpen = ns.db.questOpen or {}
@@ -101,8 +107,12 @@ local function acquireHeader(key, label, count, open, color, width)
     header.key, header.open = key, open
     header:SetWidth(width)
     local icon = ("|TInterface\\Buttons\\UI-%sButton-Up:14:14|t "):format(open and "Minus" or "Plus")
-    header.text:SetText(("%s%s (%d)"):format(icon, label, count))
+    header.text:ClearAllPoints()
+    header.text:SetPoint("LEFT", 4 + indent, 0)
+    header.text:SetWidth(math.max(40, width - indent - 70))
+    header.text:SetText(icon .. text)
     header.text:SetTextColor(color:GetRGB())
+    header.right:SetText(rightText or "")
     header:Show()
     return header
 end
@@ -157,13 +167,28 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
     end
 
     local function section(key, label, count, open, color)
-        local header = acquireHeader(key, label, count, open, color, width)
+        local header = acquireHeader(key, ("%s (%d)"):format(label, count), nil, open, color, width, 0)
         placeRegion(header, 0, y)
         y = y + HEADER_HEIGHT
     end
 
-    local function placeQuest(quest)
-        -- Rutorna: de du har, och en tom ruta för varje sak du inte har något av.
+    -- Hur långt en quest har kommit: antalet om en sak, annars hur många mål som är klara.
+    local function questTotal(quest)
+        if #quest.objectives == 1 then
+            return progressText(quest.objectives[1].have, quest.objectives[1].need)
+        end
+        local done = 0
+        for _, objective in ipairs(quest.objectives) do
+            if objective.finished then
+                done = done + 1
+            end
+        end
+        return progressText(done, #quest.objectives)
+    end
+
+    -- Innehållet i en uppfälld quest: rutorna, och en rad per sak med hur många som behövs.
+    -- Returnerar höjden.
+    local function placeBody(quest)
         local slots = {}
         for _, objective in ipairs(quest.objectives) do
             local stacks = byName[objective.name]
@@ -174,7 +199,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
                     end
                 end
             else
-                slots[#slots + 1] = false
+                slots[#slots + 1] = false -- inget i väskorna: en tom ruta
             end
         end
         local first
@@ -185,52 +210,41 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
             end
             if slot then
                 placedEntries[slot] = true
-                placeEntry(slot, shown * ITEM_CELL, y)
+                placeEntry(slot, INDENT + shown * ITEM_CELL, y)
                 buttons[#buttons + 1] = slot.button
                 first = first or slot.button
             else
-                placeRegion(acquireGhost(), shown * ITEM_CELL + 3, y + 3)
+                placeRegion(acquireGhost(), INDENT + shown * ITEM_CELL + 3, y + 3)
             end
             shown = shown + 1
         end
-        local textX = shown * ITEM_CELL + 6
-
-        local head = acquireText("GameFontNormal")
-        local prefix = quest.level > 0 and ("[%d] "):format(quest.level) or ""
-        local mark = quest.ready and (CreateAtlasMarkup(CHECK, 12, 12) .. " ") or ""
-        head:SetWidth(math.max(40, width - textX - 60))
-        head:SetText(mark .. prefix .. quest.title)
-        placeRegion(head, textX, y + 4)
-
-        -- Vad som behövs, på en rad: "Goretusk Liver 4/8".
-        local parts = {}
+        local textX = INDENT + shown * ITEM_CELL + 6
+        local lines = {}
         for _, objective in ipairs(quest.objectives) do
-            parts[#parts + 1] = ("%s %s"):format(objective.name, progressText(objective.have, objective.need))
+            lines[#lines + 1] = ("%s  %s"):format(objective.name, progressText(objective.have, objective.need))
         end
         local detail = acquireText("GameFontHighlightSmall")
-        detail:SetWidth(math.max(40, width - textX - 60))
-        detail:SetText(table.concat(parts, "   "))
-        placeRegion(detail, textX, y + 22)
-
-        -- Framsteget till höger: antalet om en sak, annars hur många mål som är klara.
-        local total = acquireText("GameFontHighlightSmall")
-        total:SetWidth(54)
-        total:SetJustifyH("RIGHT")
-        if #quest.objectives == 1 then
-            total:SetText(progressText(quest.objectives[1].have, quest.objectives[1].need))
-        else
-            local done = 0
-            for _, objective in ipairs(quest.objectives) do
-                if objective.finished then
-                    done = done + 1
-                end
-            end
-            total:SetText(progressText(done, #quest.objectives))
-        end
-        placeRegion(total, width - 58, y + 14)
-
+        detail:SetJustifyV("TOP")
+        detail:SetWidth(math.max(40, width - textX - 10))
+        detail:SetText(table.concat(lines, "\n"))
+        placeRegion(detail, textX, y + 4)
         firsts[#firsts + 1] = first
-        y = y + ROW_HEIGHT
+        return math.max(ROW_HEIGHT, #quest.objectives * 15 + 8)
+    end
+
+    -- En quest: en rad du kan klicka på, och när den är uppfälld dess innehåll.
+    local function placeQuest(quest)
+        local key = "q" .. quest.questID
+        local open = isOpen(key, false)
+        local prefix = quest.level > 0 and ("[%d] "):format(quest.level) or ""
+        local mark = quest.ready and (CreateAtlasMarkup(CHECK, 12, 12) .. " ") or ""
+        local header = acquireHeader(key, mark .. prefix .. quest.title, questTotal(quest), open,
+            NORMAL_FONT_COLOR, width, INDENT)
+        placeRegion(header, 0, y)
+        y = y + QUEST_HEIGHT
+        if open then
+            y = y + placeBody(quest) + 2
+        end
     end
 
     local function placeSection(key, label, quests, color, defaultOpen)
@@ -245,7 +259,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         section(key, label, #quests, open, color)
         if open then
             for _, quest in ipairs(quests) do
-                if fits(ROW_HEIGHT) then
+                if fits(QUEST_HEIGHT) then
                     placeQuest(quest)
                 else
                     hidden = hidden + 1

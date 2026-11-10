@@ -84,7 +84,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   (3/7)" och "And N more quests". (2) `ns.UpdateQuestStacks`: har du flera högar av samma sak räknas de
   största tills antalet räcker som quest-saker, resten (över) är vanliga saker och går att sälja; en ensam
   hög är alltid kvar hel och spelets egna quest-saker rörs aldrig. (3) Tredje fliken Quests
-  (`ns.BuildQuestsView`): klara quests överst ("Ready to turn in", `C_QuestLog.ReadyForTurnIn`), sedan de som
+  (`ns.BuildQuestsView`, avsnitt och quests fälls ut för sig): klara quests överst ("Ready to turn in", `C_QuestLog.ReadyForTurnIn`), sedan de som
   pågår, med de riktiga rutorna, namn, antal och en stapel, och tom ruta med grå text för det som saknas;
   "Other quest items" sist; högst så många quests som ryms (`maxContentHeight`), resten som "...and N more
   quests". Samma rutor flyttas mellan flikarna. En grön/blå prick på fliken (`ns.UpdateQuestsNotice`) när en
@@ -440,8 +440,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     går ända fram till kanten. På varje set-rad står "..." (tooltip "More options") i stället för ett
     kugghjul. Quests: tre rubriker med antal ("Ready to turn in (1)", "In progress (7)", "Other quest
     items (3)") med plus/minus; allt hopfällt första gången utom "Ready to turn in" när en quest är klar;
-    ett klick fäller ut och valet finns kvar efter /reload. En rad per quest: rutor, namn, vad som behövs,
-    totalen till höger. Ingen rullist (inte byggd): ryms inte allt står "...and N more quests".
+    ett klick fäller ut och valet finns kvar efter /reload. Under en öppen rubrik står en rad per quest
+    (plus/minus, namn, totalen till höger); ett klick på en quest fäller ut just den med rutorna och en rad per
+    sak (`questOpen["q<questID>"]`). Ingen rullist (inte byggd): ryms inte allt står "...and N more quests".
 35. Quest-saker: ta en quest som kräver saker (t.ex. fenor, 3 av 7). Bags: Quest Items visar "3/7" på
     rutan, grönt när det räcker; tooltipen säger "Needed for: <quest> (3/7)". Har du två högar av samma sak
     med mer än questen behöver: den största hålls kvar i Quest Items, den andra ligger bland vanliga saker och
