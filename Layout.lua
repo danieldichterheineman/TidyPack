@@ -48,9 +48,10 @@ local TIP_MAX_OPENS = 5       -- så många gånger du öppnar väskan visas tip
 local MIN_QUESTS_HEIGHT = 120 -- fliken Quests är minst så här hög
 -- Sökrutan visas inte (användarens önskan 2026-11-10), så raden spelet lämnar för den används av
 -- sakerna. Spelet räknar 12 enheter mindre för raden med handkontroll (ContainerFrameCombinedBagsMixin:
--- GetPaddingHeight, 75 med mus och 63 med handkontroll). Måttet kan behöva justeras efter en skärmbild.
+-- GetPaddingHeight, 75 med mus och 63 med handkontroll). Måttet är justerat efter en skärmbild.
 local function searchRoom()
-    return InputUtil.IsGamepadUIEnabled() and 18 or 30
+    -- 30 lämnade en remsa mellan titelraden och bakgrunden (skärmbild 2026-11-10), därför 10 till.
+    return InputUtil.IsGamepadUIEnabled() and 28 or 40
 end
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
 local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
