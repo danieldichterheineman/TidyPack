@@ -19,6 +19,9 @@
 - The Sets tab is as tall as the Bags tab, so the window no longer changes size when you
   switch. With a few sets it also shows a short tip.
 - The number of free slots is shown on the backpack icon, also when you play with a mouse.
+- The slot that shows your free slots is now called "Add to bag" and stands next to Favorites
+  instead of at the bottom. It has a + and a tooltip, and an item you drop on it goes into
+  your bags. Controller: the cursor still starts on an item.
 - If the game ever blocks something because of Tidy Pack, a line in chat now says what was
   blocked, so you can report it.
 

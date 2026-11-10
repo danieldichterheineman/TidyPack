@@ -5,10 +5,12 @@
 local addonName, ns = ...
 local L = ns.L
 
--- Grupperna, i den ordning de visas. Grupper utan saker visas inte.
+-- Grupperna, i den ordning de visas. Grupper utan saker visas inte. Empty (rutan där du
+-- släpper en sak för att lägga den i väskorna) står näst först, så att den delar översta
+-- raden med Favorites i stället för att ta en egen rad längst ned.
 ns.groupOrder = {
-    "Favorites", "New", "Consumables", "Equipment", "TradeGoods",
-    "QuestItems", "Keys", "Bags", "Miscellaneous", "Junk", "Empty",
+    "Favorites", "Empty", "New", "Consumables", "Equipment", "TradeGoods",
+    "QuestItems", "Keys", "Bags", "Miscellaneous", "Junk",
 }
 
 -- Gruppernas rubriker i spelet.
@@ -23,7 +25,7 @@ ns.groupNames = {
     Bags = L["Spare Bags"], -- inte "Bags", som fliken ovanför fönstret heter
     Miscellaneous = L["Miscellaneous"],
     Junk = L["Junk"],
-    Empty = L["Free"],
+    Empty = L["Add to bag"], -- rutan visar antalet lediga platser, och en sak som släpps dit hamnar i väskorna
 }
 
 local ItemClass = Enum.ItemClass

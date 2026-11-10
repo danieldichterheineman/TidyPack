@@ -101,12 +101,14 @@ local divider              -- linjen ovanför specialväskorna
 local shownButtons = {}    -- rutorna som syns efter senaste genomgången
 local lockedButtons = setmetatable({}, { __mode = "k" }) -- rutor som är låsta hos handlaren
 local disabledButtons = setmetatable({}, { __mode = "k" }) -- rutor som Tidy Pack stängt av
+local emptyFree = setmetatable({}, { __mode = "k" })     -- tom ruta → antal lediga platser, för tooltipen
 
 -- För handkontrollen (Gamepad.lua): första rutan i varje grupp, i den ordning grupperna
 -- visas, och vilken grupp varje ruta hör till.
 local groupFirst = {}                                    -- 1, 2, 3 … → gruppens första ruta
 local groupOfButton = setmetatable({}, { __mode = "k" }) -- ruta → plats i groupFirst
 local newGroupIndex                                      -- gruppen New, om den visas
+local startGroupIndex                                    -- första gruppen med en riktig sak (inte den tomma rutan)
 
 local function newEntry()
     entryCount = entryCount + 1
@@ -159,6 +161,18 @@ local headerX, headerY = {}, {}
 -- dem – bara här, i en tabell som släpper rutan om spelet slutar använda den.
 local extras = setmetatable({}, { __mode = "k" })
 
+-- Tooltip på den tomma rutan: hur många platser som är lediga och vad rutan är till för.
+local function showEmptyTooltip(button)
+    local free = emptyFree[button]
+    if not free then
+        return
+    end
+    GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+    GameTooltip_SetTitle(GameTooltip, L["Free slots: %d"]:format(free))
+    GameTooltip_AddInstructionLine(GameTooltip, L["Drop an item here to put it in your bags."])
+    GameTooltip:Show()
+end
+
 local function getExtras(button)
     local extra = extras[button]
     if not extra then
@@ -170,7 +184,11 @@ local function getExtras(button)
             free = button:CreateFontString(nil, "ARTWORK", "NumberFontNormal"),
             lock = button:CreateTexture(nil, "OVERLAY", nil, 6),
             later = button:CreateTexture(nil, "OVERLAY", nil, 6),
+            -- Ett + mitt på den tomma rutan, som den tomma rutan i fliken Sets: släpp en sak här.
+            plus = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"),
         }
+        extra.plus:SetPoint("CENTER", 0, 1)
+        extra.plus:SetText("+")
         extra.level:SetPoint("TOPLEFT", 2, -2)
         extra.bind:SetPoint("BOTTOMLEFT", 2, 2)
         extra.bind:SetText(L["BoE"])
@@ -187,6 +205,7 @@ local function getExtras(button)
         -- En avstängd ruta visar annars ingen tooltip. Låsta saker hos en handlare ska visa
         -- sin, med raden om varför de är låsta.
         button:SetMotionScriptsWhileDisabled(true)
+        button:HookScript("OnEnter", showEmptyTooltip)
     end
     return extra
 end
@@ -216,6 +235,8 @@ local function updateExtras(entry, atMerchant)
     local extra = getExtras(button)
 
     -- Antalet tomma platser på den enda tomma ruta som syns. Rött när det är få kvar.
+    extra.plus:SetShown(entry.isEmpty == true)
+    emptyFree[button] = entry.isEmpty and entry.free or nil
     if entry.isEmpty then
         extra.free:SetText(entry.free)
         local color = entry.free <= LOW_SPACE and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR
@@ -387,7 +408,7 @@ local function layoutSetsView(atMerchant)
     wipe(shownButtons)
     wipe(groupFirst)
     wipe(groupOfButton)
-    newGroupIndex = nil
+    newGroupIndex, startGroupIndex = nil, nil
     -- Allt hänger i raden med pengar och räknas uppifrån, så höjden måste vara känd innan
     -- något placeras. Därför samlas platserna först och sätts sedan.
     local placements = {}
@@ -444,6 +465,9 @@ local function flow(cols, apply, junkValue)
             groupFirst[groupIndex] = list[1].button
             if group == "New" then
                 newGroupIndex = groupIndex
+            end
+            if not startGroupIndex and not list[1].isEmpty then
+                startGroupIndex = groupIndex
             end
             local header = acquireHeader()
             header:SetText(text)
@@ -596,7 +620,7 @@ local function relayout()
     releaseHeaders()
     wipe(groupFirst)
     wipe(groupOfButton)
-    newGroupIndex = nil
+    newGroupIndex, startGroupIndex = nil, nil
     gridCols = chooseColumns(junkValue)
     gridWidth = widthOf(gridCols)
     local dividerY
@@ -683,9 +707,10 @@ function ns.IsLockedButton(button)
     return button ~= nil and lockedButtons[button] == true and ns.IsAtMerchant()
 end
 
--- Rutan som handkontrollens markör börjar på: första saken i New, annars första rutan.
+-- Rutan som handkontrollens markör börjar på: första saken i New, annars första saken i första
+-- gruppen som har en riktig sak (inte den tomma rutan "Add to bag", som står näst först).
 function ns.GetStartButton()
-    return groupFirst[newGroupIndex or 1]
+    return groupFirst[newGroupIndex or startGroupIndex or 1]
 end
 
 -- Första rutan i gruppen före (step = -1) eller efter (step = 1) rutans egen grupp. Efter

@@ -26,8 +26,8 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   Pusha bara efter ett ja från användaren.
 
 ## Funktioner
-- ✅ Elva grupper i fast ordning: Favorites, New, Consumables, Equipment, Trade Goods,
-  Quest Items, Keys, Bags, Miscellaneous, Junk, Empty. Tomma grupper visas inte.
+- ✅ Elva grupper i fast ordning: Favorites, Empty ("Add to bag"), New, Consumables, Equipment,
+  Trade Goods, Quest Items, Keys, Bags, Miscellaneous, Junk. Tomma grupper visas inte.
   Indelningen står i `Categories.lua`. Mer luft mot ramen än spelets rutnät (se Layout.lua; ursprungligen 6 enheter på
   var sida, 4 under sökrutan, 9 ovanför pengarna).
 - ✅ Specialväskor (`Layout.lua`): koger, ammunitionspåsar, själsväskor, yrkesväskor
@@ -70,7 +70,13 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   (`hintText` i `SetsView.lua`).
 - ✅ Lediga platser i väskikonen uppe till vänster, som spelet visar med handkontroll
   (`CountContainer.Count`; spelet visar den bara då): `updatePortraitCount` visar den också
-  med mus. Gruppen Free och dess ruta är kvar (släppplats för saker).
+  med mus. Rutan för lediga platser (gruppen Empty) är kvar som släppplats för saker, med
+  handkontroll den enda, eftersom spelets väskknappar döljs. Den heter "Add to bag" (före
+  2026-11-10 "Free", längst ned), står näst först och delar översta raden med Favorites,
+  har ett + mitt i rutan (som den tomma rutan i fliken Sets), antalet lediga platser nere
+  till höger och en tooltip ("Free slots: N / Drop an item here to put it in your bags").
+  Handkontrollens markör börjar på första riktiga sak (`startGroupIndex`), inte på rutan.
+  Inte provat i spelet.
 - ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
   vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
   bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 14 rutor brett, och bredare (upp till 20) när sakerna annars skulle bli för höga.
@@ -364,7 +370,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     visar "Tidy Pack set". I strid: ett meddelande i stället. Kugghjulets "Add to Set"
     fungerar också. Med handkontroll: nå flikarna och raderna med markören, och prova "Show
     Sets" i kugghjulets meny. Grupperna heter
-    "Spare Bags" och "Free".
+    "Spare Bags" och "Add to bag".
 27. Efter uppdateringen: starta om spelet helt (ny rad i TOC-filen), och kontrollera att
     favoriter, skräplista och inställningar finns kvar.
 28. Fliken Sets: New Set överst, Equip på varje rad (grå när setet redan sitter på), "+"
@@ -377,6 +383,10 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 30. Set: kugghjulet på en rad öppnar setets meny, också med handkontroll. "Add What I'm
     Wearing" lägger det du har på dig i setet (inte skjorta och tabard). Fliken Sets utan
     set visar en förklaring med New Set under.
+33. "Add to bag": rutan står näst först (bredvid Favorites, eller först utan favoriter), har ett
+    + och antalet lediga platser, och en tooltip. Släpp en sak på den – saken hamnar i väskorna.
+    Prova också med handkontroll: markören börjar på en riktig sak, och en sak du plockat upp
+    med A kan läggas ner på rutan.
 32. Stora väskor: med så många saker att fönstret annars skulle bli högre än skärmen blir
     fönstret bredare (upp till 20 kolumner) och ryms. Fyll gärna alla väskplatser och kontrollera
     att sökrutan, kugghjulet och flikarna syns och går att nå. Byt flik Bags ↔ Sets: fönstret
@@ -620,6 +630,10 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   `MerchantSellAllJunkButton`. Den säljer alla grå saker och känner inte till låsen eller
   skräplistan. Funktioner och testlistan ovan är rättade efter det. Inte provat i spelet.
 
+- 2026-11-10: rutan för lediga platser heter "Add to bag" (användarens val bland "Add to bag",
+  "Free slots" och "Drop here") och flyttades från sist till näst först, bredvid Favorites,
+  så att den inte tar en egen rad (65 enheters höjd) och ligger nära siffran i väskikonen.
+  Rutan behålls, eftersom den är släppplatsen. Se funktionslistan.
 - 2026-11-10 (efter test av 1.0.1 med skärmbilder, användarens val A–G): mer luft innanför
   bakgrunden, ljusare bakgrund, samma storlek i båda flikarna, fler kolumner efter behov,
   14 som standard, hjälptext i Sets och siffran i väskikonen. Siffran i gruppen Free är kvar:
