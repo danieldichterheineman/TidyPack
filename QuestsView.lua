@@ -219,15 +219,13 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
             shown = shown + 1
         end
         local textX = INDENT + shown * ITEM_CELL + 6
-        local lines = {}
-        for _, objective in ipairs(quest.objectives) do
-            lines[#lines + 1] = ("%s  %s"):format(objective.name, progressText(objective.have, objective.need))
+        -- En egen text för varje sak (en text med radbrytningar kapas till första raden).
+        for index, objective in ipairs(quest.objectives) do
+            local line = acquireText("GameFontHighlightSmall")
+            line:SetWidth(math.max(40, width - textX - 10))
+            line:SetText(("%s  %s"):format(objective.name, progressText(objective.have, objective.need)))
+            placeRegion(line, textX, y + 4 + (index - 1) * 15)
         end
-        local detail = acquireText("GameFontHighlightSmall")
-        detail:SetJustifyV("TOP")
-        detail:SetWidth(math.max(40, width - textX - 10))
-        detail:SetText(table.concat(lines, "\n"))
-        placeRegion(detail, textX, y + 4)
         firsts[#firsts + 1] = first
         return math.max(ROW_HEIGHT, #quest.objectives * 15 + 8)
     end

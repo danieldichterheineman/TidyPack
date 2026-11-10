@@ -263,6 +263,9 @@ ns.OnLoad(function()
     gearButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
     -- Fönsterhuvudet (titelraden) är en egen ram ovanpå fönstret; kugghjulet måste ligga över den,
     -- annars döljs det bakom titelraden.
+    -- Spelets titelrad ritas över en högre nivå än fönstret i övrigt, så kugghjulet läggs i ett
+    -- högre lager (strata) för att säkert synas ovanpå den.
+    gearButton:SetFrameStrata("HIGH")
     gearButton:SetFrameLevel(bagFrame:GetFrameLevel() + 30)
     -- Sitter i fönsterhuvudet, till vänster om stängknappen (finns den inte: nära hörnet).
     if bagFrame.CloseButton then
@@ -279,6 +282,7 @@ ns.OnLoad(function()
         texture:SetSize(ICON_SIZE, ICON_SIZE)
     end
     gearLabel = CreateFrame("Frame", nil, bagFrame)
+    gearLabel:SetFrameStrata("HIGH")
     gearLabel:SetFrameLevel(gearButton:GetFrameLevel() + 1)
     gearLabel:SetPoint("TOPRIGHT", gearButton, "BOTTOMRIGHT", 0, -2)
     gearLabel.bg = gearLabel:CreateTexture(nil, "BACKGROUND")
