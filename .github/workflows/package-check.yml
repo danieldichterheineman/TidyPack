@@ -30,7 +30,7 @@ jobs:
       - name: Build the package without uploading
         uses: BigWigsMods/packager@v2
         with:
-          args: -d -u -n "TidyPack-${{ steps.version.outputs.version }}:TidyPack ${{ steps.version.outputs.version }}"
+          args: -d -u -n "TidyPack-${{ steps.version.outputs.version }}:TidyPack-${{ steps.version.outputs.version }}"
 
       - name: List what is in the package
         run: |
