@@ -235,6 +235,9 @@ ns.OnLoad(function()
     -- med handkontroll som spelets egna menyer.
     gearButton = CreateFrame("DropdownButton", nil, bagFrame)
     gearButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
+    -- Fönsterhuvudet (titelraden) är en egen ram ovanpå fönstret; kugghjulet måste ligga över den,
+    -- annars döljs det bakom titelraden.
+    gearButton:SetFrameLevel(bagFrame:GetFrameLevel() + 30)
     -- Sitter i fönsterhuvudet, till vänster om stängknappen (finns den inte: nära hörnet).
     if bagFrame.CloseButton then
         gearButton:SetPoint("RIGHT", bagFrame.CloseButton, "LEFT", -2, 0)

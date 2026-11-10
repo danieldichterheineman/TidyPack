@@ -245,8 +245,8 @@ local function acquireRow(index, parent)
     row.menu:SetPoint("RIGHT", row.equip, "LEFT", -6, 0)
     -- Tre punkter i stället för ett kugghjul, så att det syns att knappen gäller just den här raden
     -- (kugghjulet i fönsterhuvudet gäller hela Tidy Pack).
-    row.menu.dots = row.menu:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    row.menu.dots:SetPoint("CENTER", 0, 3)
+    row.menu.dots = row.menu:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    row.menu.dots:SetPoint("CENTER", 0, 4)
     row.menu.dots:SetText("...")
     row.menu.dots:SetAlpha(0.8)
     row.menu:SetupMenu(function(owner, rootDescription)
