@@ -79,20 +79,23 @@ function ns.SetJunk(itemID, onList)
     end
 end
 
--- Körs efter spelets eget klick på en ruta i väskorna (HookScript).
+local showItemMenu -- definieras längre ner, efter menyn
+
+-- Körs efter spelets eget klick på en ruta i väskorna (HookScript). Alt-klick öppnar menyn för saken
+-- (favorit, skräplista, set, grupp). Spelet kan ha plockat upp saken på markören; den läggs då tillbaka.
 local function onItemButtonClick(button, mouseButton)
-    if not IsAltKeyDown() then
+    if not IsAltKeyDown() or mouseButton ~= "LeftButton" then
         return
     end
     local info = C_Container.GetContainerItemInfo(button:GetBagID(), button:GetID())
     if not info then
         return
     end
-    if mouseButton == "LeftButton" then
-        ns.ToggleFavorite(info.itemID)
-    elseif mouseButton == "RightButton" then
-        ns.ToggleJunk(info.itemID)
+    ClearCursor()
+    if ns.DismissItemTip then
+        ns.DismissItemTip() -- den som använder genvägen behöver inte tipset
     end
+    showItemMenu(button, info.itemID)
 end
 
 -- Layout.lua anropar den här för varje ruta det visar. Varje ruta får Alt-klicken en gång.
@@ -114,11 +117,16 @@ end
 
 -- Kugghjulet är svagt tills du håller en sak, pekar på den eller har dess meny öppen. När du håller
 -- en sak lyser den också upp, eftersom du kan släppa saken där.
+local gearLabel -- "Drop here for options" under kugghjulet medan du håller en sak
+
 local function updateGearButton()
     if not gearButton then
         return
     end
     local holding = cursorItemID() ~= nil
+    if gearLabel then
+        gearLabel:SetShown(holding)
+    end
     local active = holding or gearHovered or gearButton:IsMenuOpen()
     gearButton:SetAlpha(active and 1 or 0.6) -- 0.35 såg avstängt ut i spelet
     if holding then
@@ -131,8 +139,8 @@ end
 -- Menyn under kugghjulet, byggd av spelets eget menysystem. Med en sak på markören: favorit,
 -- skräplistan, set eller egen grupp. Annars: skräplistan, grupperna och inställningarna (med
 -- handkontroll också byta flik).
-local function buildMenu(_, rootDescription)
-    local itemID = cursorItemID()
+local function buildMenu(_, rootDescription, itemOverride)
+    local itemID = itemOverride or cursorItemID()
     if itemID then
         rootDescription:CreateTitle(C_Item.GetItemNameByID(itemID) or L["Item"])
         rootDescription:CreateButton(ns.IsFavorite(itemID) and L["Remove from Favorites"] or L["Add to Favorites"], function()
@@ -205,6 +213,13 @@ local function buildMenu(_, rootDescription)
     end
 end
 
+-- Öppnar menyn för en sak vid rutan (Alt-klick).
+showItemMenu = function(button, itemID)
+    MenuUtil.CreateContextMenu(button, function(owner, rootDescription)
+        buildMenu(owner, rootDescription, itemID)
+    end)
+end
+
 -- Tooltipen följer hur du spelar: med handkontroll finns inga Alt-klick, men väl knappen A
 -- (spelet visar den symbol som din kontroll har).
 local function showTooltip(self)
@@ -220,10 +235,21 @@ local function showTooltip(self)
     GameTooltip_AddNormalLine(GameTooltip, L["Click for your junk list and settings."])
     if not InputUtil.IsGamepadUIEnabled() then
         GameTooltip_AddBlankLineToTooltip(GameTooltip)
-        GameTooltip_AddInstructionLine(GameTooltip, L["Alt-click an item to star it. Alt-right-click to put it on your junk list."])
+        GameTooltip_AddInstructionLine(GameTooltip, L["Alt-click an item for its Tidy Pack options: favorite, junk list, sets and groups."])
     end
     GameTooltip:Show()
 end
+
+-- En rad i tooltipen på varje sak i Tidy Packs väska om Alt-klick (inte med handkontroll, som saknar Alt).
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
+    if tooltip ~= GameTooltip or not data or ns.db == nil or InputUtil.IsGamepadUIEnabled() then
+        return
+    end
+    local owner = tooltip:GetOwner()
+    if owner and hookedButtons[owner] and owner:IsShown() then
+        tooltip:AddLine(L["Alt-click: Tidy Pack options"], 0.44, 0.71, 1)
+    end
+end)
 
 ns.OnLoad(function()
     local bagFrame = ns.bagFrame
@@ -252,6 +278,17 @@ ns.OnLoad(function()
         texture:SetPoint("CENTER")
         texture:SetSize(ICON_SIZE, ICON_SIZE)
     end
+    gearLabel = CreateFrame("Frame", nil, bagFrame)
+    gearLabel:SetFrameLevel(gearButton:GetFrameLevel() + 1)
+    gearLabel:SetPoint("TOPRIGHT", gearButton, "BOTTOMRIGHT", 0, -2)
+    gearLabel.bg = gearLabel:CreateTexture(nil, "BACKGROUND")
+    gearLabel.bg:SetAllPoints()
+    gearLabel.bg:SetColorTexture(0, 0, 0, 0.8)
+    gearLabel.text = gearLabel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    gearLabel.text:SetPoint("CENTER")
+    gearLabel.text:SetText(L["Drop here for options"])
+    gearLabel:SetSize(gearLabel.text:GetStringWidth() + 14, 16)
+    gearLabel:Hide()
     gearButton:SetupMenu(buildMenu)
     gearButton:SetMenuAnchor(CreateAnchor("TOPRIGHT", gearButton, "BOTTOMRIGHT", 0, -2))
     -- En sak som dras och släpps på kugghjulet öppnar menyn (ett klick gör det redan).

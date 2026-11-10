@@ -43,6 +43,8 @@ local MONEY_GAP = 16         -- mellan sista raden rutor och raden med pengar
 local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
 local TAB_ROOM = 30          -- flikarna ovanför fönstret
 local NOTE_HEIGHT = 20       -- raden som ersätter quest-sakerna när de är dolda i väskan
+local TIP_HEIGHT = 26         -- tipsraden längst ner i Bags (om Alt-klick)
+local TIP_MAX_OPENS = 5       -- så många gånger du öppnar väskan visas tipset, om du inte stänger det
 local MIN_QUESTS_HEIGHT = 120 -- fliken Quests är minst så här hög
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
 local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
@@ -61,6 +63,7 @@ local bagFrame                    -- spelets fönster med alla väskor i ett
 local overlay                     -- vår egen ram i spelets fönster, för rubrikerna
 local inset                       -- den mörka, infällda bakgrunden bakom sakerna
 local contentHeight               -- höjden på det Tidy Pack lägger ut
+local tipStrip                   -- tipsraden om Alt-klick, längst ner i fliken Bags
 local bagsContentHeight           -- höjden i fliken Bags, som fliken Sets minst får
 local gridCols = MIN_COLUMNS      -- antal kolumner just nu
 local gridWidth = widthOf(MIN_COLUMNS) -- rutnätets bredd just nu
@@ -193,7 +196,17 @@ local function getExtras(button)
             plus = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"),
             -- Antal man har / antal som behövs för en quest-sak ("3/7"), där nivån står på utrustning.
             quest = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall"),
+            -- Märket "..." som syns på varje sak medan Alt hålls ner: sakerna går att Alt-klicka.
+            altBg = button:CreateTexture(nil, "OVERLAY", nil, 5),
+            alt = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
         }
+        extra.altBg:SetColorTexture(0, 0, 0, 0.75)
+        extra.altBg:SetSize(18, 11)
+        extra.altBg:SetPoint("TOPRIGHT", -1, -1)
+        extra.alt:SetPoint("CENTER", extra.altBg, "CENTER", 0, 2)
+        extra.alt:SetText("...")
+        extra.altBg:Hide()
+        extra.alt:Hide()
         extra.quest:SetPoint("TOPLEFT", 2, -2)
         extra.plus:SetPoint("CENTER", 0, 1)
         extra.plus:SetText("+")
@@ -296,6 +309,9 @@ local function updateExtras(entry, atMerchant)
     local locked = atMerchant and entry.locked == true and ns.db.lockAtMerchant
     extra.lock:SetShown(locked)
     setLocked(button, locked)
+    local showAlt = IsAltKeyDown() and not entry.isEmpty and not locked
+    extra.alt:SetShown(showAlt)
+    extra.altBg:SetShown(showAlt)
 
     -- Utropstecknet: en quest som du inte har tagit än behöver saken (QuestHints.lua).
     -- Låset går före, eftersom det sitter på samma plats.
@@ -421,6 +437,7 @@ local function layoutSetsView(atMerchant)
     end
     questNoteState = nil
     questNote:Hide()
+    tipStrip:Hide()
     for _, button in bagFrame:EnumerateValidItems() do
         if lockedButtons[button] or disabledButtons[button] then
             setLocked(button, false)
@@ -706,6 +723,22 @@ local function commit(atMerchant)
     end
 end
 
+-- Visas tipsraden? De första gångerna du öppnar väskan, tills du stänger den eller själv Alt-klickar.
+local function tipActive()
+    local tip = ns.db and ns.db.itemTip
+    return tip ~= nil and not tip.dismissed and tip.opens <= TIP_MAX_OPENS
+end
+
+function ns.DismissItemTip()
+    local tip = ns.db and ns.db.itemTip
+    if tip and not tip.dismissed then
+        tip.dismissed = true
+        if ns.Refresh then
+            ns.Refresh()
+        end
+    end
+end
+
 -- Fliken Quests (QuestsView.lua): quest-sakerna ordnade per quest, med de riktiga rutorna.
 local function layoutQuestsView(atMerchant)
     -- Spelet visar sökrutan igen när fönstret uppdateras; den söker bara bland sakerna i Bags.
@@ -717,6 +750,7 @@ local function layoutQuestsView(atMerchant)
         divider:Hide()
     end
     questNoteState = nil
+    tipStrip:Hide()
     wipe(groupFirst)
     wipe(groupOfButton)
     newGroupIndex, startGroupIndex = nil, nil
@@ -801,6 +835,15 @@ local function relayout()
     -- inloggning eller /reload var höjden då okänd (nil) och genomgången stannade med ett fel
     -- när du bar en specialväska.
     contentHeight, dividerY = flow(gridCols, true, junkValue)
+    if tipActive() then
+        local tipY = contentHeight + 4
+        contentHeight = contentHeight + TIP_HEIGHT
+        anchor(tipStrip, 0, tipY)
+        tipStrip:SetWidth(gridWidth)
+        tipStrip:Show()
+    else
+        tipStrip:Hide()
+    end
     bagsContentHeight = contentHeight
     if dividerY then
         anchor(divider, -6, dividerY)
@@ -944,6 +987,50 @@ ns.OnLoad(function()
         self.label:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB())
     end)
     questNote:Hide()
+
+    -- Tipsraden om Alt-klick längst ner i fliken Bags. Visas de första gångerna du öppnar väskan,
+    -- tills du stänger den med krysset (eller själv Alt-klickar en sak).
+    tipStrip = CreateFrame("Frame", nil, overlay)
+    tipStrip:SetHeight(TIP_HEIGHT - 4)
+    tipStrip.bg = tipStrip:CreateTexture(nil, "BACKGROUND")
+    tipStrip.bg:SetAllPoints()
+    tipStrip.bg:SetColorTexture(0.08, 0.14, 0.22, 0.9)
+    tipStrip.text = tipStrip:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    tipStrip.text:SetPoint("LEFT", 8, 0)
+    tipStrip.text:SetText(L["Tip: Alt-click an item for Tidy Pack options."])
+    tipStrip.close = CreateFrame("Button", nil, tipStrip)
+    tipStrip.close:SetSize(20, TIP_HEIGHT - 4)
+    tipStrip.close:SetPoint("RIGHT", -2, 0)
+    tipStrip.close:SetNormalFontObject("GameFontNormal")
+    tipStrip.close:SetHighlightFontObject("GameFontHighlight")
+    tipStrip.close:SetText("x")
+    tipStrip.close:SetScript("OnClick", ns.DismissItemTip)
+    tipStrip:Hide()
+
+    -- Räknar hur många gånger väskan öppnats, så att tipset slutar visas av sig självt.
+    bagFrame:HookScript("OnShow", function()
+        local tip = ns.db and ns.db.itemTip
+        if tip and not tip.dismissed and tip.opens <= TIP_MAX_OPENS then
+            tip.opens = tip.opens + 1
+        end
+    end)
+
+    -- Medan Alt hålls ner visas märket "..." på varje sak (och försvinner när Alt släpps).
+    ns.RegisterEvent("MODIFIER_STATE_CHANGED", function(key)
+        if (key == "LALT" or key == "RALT") and bagFrame:IsShown() then
+            local show = IsAltKeyDown()
+            for i = 1, entryCount do
+                local entry = entries[i]
+                local extra = extras[entry.button]
+                if extra then
+                    local visible = show and entry.button:IsShown() and not entry.isEmpty
+                        and not lockedButtons[entry.button]
+                    extra.alt:SetShown(visible == true)
+                    extra.altBg:SetShown(visible == true)
+                end
+            end
+        end
+    end)
 
     -- Linjen ovanför specialväskorna, lika bred som rutorna och lite till (bredden sätts vid
     -- varje utläggning, eftersom antalet kolumner kan ändras).

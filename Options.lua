@@ -171,7 +171,7 @@ local function createJunkPage()
     intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     intro:SetPoint("RIGHT", page, "RIGHT", -20, 0)
     intro:SetJustifyH("LEFT")
-    intro:SetText(L["Items on your junk list are suggested for deletion when you loot them, and sorted last in Junk. Alt-right-click an item in your bags, or drop it on the gear button, to add or remove it."])
+    intro:SetText(L["Items on your junk list are suggested for deletion when you loot them, and sorted last in Junk. Alt-click an item in your bags and choose Add to Junk List, or drop it on the gear button, to add or remove it."])
 
     -- Lägg till en sak utan att ha den: länk, namn eller nummer.
     junkInput = CreateFrame("EditBox", nil, page, "InputBoxTemplate")

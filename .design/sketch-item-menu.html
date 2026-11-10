@@ -1,0 +1,58 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tidy Pack – skiss: menyn för en sak</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1500px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1300px}
+.row{display:flex;gap:16px}.col{width:358px}.col h2{font-size:13px;color:#ffd100;margin:0 0 6px;min-height:34px}
+.scr{position:relative;height:300px;background:radial-gradient(ellipse at 50% 40%,#3d4a3a,#161a16);border:1px solid #2a2f3a;overflow:hidden}
+.bag{position:absolute;left:14px;top:20px;width:330px;height:262px;background:#1a1816;border:2px solid #6e6252;border-radius:5px}
+.bag .t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;border:1px solid #d4af37;border-radius:3px;background:#2a2218;color:#ffd100;text-align:center;font:13px/16px Arial}
+.g.glow{box-shadow:0 0 8px 3px #ffd100;background:#4a3a18}
+.lab{position:absolute;font:11px Arial;color:#ffd100;background:#000c;border:1px solid #d4af37;border-radius:3px;padding:1px 6px;white-space:nowrap;z-index:5}
+.hd{color:#ffd100;font:11px Arial;margin:8px 0 3px 8px}
+.it{display:inline-block;position:relative;width:32px;height:32px;margin:0 3px 3px 8px;border:1px solid #555;background:#0a0a0a;border-radius:3px;vertical-align:top}
+.it i{position:absolute;inset:3px;border-radius:2px}
+.it u{position:absolute;right:1px;top:-1px;text-decoration:none;font:bold 11px/10px Arial;color:#fff;background:#000b;border:1px solid #d4af37;border-radius:3px;padding:1px 3px 2px}
+.it.hov{outline:2px solid #ffd100;outline-offset:0}
+.tip{position:absolute;background:#0c0c0c;border:1px solid #777;padding:4px 8px;font:11px/1.5 Arial;color:#fff;z-index:6;white-space:nowrap}
+.tip b{color:#fff;font-weight:normal}.tip .y{color:#ffd100}.tip .gy{color:#9a9a9a}.tip .bl{color:#6fb5ff}
+.m{position:absolute;background:#0c0c0c;border:1px solid #777;padding:4px 10px;font:12px/1.7 Arial;color:#fff;white-space:nowrap;z-index:6}
+.m b{color:#ffd100;font-weight:normal;display:block}.m .a{display:flex;justify-content:space-between;gap:14px}.m .a i{color:#ffd100;font-style:normal}
+.sub{border-color:#4aa3ff}
+.strip{position:absolute;left:0;right:0;bottom:22px;margin:0 8px;background:#14202e;border:1px solid #3d6ea0;border-radius:3px;color:#cfe6ff;font:11px/18px Arial;padding:2px 8px;display:flex;justify-content:space-between}
+.ft{position:absolute;bottom:4px;right:10px;font:11px Arial;color:#fff}
+.call{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:11px/1.3 Arial;padding:3px 8px;border-radius:4px;z-index:8;white-space:nowrap}
+.cur{position:absolute;width:30px;height:30px;border:1px solid #ccc;background:#c44;border-radius:3px;opacity:.9;z-index:7}
+</style></head><body>
+<h1>Hur man hittar menyn för en sak – visuell guidning</h1>
+<p class="n">Skiss, inte spelet. Tanken: tre små led som lär ut Alt-klick utan att något ligger i vägen när man redan kan det. Blå rutor förklarar.</p>
+<div class="row">
+
+<div class="col"><h2>1. Första gångerna: ett tips som man kan stänga</h2><div class="scr"><div class="bag"><div class="t">Backpack</div><div class="g">⚙</div><div class="x"></div>
+<div class="hd">Consumables</div><span class="it"><i style="background:#999"></i></span><span class="it"><i style="background:#cb4"></i></span><span class="it"><i style="background:#d82"></i></span><span class="it"><i style="background:#5ab"></i></span>
+<div class="hd">Trade Goods</div><span class="it"><i style="background:#c55"></i></span><span class="it"><i style="background:#a63"></i></span><span class="it"><i style="background:#8a8"></i></span>
+<div class="strip"><span>Tip: Alt-click an item for Tidy Pack options.</span><span>✕</span></div><div class="ft">28 ● 35 ●</div></div>
+<div class="call" style="left:20px;top:238px;display:none"></div></div></div>
+
+<div class="col"><h2>2. Håller du Alt: små ⋯ visar att sakerna går att klicka</h2><div class="scr"><div class="bag"><div class="t">Backpack</div><div class="g">⚙</div><div class="x"></div>
+<div class="hd">Consumables</div><span class="it"><i style="background:#999"></i><u>⋯</u></span><span class="it hov"><i style="background:#cb4"></i><u style="background:#6a4e12">⋯</u></span><span class="it"><i style="background:#d82"></i><u>⋯</u></span><span class="it"><i style="background:#5ab"></i><u>⋯</u></span>
+<div class="hd">Trade Goods</div><span class="it"><i style="background:#c55"></i><u>⋯</u></span><span class="it"><i style="background:#a63"></i><u>⋯</u></span><span class="it"><i style="background:#8a8"></i><u>⋯</u></span>
+<div class="ft">28 ● 35 ●</div></div>
+<div class="tip" style="left:96px;top:118px"><b class="y">Brilliant Smallfish</b><br><span class="gy">Use: Restores health</span><br><span class="bl">Alt-click: Tidy Pack options</span></div>
+<div class="call" style="left:150px;top:6px">⋯ syns bara medan Alt hålls ner</div></div></div>
+
+<div class="col"><h2>3. Klick: menyn öppnas vid saken, undermenyer åt höger</h2><div class="scr"><div class="bag"><div class="t">Backpack</div><div class="g">⚙</div><div class="x"></div>
+<div class="hd">Consumables</div><span class="it"><i style="background:#999"></i></span><span class="it hov"><i style="background:#cb4"></i></span><span class="it"><i style="background:#d82"></i></span><span class="it"><i style="background:#5ab"></i></span>
+<div class="hd">Trade Goods</div><span class="it"><i style="background:#c55"></i></span><span class="it"><i style="background:#a63"></i></span><span class="it"><i style="background:#8a8"></i></span><div class="ft">28 ● 35 ●</div></div>
+<div class="m" style="left:80px;top:92px"><b>Brilliant Smallfish</b>☆ Add to Favorites<br>Add to Junk List<div class="a">Add to Set<i>▶</i></div><div class="a">Add to Group<i>▶</i></div></div>
+<div class="m sub" style="left:224px;top:144px">☐ Potions<br>☐ Bandage<br>New Group...</div></div></div>
+
+<div class="col"><h2>4. Mus eller kontroll: håll saken, så lyser kugghjulet</h2><div class="scr"><div class="bag"><div class="t">Backpack</div><div class="g glow">⚙</div><div class="x"></div>
+<div class="hd">Consumables</div><span class="it"><i style="background:#999"></i></span><span class="it" style="opacity:.35"><i style="background:#cb4"></i></span><span class="it"><i style="background:#d82"></i></span>
+<div class="hd">Trade Goods</div><span class="it"><i style="background:#c55"></i></span><span class="it"><i style="background:#a63"></i></span><div class="ft">28 ● 35 ●</div></div>
+<div class="lab" style="left:158px;top:44px">Drop here for options ▲</div>
+<div class="cur" style="left:112px;top:134px;background:#cb4"></div>
+<div class="call" style="left:20px;top:260px">Samma väg för handkontroll (A plockar upp, A släpper)</div></div></div>
+
+</div></body></html>

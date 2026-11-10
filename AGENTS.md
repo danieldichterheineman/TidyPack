@@ -111,8 +111,8 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List" /
   "Add to Set ▸", annars "Junk List…" / "Settings…" (med handkontroll också "Show Sets"
   eller "Show Bags"). Svagt tills man håller en sak, pekar på det eller har menyn öppen.
-- ✅ Favorites (`Marks.lua`): Alt-klick (mus) eller via kugghjulet. Sparas per itemID och konto.
-- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-högerklick, via kugghjulet eller på skräplistans
+- ✅ Favorites (`Marks.lua`): Alt-klick (mus, öppnar menyn för saken) eller via kugghjulet. Sparas per itemID och konto.
+- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-klick-menyn, via kugghjulet eller på skräplistans
   sida i inställningarna (lägg till med länk, namn, nummer eller genom att släppa en sak;
   ta bort med det röda krysset). Saker på listan hamnar sist i Junk, får spelets eget
   skräpmynt (`JunkIcon` på rutan) och föreslås först när väskorna är fulla. En sak kan inte vara både favorit och på listan. Sparas per itemID och konto.
@@ -192,7 +192,12 @@ Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
   som spelets eget rutnät), sätter märken och lås och sätter fönstrets storlek.
 - `SetSearchBoxPoint`: med handkontroll kortas sökrutan av så att kugghjulet får plats.
 - `OnHide` (HookScript): gruppen New glöms.
-- Rutornas `OnClick` (HookScript, en gång per ruta): Alt-klick stjärnmärker.
+- Rutornas `OnClick` (HookScript, en gång per ruta): Alt-klick (vänster) öppnar menyn för saken vid rutan
+  (`MenuUtil.CreateContextMenu`, samma meny som kugghjulet har med en sak på markören). Alt-högerklick gör
+  inget (spelet använder saken). Medan Alt hålls ner (`MODIFIER_STATE_CHANGED`) visas märket "..." på
+  varje sak; tooltipen har raden "Alt-click: Tidy Pack options"; kugghjulet visar "Drop here for options" när
+  du håller en sak; en tipsrad längst ner i Bags visas de 5 första gångerna fönstret öppnas
+  (`itemTip = { opens, dismissed }`) tills den stängs eller du Alt-klickar.
 - `EventRegistry`-eventet `ContainerFrameItemButton.OnItemClicked` (sist i spelets klick på
   en ruta): väskbytet.
 - `TooltipDataProcessor.AddTooltipPostCall` (typ Item): raden "Needed for" och den röda
@@ -327,7 +332,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
    rustning).
 5. New: loota något, öppna väskan – saken ligger i New även när musen hålls över den, och
    flyttar till sin grupp när fönstret stängs och öppnas igen.
-6. Favorites: Alt-klicka på Hearthstone (hamnar överst), Alt-klicka igen (tillbaka). Plocka
+6. Favorites: håll Alt ("..." syns på sakerna), Alt-klicka på Hearthstone och välj Add to Favorites (hamnar överst), gör om och välj Remove from Favorites (tillbaka). Tipsraden längst ner i Bags syns de första 5 gångerna och försvinner med x. Plocka
    upp en sak, se att kugghjulet lyser upp, och släpp den på kugghjulet. Kvar efter `/reload`.
 7. Tomma platser: en ruta med antalet, röd vid 5 eller färre. Släpp en sak där. Fyll
    väskorna: "Your bags are full." visas en gång.
@@ -361,8 +366,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     uppdateras när du lootar. Med handkontroll fungerar markören som utan Tidy Pack tills
     striden är över, och rättas sedan.
 15. Efter `/reload` ser allt likadant ut.
-16. Skräplistan: Alt-högerklicka på en vit sak – den hamnar sist i Junk med spelets
-    skräpmynt. Alt-högerklicka igen – den går tillbaka. Med handkontroll: plocka upp en sak
+16. Skräplistan: Alt-klicka på en vit sak och välj Add to Junk List – den hamnar sist i Junk med spelets
+    skräpmynt. Gör om och välj Remove from Junk List – den går tillbaka. Med handkontroll: plocka upp en sak
     med A, gå till kugghjulet, tryck A och välj "Add to Junk List" i menyn. Saker på listan som
     inte är grå säljs för hand (spelets "Sell All Junk" tar bara grå).
 17. Loota en sak som står på skräplistan: frågan "You looted ..., which is on your junk

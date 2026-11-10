@@ -44,8 +44,9 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 
 - **Gear button** (top right of your bags): drop an item on it to make it a favorite, put it
   on your junk list or add it to a set. Click it for your junk list and settings.
-- **Mouse shortcuts**: Alt-click an item to make it a favorite, Alt-right-click to put it on
-  your junk list.
+- **Item options**: hold Alt to see a small "..." on every item, then Alt-click one for a menu:
+  favorite, junk list, sets and your own groups. You can also pick an item up and drop it on the
+  gear button.
 - **Sets tab**: click "New Set", then use the set's gear button and choose "Add What I'm
   Wearing", or drop items on the set. The gear button also renames the set, changes its
   icon, removes an item or deletes it.
