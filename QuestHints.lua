@@ -12,7 +12,7 @@
 -- ⚠️ QuestieDB:s data för Forevers nya quests är inte komplett enligt QuestieDB själv.
 -- ⚠️ Utan Questie skriver Tidy Pack en gång (per konto) i chatten hur funktionen slås på.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local LEVELS_AHEAD = 5        -- quests du kan ta inom så här många nivåer

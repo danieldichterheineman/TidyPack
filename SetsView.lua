@@ -7,9 +7,9 @@
 -- Layout.lua lägger ut listan: den anropar ns.LayoutSetsView när fliken Sets är vald.
 -- Väskfönstret öppnas alltid på fliken Bags.
 -- ⚠️ Med handkontroll: raderna är vanliga knappar i väskfönstret och ska nås med markören,
--- och ★-menyn kan också byta flik (Marks.lua). Måste provas i spelet.
+-- och kugghjulets meny kan också byta flik (Marks.lua). Måste provas i spelet.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local ROW_HEIGHT = 50

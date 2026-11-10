@@ -26,7 +26,7 @@
 -- ⚠️ LB och RB utgår från spelets egen väskräkning. Är nyckelringen påslagen gör LB ingenting
 --    på saker i ryggsäcken och RB ingenting på nycklar – precis som i spelets eget fönster.
 
-local addonName, ns = ...
+local _, ns = ...
 
 local bagFrame
 local fixScheduled = false

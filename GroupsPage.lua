@@ -7,7 +7,7 @@
 -- sak som släpps på sidan), som på skräplistans sida (Options.lua).
 -- Sidan är en egen ram (canvas layout) byggd av spelets mallar. Options.lua registrerar den.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local ROW_HEIGHT = 32     -- en rad i listan med grupper

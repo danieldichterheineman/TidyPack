@@ -2,7 +2,7 @@
 -- All text som visas i spelet samlas här. Koden skriver L["Engelsk text"].
 -- Finns ingen översättning för spelets språk visas texten som den står.
 
-local addonName, ns = ...
+local _, ns = ...
 
 -- Tabellen svarar med själva nyckeln när en översättning saknas.
 local L = setmetatable({}, {

@@ -14,7 +14,7 @@
 -- handkontroll ligger nycklarna i väskfönstret och hamnar i gruppen Keys.
 -- Måtten ska stämma med skissen i .design/sketch.html.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 -- Mått i enheter, samma som i skissen.
@@ -52,7 +52,7 @@ local LAST_BAG = Constants.InventoryConstants.NumBagSlots + Constants.InventoryC
 -- Utrustning där nivån inte säger något visas utan nivå (skjortor och tabarder).
 local NO_LEVEL = { INVTYPE_BODY = true, INVTYPE_TABARD = true, INVTYPE_NON_EQUIP_IGNORE = true }
 
--- Stjärnan framför rubriken Favorites, samma bild som ★-knappen.
+-- Stjärnan framför rubriken Favorites.
 local FAVORITE_ICON = "|A:auctionhouse-icon-favorite:13:13|a "
 
 local bagFrame                    -- spelets fönster med alla väskor i ett

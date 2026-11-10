@@ -3,7 +3,7 @@
 -- eller "Tanking". Seten sparas per karaktär (TidyPackCharDB), eftersom karaktärer har olika
 -- saker och yrken.
 -- Så används de:
---   - Släpp en sak på ★ i väskfönstret och välj "Add to Set" (Marks.lua).
+--   - Släpp en sak på kugghjulet i väskfönstret och välj "Add to Set" (Marks.lua).
 --   - Fliken Sets ovanför väskfönstret listar seten. Klick tar på allt i setet som går att
 --     ha på sig (SetsView.lua).
 --   - I fliken Sets skapas set (New Set), saker släpps på ett set, och högerklick ändrar
@@ -12,7 +12,7 @@
 -- att de inte säljs av misstag (QuestLock.lua).
 -- ⚠️ Spelet låter ingen byta rustning i strid, så ett set tas bara på utanför strid.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local MAX_NAME_LENGTH = 32

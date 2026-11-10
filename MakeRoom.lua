@@ -7,7 +7,7 @@
 --      du försöker loota är värt mer.
 -- Panelen hänger under lootfönstret när det är öppet, i samma sorts panel och lika bred, så
 -- att den känns som en del av det. Annars syns den uppe i mitten, där spelets egna frågor
--- visas. Vad som räknas som skräp avgör ns.GetJunkKind (Junk.lua): stjärnmärkta och låsta
+-- visas. Vad som räknas som skräp avgör ns.GetJunkKind (Junk.lua): favoriter och låsta
 -- saker, quest-saker och grå saker som en quest behöver senare föreslås aldrig.
 -- Du godkänner med ett tryck på Delete. Båda tillfällena går att stänga av i inställningarna.
 -- ⚠️ Spelet låter bara ett addon radera en sak när spelaren trycker eller klickar
@@ -19,7 +19,7 @@
 -- ⚠️ Panelen använder spelets lootfönster (LootFrame). Byter ett annat addon ut
 --    lootfönstret syns panelen uppe i mitten i stället.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local NUM_BAGS = Constants.InventoryConstants.NumBagSlots

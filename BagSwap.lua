@@ -6,7 +6,7 @@
 -- ⚠️ Fungerar bara utanför strid. Specialväskor (t.ex. koger och väskor för örter) byts
 -- inte, eftersom de bara rymmer vissa saker.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local NUM_BAGS = Constants.InventoryConstants.NumBagSlots -- de fyra vanliga väskplatserna

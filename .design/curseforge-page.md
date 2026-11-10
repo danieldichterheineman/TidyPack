@@ -9,7 +9,7 @@ Kopiera fälten nedan till projektet i Authors Console (authors.curseforge.com).
 | Game | World of Warcraft |
 | Project class | Addons |
 | Name | Tidy Pack |
-| Summary | Sorts the game's own bag window into clear groups, with sets, junk selling and quest locks. |
+| Summary | Sorts the game's own bag window into clear groups, with item sets, quest item locks, a junk list and your own groups. |
 | Main category | Bags & Inventory |
 | Additional categories | inga |
 | License | MIT License |

@@ -1,7 +1,7 @@
 -- TidyPack – Options.lua
 -- Inställningarna i spelets eget fönster: Esc → Options → AddOns → Tidy Pack, med en egen
 -- sida för skräplistan. Seten sköts i fliken Sets i väskfönstret (SetsView.lua). Sidan öppnas också med /tidypack, från addonmenyn vid minikartan
--- (## AddonCompartmentFunc i TOC-filen) och från ★ i väskfönstret (Marks.lua).
+-- (## AddonCompartmentFunc i TOC-filen) och från kugghjulet i väskfönstret (Marks.lua).
 -- Huvudsidan använder spelets vanliga rader (vertical layout), så att den ser ut som spelets
 -- egna sidor. Skräplistans sida är en egen ram (canvas layout) byggd av spelets mallar.
 -- Varje kryssruta sparas direkt i ns.db.

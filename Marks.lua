@@ -1,7 +1,7 @@
 -- TidyPack – Marks.lua
 -- Två märken som du sätter själv. De sparas per sorts sak (itemID) och gäller alla dina
 -- karaktärer:
---   ★ Favorit: saken hamnar i gruppen Favorites överst.
+--   Favorit (stjärna): saken hamnar i gruppen Favorites överst.
 --   Skräplistan: saken hamnar sist i Junk med spelets eget skräpmynt. Tidy Pack frågar om
 --   den ska raderas när du lootar den (MakeRoom.lua), och den föreslås först när
 --   väskorna är fulla.
@@ -9,26 +9,27 @@
 --   - Mus: Alt-vänsterklick = favorit, Alt-högerklick = skräplistan. Spelets klick gör
 --     ingenting med Alt nedtryckt (i Forever är Alt bara kopplat till besvärjelser och
 --     utrustningsmenyer, se Bindings_Camelot.xml i spelets kod).
---   - Mus och handkontroll: släpp saken på ★ uppe till höger. Spelets egen meny frågar då
---     om saken ska bli favorit eller hamna på skräplistan.
+--   - Mus och handkontroll: släpp saken på kugghjulet uppe till höger. Spelets egen meny
+--     frågar då om saken ska bli favorit, hamna på skräplistan eller läggas i ett set eller
+--     en egen grupp.
 --   - Skräplistan har också en egen sida i inställningarna (Options.lua).
 -- Samma sak en gång till tar bort märket. En sak kan inte vara både favorit och på
 -- skräplistan.
--- ★ är den enda knapp Tidy Pack lägger i väskfönstret. Den sitter där spelets
--- sorteringsknapp satt. Utan en sak på markören öppnar den skräplistan och inställningarna.
+-- Kugghjulet är den enda knapp Tidy Pack lägger i väskfönstret. Den sitter där spelets
+-- sorteringsknapp satt. Utan en sak på markören öppnar den skräplistan, de egna grupperna och
+-- inställningarna.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 -- Knappens bild: spelets kugghjul för inställningar (questlog-icon-setting, samma som
--- spelets UIPanelIconDropdownButtonTemplate). Stjärnan passade när knappen bara gjorde
--- favoriter; nu öppnar den också skräplistan, seten och inställningarna.
+-- spelets UIPanelIconDropdownButtonTemplate).
 local BUTTON_ATLAS = "questlog-icon-setting"
 local BUTTON_SIZE = 26
 local ICON_SIZE = 20
 
-local starButton
-local starHovered = false -- markören (mus eller handkontroll) står på ★
+local gearButton
+local gearHovered = false -- markören (mus eller handkontroll) står på kugghjulet
 local hookedButtons = setmetatable({}, { __mode = "k" })
 
 function ns.IsFavorite(itemID)
@@ -111,24 +112,25 @@ local function cursorItemID()
     return nil
 end
 
--- ★ är svag tills du håller en sak, pekar på den eller har dess meny öppen. När du håller
+-- Kugghjulet är svagt tills du håller en sak, pekar på den eller har dess meny öppen. När du håller
 -- en sak lyser den också upp, eftersom du kan släppa saken där.
-local function updateStarButton()
-    if not starButton then
+local function updateGearButton()
+    if not gearButton then
         return
     end
     local holding = cursorItemID() ~= nil
-    local active = holding or starHovered or starButton:IsMenuOpen()
-    starButton:SetAlpha(active and 1 or 0.6) -- 0.35 såg avstängt ut i spelet
+    local active = holding or gearHovered or gearButton:IsMenuOpen()
+    gearButton:SetAlpha(active and 1 or 0.6) -- 0.35 såg avstängt ut i spelet
     if holding then
-        starButton:LockHighlight()
+        gearButton:LockHighlight()
     else
-        starButton:UnlockHighlight()
+        gearButton:UnlockHighlight()
     end
 end
 
--- Menyn under ★, byggd av spelets eget menysystem. Med en sak på markören: favorit,
--- skräplistan eller ett set. Annars: byta flik, skräplistan, seten och inställningarna.
+-- Menyn under kugghjulet, byggd av spelets eget menysystem. Med en sak på markören: favorit,
+-- skräplistan, set eller egen grupp. Annars: skräplistan, grupperna och inställningarna (med
+-- handkontroll också byta flik).
 local function buildMenu(_, rootDescription)
     local itemID = cursorItemID()
     if itemID then
@@ -213,42 +215,42 @@ ns.OnLoad(function()
         return
     end
 
-    -- ★ sitter där spelets sorteringsknapp satt (TOPRIGHT -9, -34, i höjd med sökrutan). Den
+    -- Kugghjulet sitter där spelets sorteringsknapp satt (TOPRIGHT -9, -34, i höjd med sökrutan). Den
     -- är spelets egen menyknapp (DropdownButton), så menyn öppnas under den och fungerar
     -- med handkontroll som spelets egna menyer.
-    starButton = CreateFrame("DropdownButton", nil, bagFrame)
-    starButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
-    starButton:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9, -34)
-    starButton:SetNormalAtlas(BUTTON_ATLAS)
-    starButton:SetHighlightAtlas(BUTTON_ATLAS, "ADD")
+    gearButton = CreateFrame("DropdownButton", nil, bagFrame)
+    gearButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
+    gearButton:SetPoint("TOPRIGHT", bagFrame, "TOPRIGHT", -9, -34)
+    gearButton:SetNormalAtlas(BUTTON_ATLAS)
+    gearButton:SetHighlightAtlas(BUTTON_ATLAS, "ADD")
     -- Bilden lite mindre än knappen, så att kugghjulet inte blir suddigt.
-    for _, texture in ipairs({ starButton:GetNormalTexture(), starButton:GetHighlightTexture() }) do
+    for _, texture in ipairs({ gearButton:GetNormalTexture(), gearButton:GetHighlightTexture() }) do
         texture:ClearAllPoints()
         texture:SetPoint("CENTER")
         texture:SetSize(ICON_SIZE, ICON_SIZE)
     end
-    starButton:SetupMenu(buildMenu)
-    starButton:SetMenuAnchor(CreateAnchor("TOPRIGHT", starButton, "BOTTOMRIGHT", 0, -2))
-    -- En sak som dras och släpps på ★ öppnar menyn (ett klick gör det redan).
-    starButton:SetScript("OnReceiveDrag", function(self)
+    gearButton:SetupMenu(buildMenu)
+    gearButton:SetMenuAnchor(CreateAnchor("TOPRIGHT", gearButton, "BOTTOMRIGHT", 0, -2))
+    -- En sak som dras och släpps på kugghjulet öppnar menyn (ett klick gör det redan).
+    gearButton:SetScript("OnReceiveDrag", function(self)
         self:OpenMenu()
     end)
-    starButton:SetScript("OnEnter", function(self)
-        starHovered = true
-        updateStarButton()
+    gearButton:SetScript("OnEnter", function(self)
+        gearHovered = true
+        updateGearButton()
         showTooltip(self)
     end)
-    starButton:SetScript("OnLeave", function()
-        starHovered = false
-        updateStarButton()
+    gearButton:SetScript("OnLeave", function()
+        gearHovered = false
+        updateGearButton()
         GameTooltip_Hide()
     end)
     -- Spelets menyknapp meddelar när menyn öppnas och stängs (DropdownButton.lua).
-    starButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuOpen, updateStarButton, starButton)
-    starButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuClose, updateStarButton, starButton)
+    gearButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuOpen, updateGearButton, gearButton)
+    gearButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuClose, updateGearButton, gearButton)
 
-    ns.RegisterEvent("CURSOR_CHANGED", updateStarButton)
-    updateStarButton()
+    ns.RegisterEvent("CURSOR_CHANGED", updateGearButton)
+    updateGearButton()
 
     -- Med mus ger spelet sökrutan en fast bredd (330), som slutade långt före knappen när
     -- Tidy Packs fönster är bredare. Därför går sökrutan i båda lägena fram till knappen,

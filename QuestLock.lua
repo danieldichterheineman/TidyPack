@@ -6,7 +6,7 @@
 -- "Linen Cloth: 3/10", alltså på spelets språk.
 -- ⚠️ Spelets egen knapp "Sell All Junk" i handlarfönstret känner inte till låsen.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local neededBy = {}   -- sakens namn → questens namn, för saker som en pågående quest kräver

@@ -5,11 +5,10 @@
 -- ⚠️ Spelets knapp säljer alla grå saker och känner inte till Tidy Packs lås eller
 -- skräplista. Saker på skräplistan som inte är grå säljs för hand.
 
-local addonName, ns = ...
-local L = ns.L
+local _, ns = ...
 
 -- Vad för sorts skräp en sak är: "marked" (du har markerat den som skräp i Marks.lua),
--- "grey" (grå) eller nil (inte skräp). Stjärnmärkta och låsta saker, quest-saker och saker
+-- "grey" (grå) eller nil (inte skräp). Favoriter, låsta saker, quest-saker och saker
 -- som spelet håller på med är aldrig skräp, och inte heller grå saker som en quest behöver
 -- senare (QuestHints.lua). Det du själv markerat räknas även om en quest behöver det senare:
 -- där har du bestämt dig. Används av förslagen vid fulla väskor och frågan vid loot (MakeRoom.lua).

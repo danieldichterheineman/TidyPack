@@ -13,7 +13,7 @@
 -- Spelets frågerutor (StaticPopup) används inte; namnet frågas i Tidy Packs egen ruta
 -- (ns.ShowDialog i Sets.lua).
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local MAX_GROUPS = 8

@@ -2,7 +2,7 @@
 -- Bestämmer vilken grupp en sak hör till, och i vilken ordning grupperna och sakerna
 -- kommer. Ordningen är fast – det finns inga inställningar för den.
 
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 -- Grupperna, i den ordning de visas. Grupper utan saker visas inte. Empty (rutan där du

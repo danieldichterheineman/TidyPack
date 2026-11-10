@@ -11,7 +11,7 @@ local L = ns.L
 ns.defaults = {
     -- Blir sant när Tidy Pack har slagit på spelets inställning "Combined Bags" en gång.
     combinedBagsTurnedOn = false,
-    -- Stjärnmärkta saker: itemID → true (se Marks.lua).
+    -- Favoriter (stjärnmärkta saker): itemID → true (se Marks.lua).
     favorites = {},
     -- Skräplistan: itemID → true (se Marks.lua).
     junk = {},
@@ -66,10 +66,14 @@ end
 -- Versionen av hur den sparade datan är uppbyggd. Höj den och lägg till ett steg i
 -- migrations när en sparad nyckel byter namn, typ eller betydelse, så att spelarnas
 -- gamla data följer med (se skillen wow-maintain).
-local DATA_VERSION = 1
+local DATA_VERSION = 2
 
 -- migrations[2] uppgraderar sparad data från version 1 till 2, och så vidare.
 local migrations = {
+    -- 2: knappen Sell Junk togs bort (2026-11-09), så dess inställning behövs inte längre.
+    [2] = function(database)
+        database.sellJunkButton = nil
+    end,
 }
 
 -- Uppgraderar sparad data ett steg i taget till DATA_VERSION.

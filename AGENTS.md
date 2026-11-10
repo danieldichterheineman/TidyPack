@@ -20,7 +20,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - SavedVariables: `TidyPackDB` (per konto)
 - Inställningssida i spelets Options → AddOns → Tidy Pack, med en egen sida för
   skräplistan (`Options.lua`). Öppnas också med `/tidypack`, från addonmenyn vid minikartan
-  (`## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick`) och från ★ (se Beslut).
+  (`## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick`) och från kugghjulet (se Beslut).
 - Projektmapp: `/Users/danhei1104/TidyPack`, med git (gren `main`).
 - GitHub: https://github.com/danieldichterheineman/TidyPack (privat, skapat 2026-11-09).
   Pusha bara efter ett ja från användaren.
@@ -97,8 +97,8 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List" /
   "Add to Set ▸", annars "Junk List…" / "Settings…" (med handkontroll också "Show Sets"
   eller "Show Bags"). Svagt tills man håller en sak, pekar på det eller har menyn öppen.
-- ✅ Favorites (`Marks.lua`): Alt-klick (mus) eller via ★. Sparas per itemID och konto.
-- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-högerklick, via ★ eller på skräplistans
+- ✅ Favorites (`Marks.lua`): Alt-klick (mus) eller via kugghjulet. Sparas per itemID och konto.
+- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-högerklick, via kugghjulet eller på skräplistans
   sida i inställningarna (lägg till med länk, namn, nummer eller genom att släppa en sak;
   ta bort med det röda krysset). Saker på listan hamnar sist i Junk, får spelets eget
   skräpmynt (`JunkIcon` på rutan) och föreslås först när väskorna är fulla. En sak kan inte vara både favorit och på listan. Sparas per itemID och konto.
@@ -151,7 +151,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   döljs flyttas den till närmaste synliga. Begränsningar: inget av det kan göras i strid
   (görs när striden är över), och LB/RB bygger på spelets väskräkning – med nyckelringen
   påslagen gör LB inget på saker i ryggsäcken och RB inget på nycklar, som i spelets fönster.
-- ✅ ★-knappens tooltip visar handkontrollens knapp A med handkontroll, och Alt-klick med mus.
+- ✅ kugghjulets tooltip visar handkontrollens knapp A med handkontroll, och Alt-klick med mus.
 - ✅ Sökruta, pengar och markering av nya saker är spelets egna.
 - ✅ Väskorna man har på sig syns inte bland sakerna (`GamepadBagBar` döljs med
   handkontroll).
@@ -176,7 +176,7 @@ Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
 - `UpdateItemLayout` och `UpdateItems`: Tidy Pack går igenom rutorna
   (`EnumerateValidItems`), sorterar in dem i grupper, flyttar dem (fästa i `MoneyFrame`,
   som spelets eget rutnät), sätter märken och lås och sätter fönstrets storlek.
-- `SetSearchBoxPoint`: med handkontroll kortas sökrutan av så att ★-knappen får plats.
+- `SetSearchBoxPoint`: med handkontroll kortas sökrutan av så att kugghjulet får plats.
 - `OnHide` (HookScript): gruppen New glöms.
 - Rutornas `OnClick` (HookScript, en gång per ruta): Alt-klick stjärnmärker.
 - `EventRegistry`-eventet `ContainerFrameItemButton.OnItemClicked` (sist i spelets klick på
@@ -206,7 +206,7 @@ Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
   `DeleteCursorItem`. Med handkontroll: `SmartNavigation:RefreshButtonGroups(LootFrame)`
   under lootfönstret, `GamepadMode.FrameControlsManager:HandlePopupShown/HandlePopupHide`
   uppe i mitten.
-- ★ (`Marks.lua`) är `CreateFrame("DropdownButton")` med `SetupMenu`, `SetMenuAnchor`
+- Kugghjulet (`Marks.lua`) är `CreateFrame("DropdownButton")` med `SetupMenu`, `SetMenuAnchor`
   (`CreateAnchor`) och `OpenMenu` vid `OnReceiveDrag`. Menyn byggs med
   `rootDescription:CreateTitle` och `CreateButton`.
 - Inställningarna (`Options.lua`): `Settings.RegisterVerticalLayoutCategory`,
@@ -253,6 +253,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `TidyPackCharDB` (per karaktär, ny 2026-11-09): `sets` = lista med
   `{ name = "...", items = { itemID, ... } }` i den ordning seten skapades. Kräver omstart
   av spelet första gången, eftersom TOC-filen fick en ny rad.
+- Version 2 (2026-11-10): `sellJunkButton` tas bort ur sparad data (knappen finns inte längre).
 - Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
   nya nycklar med standardvärden, så ingen migrering behövdes.
 
@@ -287,7 +288,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   märken, lås, tomma platser, listläget för fliken Sets, varningen för fulla väskor och att städknappen och väskmenyn döljs
 - `SetsView.lua`: flikarna Bags och Sets och listan med set i väskfönstret
 - `QuestHints.lua`: saker som quests man inte har tagit än behöver, via Questies databas
-- `Marks.lua`: favoriter och skräplistan, med Alt-klick och ★ med spelets meny (hette
+- `Marks.lua`: favoriter och skräplistan, med Alt-klick och kugghjulet med spelets meny (hette
   `Favorites.lua` före 2026-11-09)
 - `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`)
 - `MakeRoom.lua`: frågorna om radering, när skräp lootas och när väskorna är fulla
@@ -309,7 +310,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 5. New: loota något, öppna väskan – saken ligger i New även när musen hålls över den, och
    flyttar till sin grupp när fönstret stängs och öppnas igen.
 6. Favorites: Alt-klicka på Hearthstone (hamnar överst), Alt-klicka igen (tillbaka). Plocka
-   upp en sak, se att ★ lyser upp, och släpp den på ★. Kvar efter `/reload`.
+   upp en sak, se att kugghjulet lyser upp, och släpp den på kugghjulet. Kvar efter `/reload`.
 7. Tomma platser: en ruta med antalet, röd vid 5 eller färre. Släpp en sak där. Fyll
    väskorna: "Your bags are full." visas en gång.
 8. Mus: högerklick använder och utrustar, dra och släpp flyttar, shift-klick länkar i chatten,
@@ -330,10 +331,10 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     - LB och RB hoppar till förra och nästa grupp. (Med nyckelringen påslagen gör LB inget
       på saker i ryggsäcken, precis som utan Tidy Pack.)
     - Styrkorset går till rutan närmast åt det håll du trycker, även mellan grupper som
-      delar rad. Uppåt från översta raden längst till höger når ★.
+      delar rad. Uppåt från översta raden längst till höger når kugghjulet.
     - Use, Equip, Sell och Split fungerar. Sälj en sak med X: markören hamnar på saken som
       tar dess plats.
-    - Plocka upp en sak med A och lägg den på ★. ★:s tooltip visar knappen A.
+    - Plocka upp en sak med A och lägg den på kugghjulet. kugghjulets tooltip visar knappen A.
     - Hos en handlare gör A och X ingenting på låsta saker, och tooltipen har den röda
       raden. Efter handeln går quest-saker att använda igen.
     - Inget "Interface action failed because of an AddOn" i chatten eller som fel.
@@ -344,7 +345,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 15. Efter `/reload` ser allt likadant ut.
 16. Skräplistan: Alt-högerklicka på en vit sak – den hamnar sist i Junk med spelets
     skräpmynt. Alt-högerklicka igen – den går tillbaka. Med handkontroll: plocka upp en sak
-    med A, gå till ★, tryck A och välj "Add to Junk List" i menyn. Saker på listan som
+    med A, gå till kugghjulet, tryck A och välj "Add to Junk List" i menyn. Saker på listan som
     inte är grå säljs för hand (spelets "Sell All Junk" tar bara grå).
 17. Loota en sak som står på skräplistan: frågan "You looted ..., which is on your junk
     list. Delete it?" kommer direkt – under lootfönstret, och uppe i mitten om lootfönstret
@@ -355,9 +356,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     eller den billigaste grå saken (bara om det nya är värt mer). Med handkontroll: gå ned
     till knapparna med styrkorset och tryck A på Delete. Inget felmeddelande om blockerade
     handlingar.
-19. ★: klicka utan sak – menyn visar "Junk List…" och "Settings…". Släpp en sak på ★ –
+19. Kugghjulet: klicka utan sak – menyn visar "Junk List…" och "Settings…". Släpp en sak på kugghjulet –
     menyn visar "Add to Favorites" och "Add to Junk List". Menyn ser ut som spelets egna.
-    ★ lyser upp när du pekar på den och medan menyn är öppen.
+    kugghjulet lyser upp när du pekar på den och medan menyn är öppen.
 20. Inställningar: Esc → Options → AddOns → Tidy Pack, `/tidypack` och addonmenyn vid
     minikartan öppnar sidan. Ingen etikett slutar med "...", och tooltipen förklarar varje
     rad. Varje kryssruta gör det den säger, även efter `/reload`.
@@ -368,7 +369,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 21. Quests i förväg, med Questie installerat: saker som en quest du inte tagit än behöver
     har ett gult utropstecken uppe till höger, och tooltipen visar "Needed later for: ...".
     Utan Questie: en rad i chatten första gången, och aldrig mer.
-22. Utseende: panelen ser ut som lootfönstret, ★ står i höjd med sökrutan, och Tidy Packs
+22. Utseende: panelen ser ut som lootfönstret, kugghjulet står i höjd med sökrutan, och Tidy Packs
     siffror och märken krockar inte med spelets egna (antal nere till höger, skräpmynt och
     grön pil uppe till vänster).
 23. Prestanda: öppna väskan, loota och sälj något, och skriv sedan
@@ -379,7 +380,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 24. Specialväskor: med ett koger eller en själsväska på plats ligger den längst ned under
     en linje, med väskans ikon och namn, sina saker och sina lediga platser. Empty räknar
     bara vanliga platser. Utan specialväska syns ingen linje.
-25. Mer luft: rutorna står längre från ramen än förut, och inget krockar (★, sökrutan,
+25. Mer luft: rutorna står längre från ramen än förut, och inget krockar (kugghjulet, sökrutan,
     pengarna). Skicka en skärmbild.
 26. Set, i fliken Sets: "New Set" → namn och ikon i spelets ruta → Okay. Plocka upp en sak
     och håll den över fliken Sets (fönstret byter flik), släpp den på setets rad – den syns
@@ -673,6 +674,13 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   högst 8, efter Favorites och "Add to bag"). Två avvikelser från skissen: en sak eller typ ligger i
   högst en grupp (bockrutan flyttar den i stället för att lägga den i flera), och raden om att en
   favorit eller skräpmarkerad sak ligger kvar i sin grupp är en rubrikrad i menyn (guld), inte grå.
+
+- 2026-11-10: städning efter en granskning (analys av alla `ns`-medlemmar, lokala variabler och
+  inställningar; ingen oanvänd funktion hittades): borttaget oanvänt `addonName` i 14 filer
+  (`local _, ns = ...`) och oanvänd `L` i `Junk.lua`; knappvariablerna i `Marks.lua` heter
+  `gearButton` i stället för `starButton`; gamla kommentarer om ★-knappen och Sell Junk rättade;
+  migrering 2 tar bort `sellJunkButton` ur sparad data; `.design/sketch.html` märkt som gammal.
+  Kvar med avsikt: `locale` i `Locales.lua` (mall för översättningar) och `migrations` (mall).
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1
