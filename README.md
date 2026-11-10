@@ -13,12 +13,12 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   Bags, Miscellaneous and Junk. Empty groups are hidden, and similar items sit side by side.
   The "Add to bag" slot next to Favorites shows how many slots are free – drop an item on it
   to put it in your bags.
-- **Your own groups**: make groups like "Potions" or "Food & Drink" – put single items in them
-  with the gear button, or a whole type at once ("Add all Potion items to Group"). Manage them
+- **Your own groups**: make groups like "Potions" or "Food & Drink" – Alt-click an item to put it
+  in one, or add a whole type at once ("Add all Potion items to Group"). Manage them
   under Esc → Options → AddOns → Tidy Pack → Groups.
-- **Quests**: quest items show how many you have and need ("3/7") and which quest wants them. A
-  Quests tab lists what each quest needs, with ready quests first. Extra stacks of an item that a quest
-  only needs some of can be sold.
+- **Quests**: quest items show how many you have and need ("3/7") and which quest wants them. The
+  Quests tab lists your quests with ready ones first – open a quest to see its items and what is
+  still missing. Extra stacks of an item that a quest only needs some of can be sold.
 - **Special bags** – quivers, ammo pouches, soul bags, profession bags and the reagent bag –
   get their own groups at the bottom, with the bag's icon, name and free slots.
 - **New loot** is shown at the top until you close your bags.
@@ -42,14 +42,14 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 
 ## How to use
 
-- **Gear button** (top right of your bags): drop an item on it to make it a favorite, put it
-  on your junk list or add it to a set. Click it for your junk list and settings.
 - **Item options**: hold Alt to see a small "..." on every item, then Alt-click one for a menu:
-  favorite, junk list, sets and your own groups. You can also pick an item up and drop it on the
-  gear button.
-- **Sets tab**: click "New Set", then use the set's gear button and choose "Add What I'm
-  Wearing", or drop items on the set. The gear button also renames the set, changes its
+  favorite, junk list, sets and your own groups. With a controller, pick the item up and drop
+  it on the gear button.
+- **Gear button** (next to the close button): click it for your junk list, groups and settings.
+- **Sets tab**: click "New Set", then use the set's "..." button and choose "Add What I'm
+  Wearing", or drop items on the set. The "..." button also renames the set, changes its
   icon, removes an item or deletes it.
+- **Quests tab**: click a heading to open it, then a quest to see its items.
 - **Settings**: type `/tidypack`, use the minimap's addon menu, or go to Esc → Options →
   AddOns → Tidy Pack.
 - **Key bindings**: Esc → Options → Keybindings → AddOns → Tidy Pack, to open the Sets tab

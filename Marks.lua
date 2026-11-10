@@ -25,8 +25,9 @@ local L = ns.L
 -- Knappens bild: spelets kugghjul för inställningar (questlog-icon-setting, samma som
 -- spelets UIPanelIconDropdownButtonTemplate).
 local BUTTON_ATLAS = "questlog-icon-setting"
-local BUTTON_SIZE = 26
-local ICON_SIZE = 20
+local BUTTON_SIZE = 20
+local ICON_SIZE = 15
+local GOLD_R, GOLD_G, GOLD_B = 1, 0.82, 0 -- spelets gula textfärg
 
 local gearButton
 local gearHovered = false -- markören (mus eller handkontroll) står på kugghjulet
@@ -128,7 +129,7 @@ local function updateGearButton()
         gearLabel:SetShown(holding)
     end
     local active = holding or gearHovered or gearButton:IsMenuOpen()
-    gearButton:SetAlpha(active and 1 or 0.6) -- 0.35 såg avstängt ut i spelet
+    gearButton:SetAlpha(active and 1 or 0.85)
     if holding then
         gearButton:LockHighlight()
     else
@@ -198,7 +199,7 @@ local function buildMenu(_, rootDescription, itemOverride)
         rootDescription:CreateDivider()
         for _, option in ipairs({
             { "showQuestItemsInBags", L["Show quest items in Bags"] },
-            { "lockAtMerchant", L["Lock quest and set items"] },
+            { "lockAtMerchant", L["Lock items at merchants"] },
         }) do
             local key = option[1]
             rootDescription:CreateCheckbox(option[2], function()
@@ -227,12 +228,12 @@ local function showTooltip(self)
     GameTooltip_SetTitle(GameTooltip, L["Tidy Pack"])
     if InputUtil.IsGamepadUIEnabled() then
         local icon = ns.GamepadIcon and ns.GamepadIcon(GAMEPAD_FACE_BOTTOM) or ""
-        local text = L["Pick up an item, then drop it here to star it, put it on your junk list or add it to a set."]
+        local text = L["Pick up an item, then drop it here to make it a favorite, put it on your junk list or add it to a set or group."]
         GameTooltip_AddNormalLine(GameTooltip, icon ~= "" and (icon .. " " .. text) or text)
     else
-        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item here to star it, put it on your junk list or add it to a set."])
+        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item here to make it a favorite, put it on your junk list or add it to a set or group."])
     end
-    GameTooltip_AddNormalLine(GameTooltip, L["Click for your junk list and settings."])
+    GameTooltip_AddNormalLine(GameTooltip, L["Click for your junk list, groups and settings."])
     if not InputUtil.IsGamepadUIEnabled() then
         GameTooltip_AddBlankLineToTooltip(GameTooltip)
         GameTooltip_AddInstructionLine(GameTooltip, L["Alt-click an item for its Tidy Pack options: favorite, junk list, sets and groups."])
@@ -276,10 +277,31 @@ ns.OnLoad(function()
     gearButton:SetNormalAtlas(BUTTON_ATLAS)
     gearButton:SetHighlightAtlas(BUTTON_ATLAS, "ADD")
     -- Bilden lite mindre än knappen, så att kugghjulet inte blir suddigt.
+    -- Kugghjulet färgas gult (bilden är grå i sig) och får en tunn gul ram på mörk botten, så att
+    -- det syns att det är en knapp och inte en del av titelraden.
     for _, texture in ipairs({ gearButton:GetNormalTexture(), gearButton:GetHighlightTexture() }) do
         texture:ClearAllPoints()
         texture:SetPoint("CENTER")
         texture:SetSize(ICON_SIZE, ICON_SIZE)
+        texture:SetDesaturated(true)
+        texture:SetVertexColor(GOLD_R, GOLD_G, GOLD_B)
+    end
+    local back = gearButton:CreateTexture(nil, "BACKGROUND")
+    back:SetAllPoints()
+    back:SetColorTexture(0.1, 0.08, 0.05, 0.9)
+    for _, edge in ipairs({
+        { "TOPLEFT", "TOPRIGHT", nil, 1 }, { "BOTTOMLEFT", "BOTTOMRIGHT", nil, 1 },
+        { "TOPLEFT", "BOTTOMLEFT", 1, nil }, { "TOPRIGHT", "BOTTOMRIGHT", 1, nil },
+    }) do
+        local line = gearButton:CreateTexture(nil, "BORDER")
+        line:SetColorTexture(GOLD_R, GOLD_G, GOLD_B, 0.8)
+        line:SetPoint(edge[1])
+        line:SetPoint(edge[2])
+        if edge[3] then
+            line:SetWidth(edge[3])
+        else
+            line:SetHeight(edge[4])
+        end
     end
     gearLabel = CreateFrame("Frame", nil, bagFrame)
     gearLabel:SetFrameStrata("HIGH")

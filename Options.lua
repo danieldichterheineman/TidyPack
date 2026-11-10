@@ -247,14 +247,27 @@ ns.OnLoad(function()
 
     -- Etiketterna hålls korta. Spelet kortar av en etikett som är längre än ungefär
     -- "Show item level and BoE on gear" med "...", så förklaringen står i tooltipen.
-    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Junk"]))
-    addCheckbox("suggestOnLoot", L["Ask to delete junk list loot"],
-        L["When you loot an item on your junk list, Tidy Pack asks right away whether to delete it. Nothing is deleted until you press Delete."])
-    addCheckbox("suggestWhenFull", L["Suggest a deletion when full"],
-        L["When your bags are full and something can't be looted, a panel under the loot window suggests an item to delete: your junk list first, then your cheapest grey item if the new loot is worth more. Nothing is deleted until you press Delete."])
-    layout:AddInitializer(CreateSettingsButtonInitializer(L["Junk List"], L["Open"], function()
-        ns.OpenSettings("junk")
-    end, L["See, add and remove the items on your junk list."], true))
+    local function refresh()
+        if ns.Refresh then
+            ns.Refresh()
+        end
+    end
+
+    -- Ordningen följer hur man möter addonet: väskfönstret, handlaren, quests och sist skräp.
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Bag window"]))
+    addCheckbox("itemLevelAndBoE", L["Show item level and BoE"],
+        L["On uncommon or better weapons and armor."], refresh)
+    addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
+        L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
+        refresh)
+    layout:AddInitializer(CreateSettingsButtonInitializer(L["Your own groups"], L["Open"], function()
+        ns.OpenSettings("groups")
+    end, L["Create groups such as Potions, and choose what goes in them."], true))
+
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Merchants"]))
+    addCheckbox("lockAtMerchant", L["Lock items at merchants"],
+        L["At merchants, items your quests need and items in your sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
+        refresh)
 
     -- Raden visar om Questie finns. Utan Questie går kryssrutan inte att ändra.
     local hasQuestie = ns.HasQuestie ~= nil and ns.HasQuestie()
@@ -271,28 +284,14 @@ ns.OnLoad(function()
         return ns.HasQuestie ~= nil and ns.HasQuestie()
     end)
 
-    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Bag window"]))
-    addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
-        L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
-        function()
-            if ns.Refresh then
-                ns.Refresh()
-            end
-        end)
-    addCheckbox("lockAtMerchant", L["Lock quest and set items"],
-        L["At merchants, items your quests need and items in your sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
-        function()
-            if ns.Refresh then
-                ns.Refresh()
-            end
-        end)
-    addCheckbox("itemLevelAndBoE", L["Show item level and BoE"],
-        L["On uncommon or better weapons and armor."],
-        function()
-            if ns.Refresh then
-                ns.Refresh()
-            end
-        end)
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Junk"]))
+    addCheckbox("suggestOnLoot", L["Ask to delete junk list loot"],
+        L["When you loot an item on your junk list, Tidy Pack asks right away whether to delete it. Nothing is deleted until you press Delete."])
+    addCheckbox("suggestWhenFull", L["Suggest a deletion when full"],
+        L["When your bags are full and something can't be looted, a panel under the loot window suggests an item to delete: your junk list first, then your cheapest grey item if the new loot is worth more. Nothing is deleted until you press Delete."])
+    layout:AddInitializer(CreateSettingsButtonInitializer(L["Junk List"], L["Open"], function()
+        ns.OpenSettings("junk")
+    end, L["See, add and remove the items on your junk list."], true))
 
     junkPage = createJunkPage()
     junkCategory = Settings.RegisterCanvasLayoutSubcategory(category, junkPage, L["Junk List"])

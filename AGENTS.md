@@ -439,6 +439,11 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+37. Sista granskningen (2026-11-10): kugghjulet är gult med en tunn gul ram på mörk botten (grå bild som
+    färgas, `SetDesaturated` + `SetVertexColor`), i lagret HIGH så att det syns över titelraden. Quests har
+    en rad under titeln ("8 quests need items – 1 ready to turn in"). Inställningssidan: Bag window (nivå och
+    BoE, quest-saker i Bags, knappen Your own groups), Merchants (Lock items at merchants), Quests (Questie),
+    Junk (två kryssrutor och Junk List). Texterna säger "favorite" i stället för "star".
 36. Kugghjul och ⋯ (2026-11-10): ett kugghjul i fönsterhuvudet, till vänster om stängknappen, på alla
     flikar: meny med Junk List, Groups, Settings och två kryssrutor (Show quest items in Bags, Lock quest
     and set items); en sak som släpps på det öppnar menyn för favorit/skräp/set/grupp som förut. Sökrutan

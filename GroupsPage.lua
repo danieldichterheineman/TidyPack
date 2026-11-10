@@ -330,7 +330,7 @@ function ns.CreateGroupsPage()
     intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     intro:SetPoint("RIGHT", page, "RIGHT", -20, 0)
     intro:SetJustifyH("LEFT")
-    intro:SetText(L["Collect items under your own names. Groups come after Favorites and \"Add to bag\". Drop an item on the gear button in your bags to add it, or choose Add all ... items to Group to add a whole type."])
+    intro:SetText(L["Collect items under your own names. Groups come after Favorites and \"Add to bag\". Alt-click an item in your bags and choose Add to Group, or Add all ... items to Group for a whole type."])
 
     rowsHolder = CreateFrame("Frame", nil, page)
     rowsHolder:SetPoint("TOPLEFT", intro, "BOTTOMLEFT", 0, -14)

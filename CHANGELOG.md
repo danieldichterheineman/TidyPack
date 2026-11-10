@@ -29,6 +29,7 @@
 - The Tidy Pack gear button now sits next to the close button on every tab, and its menu also has
   "Show quest items in Bags" and "Lock quest and set items". Each set has a "..." button for its own
   options, so the two menus can no longer be mixed up.
+- The settings page is in a clearer order (Bag window, Merchants, Quests, Junk), with a button to your own groups. "Lock quest and set items" is now called "Lock items at merchants".
 - Alt-click an item to open a menu for it (favorite, junk list, sets, groups). Holding Alt shows a small "..." on every item, item tooltips mention it, the gear button says "Drop here for options" while you hold an item, and a tip at the bottom of the Bags tab explains it for the first few times. Alt-right-click no longer marks junk; use the menu.
 - A set's "..." button now sits right after its items, and its menu lists the items you can remove directly (up to 6), so side menus have room to open the right way.
 - The Quests tab is now a list: open "In progress" to see one line per quest, then open a quest to see

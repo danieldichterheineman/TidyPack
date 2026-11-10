@@ -13,8 +13,7 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
 
 ## Install
 
-- **CurseForge:** Tidy Pack is waiting for approval there. A link will be added here when it
-  is live.
+- **CurseForge:** search for "Tidy Pack" in the CurseForge app or on curseforge.com.
 - **By hand:** download `TidyPack-<version>.zip` from [Releases](https://github.com/danieldichterheineman/TidyPack/releases)
   and unpack it into `World of Warcraft/_forever_/Interface/AddOns/`, so that the folder is
   called `TidyPack`. Releases marked **Pre-release** are test versions.
@@ -26,10 +25,11 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
   items. Special bags (quivers, soul bags, profession bags, the reagent bag) get their own
   groups at the bottom.
 - **Your own groups:** make groups like "Potions", and put single items or whole item types
-  in them from the gear button's menu.
-- **Quests:** quest items show "3/7", and a Quests tab gives an overview of what each quest needs.
+  in them by Alt-clicking an item.
+- **Quests:** quest items show "3/7", and the Quests tab lists your quests – open one to see its
+  items and what is still missing.
 - **Sets:** collect items under a name and icon, like "Fishing", in the Sets tab. Click a set
-  to put it on, or use its gear button and choose "Add What I'm Wearing". Missing items are
+  to put it on, or use its "..." button and choose "Add What I'm Wearing". Missing items are
   greyed out.
 - **Locks:** quest items, items your quests ask for and items in your sets can't be sold by
   mistake at a merchant (can be turned off in the settings).
