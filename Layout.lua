@@ -43,11 +43,11 @@ local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till ba
 -- Raden med pengar görs högre, och "17 free" och väskraden står till vänster på den, pengarna till
 -- höger (användarens önskan 2026-11-11). Spelets låga myntruta (MoneyFrame.Border) döljs och ersätts
 -- av en högre med samma bilder; pengarna är kvar på spelets plats, mitt i den högre raden.
-local BAR_HEIGHT = 38       -- den högre radens höjd
+local BAR_HEIGHT = 46       -- den högre radens höjd (38 var för lågt: väskorna nådde kanterna)
 -- Spelet sätter pengarna 8 från nederkanten (UpdateCurrencyFrames). De flyttas upp så här mycket, så
--- att de står mitt i den högre raden: (3 + 38 / 2) - (8 + 16 / 2) = 6. Fönstret blir lika mycket högre.
-local MONEY_RAISE = 6
-local BAG_ROW = 13          -- luft mellan bakgrunden och den högre raden
+-- att de står mitt i den högre raden: (3 + 46 / 2) - (8 + 16 / 2) = 10. Fönstret blir lika mycket högre.
+local MONEY_RAISE = 10
+local BAG_ROW = 17          -- luft mellan bakgrunden och den högre raden
 local moneyRaised = false   -- pengarna är flyttade (inte när spelet visar valutor under dem)
 local MONEY_GAP = 16 + BAG_ROW -- mellan sista raden rutor och raden med pengar
 local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
