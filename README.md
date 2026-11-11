@@ -11,8 +11,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 
 - **Groups**: Favorites, New, Consumables, Equipment, Trade Goods, Quest Items, Keys, Spare
   Bags, Miscellaneous and Junk. Empty groups are hidden, and similar items sit side by side.
-  The "Add to bag" slot next to Favorites shows how many slots are free – drop an item on it
-  to put it in your bags.
+  The groups come in five parts: your own, everyday, crafting, quests and the rest. Your free
+  slots are shown at the bottom left.
 - **Your own groups**: make groups like "Potions" or "Food & Drink" – Alt-click an item to put it
   in one, or add a whole type at once ("Add all Potion items to Group"). Manage them
   under Esc → Options → AddOns → Tidy Pack → Groups.

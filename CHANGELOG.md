@@ -10,6 +10,12 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- The Bags tab is in five parts, each starting on a new row with a thin line above: your own
+  (Favorites, your groups, New), everyday (Consumables, Equipment), crafting materials, quest
+  items, and the rest (Keys, Miscellaneous, Spare Bags, Junk). Special bags stay at the bottom.
+- With a mouse, the "Add to bag" slot is gone – drop items anywhere instead. Your free slots are
+  shown at the bottom left ("10 free", red when few are left). With a controller the slot stays.
+- The leftover Trade Goods group (recipes, gems, enhancements) is now called "Recipes & Gems".
 - A short guide the first time you open your bags, in the game's own yellow tip boxes: Alt-click
   on items, the gear button, Sets and Quests. Show it again under Esc → Options → AddOns → Tidy
   Pack → Tips. It replaces the blue tip line at the bottom of the bags. Like the game's own tips,

@@ -10,8 +10,27 @@ local L = ns.L
 -- raden med Favorites i stället för att ta en egen rad längst ned.
 ns.baseGroupOrder = {
     "Favorites", "Empty", "New", "Consumables", "Equipment", "TradeGoods",
-    "QuestItems", "Keys", "Bags", "Miscellaneous", "Junk",
+    "QuestItems", "Keys", "Miscellaneous", "Bags", "Junk",
 }
+
+-- Avsnitten i fliken Bags (användarens önskan 2026-11-11). Varje avsnitt börjar på en ny rad med
+-- en tunn linje ovanför; grupper inom ett avsnitt delar rad. 1 dina egna (Favorites, egna grupper,
+-- New), 2 vardag, 3 råvaror, 4 quests, 5 övrigt. Specialväskorna står sist under spelets linje.
+local SECTION_OF = {
+    Favorites = 1, Empty = 1, New = 1, Consumables = 2, Equipment = 2, TradeGoods = 3,
+    QuestItems = 4, Keys = 5, Miscellaneous = 5, Bags = 5, Junk = 5,
+}
+
+function ns.GetGroupSection(group)
+    if SECTION_OF[group] then
+        return SECTION_OF[group]
+    elseif group:match("^custom") then
+        return 1
+    elseif group:match("^trade") then
+        return 3
+    end
+    return 5
+end
 -- Det som visas: spelets grupper med spelarens egna grupper insatta efter Empty ("Add to
 -- bag"). Groups.lua bygger om den när grupperna ändras (ns.RebuildGroupOrder).
 ns.groupOrder = ns.baseGroupOrder

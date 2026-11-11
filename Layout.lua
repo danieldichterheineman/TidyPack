@@ -52,7 +52,8 @@ local function searchRoom()
     -- (skärmbilder 2026-11-10), därför 55.
     return InputUtil.IsGamepadUIEnabled() and 43 or 55
 end
-local LOW_SPACE = 5        -- så här få lediga platser gör siffran i Empty röd
+local LOW_SPACE = 5        -- så här få lediga platser gör siffran för lediga platser röd
+local SECTION_GAP = 8      -- luft ovanför och under linjen mellan två avsnitt
 local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
 local DIVIDER_GAP = 6      -- luft ovanför och under linjen före specialväskorna
 -- Väskplatser som kan ha en specialväska: de fyra vanliga och reagensväskan. Med mus visar
@@ -359,6 +360,8 @@ local function anchor(region, x, y, scale)
         (MONEY_GAP + contentHeight - y) / scale)
 end
 
+local updateFreeText -- längre ner; applySize uppdaterar antalet lediga platser
+
 -- Ger spelets fönster Tidy Packs storlek: kanterna, titelraden och raden med pengar som
 -- spelet räknade ut, plus det Tidy Pack lägger ut.
 local function applySize()
@@ -377,6 +380,7 @@ local function applySize()
         inset:Show()
     end
     NineSliceUtil.UpdateCornerCropping(bagFrame, height)
+    updateFreeText()
 end
 
 -- Körs efter spelets UpdateFrameSize. Spelet har då gett fönstret storlek efter sitt eget
@@ -420,9 +424,54 @@ local function isSpecialBag(bagID)
     return family ~= nil and family ~= 0
 end
 
+-- Linjerna mellan avsnitten i fliken Bags. flow fyller sectionYs, placeSectionLines ritar dem.
+local sectionYs = {}
+local sectionLines = {}
+local freeText -- antalet lediga platser nere till vänster (med mus, i stället för "Add to bag")
+
+local function hideSectionLines()
+    for _, line in ipairs(sectionLines) do
+        line:Hide()
+    end
+end
+
+local function placeSectionLines()
+    hideSectionLines()
+    for index, lineY in ipairs(sectionYs) do
+        local line = sectionLines[index]
+        if not line then
+            line = overlay:CreateTexture(nil, "ARTWORK")
+            line:SetColorTexture(1, 0.82, 0, 0.18)
+            sectionLines[index] = line
+        end
+        line:SetSize(gridWidth + 8, 1)
+        anchor(line, -4, lineY)
+        line:Show()
+    end
+end
+
+-- "10 free" nere till vänster, rött när det är få kvar. Med handkontroll visar rutan "Add to bag"
+-- samma sak, så då visas inte texten.
+updateFreeText = function()
+    if not freeText then
+        return
+    end
+    if InputUtil.IsGamepadUIEnabled() then
+        freeText:Hide()
+        return
+    end
+    local free = C_Container.CalculateTotalNumberOfFreeBagSlots()
+    freeText:SetText(L["%d free"]:format(free))
+    freeText:SetTextColor((free <= LOW_SPACE and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
+    if not freeText.hiddenByDrop then
+        freeText:Show()
+    end
+end
+
 -- Listan med set i fliken Sets (SetsView.lua) i stället för sakerna.
 local function layoutSetsView(atMerchant)
     releaseHeaders()
+    hideSectionLines()
     if divider then
         divider:Hide()
     end
@@ -471,6 +520,9 @@ local function flow(cols, apply, junkValue)
     local width = widthOf(cols)
     local x, y, shelfHeight = 0, 0, 0
     local dividerY
+    if apply then
+        wipe(sectionYs)
+    end
     local function place(group, text)
         local list = groupLists[group]
         if not (list and #list > 0) then
@@ -524,8 +576,26 @@ local function flow(cols, apply, junkValue)
         x = left + groupWidth
         shelfHeight = math.max(shelfHeight, height)
     end
+    -- Med mus behövs inte rutan "Add to bag": hela väskan tar emot saker, och antalet lediga platser
+    -- står nere till vänster. Med handkontroll är den kvar som platsen där en sak släpps.
+    local showEmpty = InputUtil.IsGamepadUIEnabled()
+    local lastSection
     for _, group in ipairs(ns.groupOrder) do
-        place(group, headerText(group, junkValue))
+        local list = groupLists[group]
+        if list and #list > 0 and (group ~= "Empty" or showEmpty) then
+            -- Ett nytt avsnitt börjar på en ny rad, med en tunn linje ovanför.
+            local section = ns.GetGroupSection(group)
+            if lastSection and section ~= lastSection then
+                y = y + shelfHeight + SECTION_GAP
+                if apply then
+                    sectionYs[#sectionYs + 1] = y
+                end
+                y = y + 1 + SECTION_GAP
+                x, shelfHeight = 0, 0
+            end
+            lastSection = section
+            place(group, headerText(group, junkValue))
+        end
     end
 
     -- Specialväskorna längst ned, under spelets linje, i väskplatsernas ordning.
@@ -714,6 +784,7 @@ end
 -- Fliken Quests (QuestsView.lua): quest-sakerna ordnade per quest, med de riktiga rutorna.
 local function layoutQuestsView(atMerchant)
     releaseHeaders()
+    hideSectionLines()
     if divider then
         divider:Hide()
     end
@@ -810,6 +881,7 @@ local function relayout()
     -- när du bar en specialväska.
     contentHeight = sharedHeight
     dividerY = select(2, flow(gridCols, true, junkValue))
+    placeSectionLines()
     if dividerY then
         anchor(divider, -6, dividerY)
         divider:SetWidth(gridWidth + 12)
@@ -1001,6 +1073,10 @@ ns.OnLoad(function()
     label:SetSize(label.text:GetStringWidth() + 16, 18)
     glow:Hide()
     label:Hide()
+
+    freeText = bagFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    freeText:SetPoint("BOTTOMLEFT", bagFrame, "BOTTOMLEFT", 16, 9)
+    freeText:Hide()
     local watcher = CreateFrame("Frame")
     watcher:Hide()
     local sinceCheck = 0
@@ -1014,6 +1090,9 @@ ns.OnLoad(function()
         local show = bagFrame:IsShown() and inset:IsShown() and bagFrame:IsMouseOver()
         glow:SetShown(show)
         label:SetShown(show)
+        -- Raden "Drop anywhere" står där antalet lediga platser står.
+        freeText.hiddenByDrop = show
+        freeText:SetShown(not show and not InputUtil.IsGamepadUIEnabled())
     end)
     ns.RegisterEvent("CURSOR_CHANGED", function()
         local holding = GetCursorInfo() == "item"
@@ -1021,6 +1100,8 @@ ns.OnLoad(function()
         if not holding then
             glow:Hide()
             label:Hide()
+            freeText.hiddenByDrop = false
+            updateFreeText()
         end
     end)
 
