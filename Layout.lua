@@ -241,6 +241,16 @@ local function getExtras(button)
         extra.later:SetSize(10, 14)
         extra.later:SetPoint("TOPRIGHT", -1, -1)
         extras[button] = extra
+        -- Spelets gula ram runt quest-saker behövs inte: de står redan i Quest Items (användarens
+        -- önskan 2026-11-11). Spelet sätter den i UpdateQuestItem; Tidy Pack döljer den direkt efteråt.
+        -- Det gula utropstecknet på saker som startar en quest står kvar.
+        if button.UpdateQuestItem and button.IconQuestTexture then
+            hooksecurefunc(button, "UpdateQuestItem", function(self, _, questID, isActive)
+                if not (questID and not isActive) then
+                    self.IconQuestTexture:Hide()
+                end
+            end)
+        end
         -- En avstängd ruta visar annars ingen tooltip. Låsta saker hos en handlare ska visa
         -- sin, med raden om varför de är låsta.
         button:SetMotionScriptsWhileDisabled(true)

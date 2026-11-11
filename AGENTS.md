@@ -442,6 +442,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+46. Quest-ramen (2026-11-11): spelets gula ram runt quest-saker döljs efter spelets `UpdateQuestItem`
+    (hook per ruta); utropstecknet på saker som startar en quest står kvar. Inte provat i spelet.
 45. Harmoni och rullning (2026-11-11): raden med pengar har samma vänster- och högerkant som bakgrunden
     (ankrad till `inset`); bakgrunden når 3 närmare sidorna än sakernas luft upptill, `INSET_PAD_X` 15; luften runt bakgrunden är lika (PADDING_SIDE 16, PADDING_TOP 20, raden 6 från
     nederkanten, MONEY_RAISE 13). Höjden i alla flikar = `sharedHeight` (Bags, minst fem set-platser);

@@ -10,6 +10,8 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- Quest items no longer have the game's yellow border – they're already in Quest Items. Items
+  that start a quest keep their yellow exclamation mark.
 - The reagent bag's own window is attached to the left of the Tidy Pack window. With a mouse the
   game always shows the reagent bag in its own window, so its items aren't sorted into groups.
 - The Tidy Pack logo replaces the game's backpack and bag buttons at the bottom right. Click it
