@@ -68,6 +68,12 @@ function ns.RebuildGroupOrder()
     wipe(customKeys)
     local order = {}
     for _, key in ipairs(ns.baseGroupOrder) do
+        -- Råvarorna per undertyp, dina yrken först, före övriga Trade Goods (Categories.lua).
+        if key == "TradeGoods" and ns.GetTradeGroupKeys then
+            for _, tradeKey in ipairs(ns.GetTradeGroupKeys()) do
+                order[#order + 1] = tradeKey
+            end
+        end
         order[#order + 1] = key
         if key == "Empty" then
             for _, group in ipairs(groups()) do
@@ -365,3 +371,13 @@ end)
 ns.OnLoad(function()
     ns.RebuildGroupOrder()
 end)
+
+-- Yrkena är kända först efter inloggningen och ändras när du lär dig eller glömmer ett yrke.
+local function professionsChanged()
+    ns.RebuildGroupOrder()
+    if ns.Refresh then
+        ns.Refresh()
+    end
+end
+ns.RegisterEvent("PLAYER_LOGIN", professionsChanged)
+ns.RegisterEvent("SKILL_LINES_CHANGED", professionsChanged)

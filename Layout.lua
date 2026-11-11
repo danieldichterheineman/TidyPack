@@ -958,6 +958,89 @@ ns.OnLoad(function()
     end
     inset:Hide()
 
+    -- Släpp var som helst (användarens önskan 2026-11-11): bakgrunden ligger under rutorna, så den
+    -- tar bara emot en sak som släpps på tom yta. Saken läggs på första lediga plats i en vanlig
+    -- väska, som spelets "Add to bag"-ruta. Släpps den på en annan sak byter spelet plats på dem.
+    local function dropAnywhere()
+        local kind = GetCursorInfo()
+        if kind ~= "item" then
+            return
+        end
+        for bagID = 0, Constants.InventoryConstants.NumBagSlots do
+            local free, family = C_Container.GetContainerNumFreeSlots(bagID)
+            if free and free > 0 and (family == nil or family == 0) then
+                for slot = 1, C_Container.GetContainerNumSlots(bagID) do
+                    if not C_Container.GetContainerItemInfo(bagID, slot) then
+                        C_Container.PickupContainerItem(bagID, slot)
+                        return
+                    end
+                end
+            end
+        end
+        UIErrorsFrame:AddMessage(ERR_INV_FULL, 1.0, 0.1, 0.1, 1.0)
+    end
+    inset:EnableMouse(true)
+    inset:SetScript("OnReceiveDrag", dropAnywhere)
+    inset:SetScript("OnMouseUp", function(_, mouseButton)
+        if mouseButton == "LeftButton" then
+            dropAnywhere()
+        end
+    end)
+
+    -- En gul kant och en rad längst ner medan du håller en sak över väskan. Kollas bara medan
+    -- markören håller något (CURSOR_CHANGED), så det kostar inget annars.
+    local glow = CreateFrame("Frame", nil, inset)
+    glow:SetAllPoints()
+    glow:SetFrameLevel(inset:GetFrameLevel() + 1)
+    for _, edge in ipairs({
+        { "TOPLEFT", "TOPRIGHT", nil, 2 }, { "BOTTOMLEFT", "BOTTOMRIGHT", nil, 2 },
+        { "TOPLEFT", "BOTTOMLEFT", 2, nil }, { "TOPRIGHT", "BOTTOMRIGHT", 2, nil },
+    }) do
+        local line = glow:CreateTexture(nil, "OVERLAY")
+        line:SetColorTexture(1, 0.82, 0, 0.9)
+        line:SetPoint(edge[1])
+        line:SetPoint(edge[2])
+        if edge[3] then
+            line:SetWidth(edge[3])
+        else
+            line:SetHeight(edge[4])
+        end
+    end
+    local label = CreateFrame("Frame", nil, bagFrame)
+    label:SetFrameStrata("HIGH")
+    label:SetPoint("BOTTOM", inset, "BOTTOM", 0, 6)
+    label.bg = label:CreateTexture(nil, "BACKGROUND")
+    label.bg:SetAllPoints()
+    label.bg:SetColorTexture(0, 0, 0, 0.8)
+    label.text = label:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label.text:SetPoint("CENTER")
+    label.text:SetText(L["Drop anywhere to put it in your bags"])
+    label:SetSize(label.text:GetStringWidth() + 20, 20)
+    glow:Hide()
+    label:Hide()
+    local watcher = CreateFrame("Frame")
+    watcher:Hide()
+    local sinceCheck = 0
+    watcher:SetScript("OnUpdate", function(_, elapsed)
+        -- Tio gånger i sekunden räcker, och bara medan du håller en sak.
+        sinceCheck = sinceCheck + elapsed
+        if sinceCheck < 0.1 then
+            return
+        end
+        sinceCheck = 0
+        local show = bagFrame:IsShown() and inset:IsShown() and bagFrame:IsMouseOver()
+        glow:SetShown(show)
+        label:SetShown(show)
+    end)
+    ns.RegisterEvent("CURSOR_CHANGED", function()
+        local holding = GetCursorInfo() == "item"
+        watcher:SetShown(holding)
+        if not holding then
+            glow:Hide()
+            label:Hide()
+        end
+    end)
+
     -- Osynlig text som mäter hur breda rubrikerna är, för att kunna räkna ut höjden utan att
     -- lägga ut något (se flow).
     measurer = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")

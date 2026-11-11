@@ -42,7 +42,7 @@ local byClass = {
     [ItemClass.Weapon] = { "Equipment", 1 },
     [ItemClass.Armor] = { "Equipment", 2 },
     [ItemClass.Projectile] = { "Equipment", 3 },
-    [ItemClass.Tradegoods] = { "TradeGoods", 1 },
+    -- Handelsvaror (råvaror) får en grupp per undertyp, se tradeGroupKey nedan.
     [ItemClass.Gem] = { "TradeGoods", 2 },
     [ItemClass.ItemEnhancement] = { "TradeGoods", 3 },
     [ItemClass.Recipe] = { "TradeGoods", 4 },
@@ -63,6 +63,68 @@ local consumableOrder = {
     [ConsumableSubclass.Bandage] = 3,
     [ConsumableSubclass.Scroll] = 4,
 }
+
+---------------------------------------------------------------------------
+-- Råvaror per yrke (användarens önskan 2026-11-11)
+---------------------------------------------------------------------------
+-- Handelsvaror delas upp efter spelets egen undertyp (Cloth, Leather, Herb ...), samma uppdelning
+-- som auktionshuset i Forever gör (C_AuctionHouse.GetAuctionItemSubClasses). Namnen kommer från
+-- spelet (C_Item.GetItemSubClassInfo). Grupper för dina yrken (GetProfessions/GetProfessionInfo)
+-- står först, med yrkets ikon och namn; resten står efter, i ordningen nedan.
+-- ⚠️ Undertypernas nummer och yrkenas skillLine-nummer står inte i Forevers genererade
+--    dokumentation. De är retail-klientens värden. Stämmer de inte blir bara ordningen och
+--    yrkets namn i rubriken fel – sakerna hamnar ändå i grupper med spelets egna namn.
+local TRADE_SUBCLASSES = { 5, 6, 7, 9, 8, 12, 10, 1, 3, 2, 17, 4, 16, 13, 11, 0 }
+-- Undertyp → yrken som använder den (skillLine): Cloth → Tailoring, Leather → Leatherworking och
+-- Skinning, Metal & Stone → Blacksmithing, Mining och Engineering, Meat → Cooking, Herb → Alchemy,
+-- Herbalism och Inscription, Enchanting → Enchanting, Parts och Devices → Engineering,
+-- Jewelcrafting → Jewelcrafting, Inscription → Inscription.
+local PROFESSIONS_FOR = {
+    [5] = { 197 }, [6] = { 165, 393 }, [7] = { 164, 186, 202 }, [8] = { 185 },
+    [9] = { 171, 182, 773 }, [12] = { 333 }, [1] = { 202 }, [3] = { 202 }, [17] = { 202 },
+    [4] = { 755 }, [16] = { 773 },
+}
+
+local function tradeGroupKey(subClassID)
+    return "trade" .. (subClassID or 0)
+end
+
+-- Gruppernas nycklar för råvaror, dina yrken först. Sätter också rubrikerna i ns.groupNames.
+-- Groups.lua lägger dem på Trade Goods plats i ns.groupOrder.
+function ns.GetTradeGroupKeys()
+    local mine = {}
+    local professions = { GetProfessions() }
+    for _, professionIndex in pairs(professions) do
+        local name, icon, _, _, _, _, skillLine = GetProfessionInfo(professionIndex)
+        if skillLine then
+            mine[skillLine] = { name = name, icon = icon }
+        end
+    end
+    local first, rest = {}, {}
+    for _, subClassID in ipairs(TRADE_SUBCLASSES) do
+        local key = tradeGroupKey(subClassID)
+        local subName = C_Item.GetItemSubClassInfo(ItemClass.Tradegoods, subClassID)
+        if not subName or subName == "" then
+            subName = L["Trade Goods"]
+        end
+        local profession
+        for _, skillLine in ipairs(PROFESSIONS_FOR[subClassID] or {}) do
+            profession = profession or mine[skillLine]
+        end
+        if profession then
+            ns.groupNames[key] = ("|T%s:13:13|t %s %s"):format(profession.icon, subName,
+                GRAY_FONT_COLOR:WrapTextInColorCode(profession.name))
+            first[#first + 1] = key
+        else
+            ns.groupNames[key] = subName
+            rest[#rest + 1] = key
+        end
+    end
+    for _, key in ipairs(rest) do
+        first[#first + 1] = key
+    end
+    return first
+end
 
 -- Vilken grupp en sak i väskorna hör till, och sakens plats inom gruppen (lägre först).
 -- info kommer från C_Container.GetContainerItemInfo, classID och subClassID från
@@ -99,6 +161,9 @@ function ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
     end
     if classID == ItemClass.Consumable then
         return "Consumables", consumableOrder[subClassID] or 5
+    end
+    if classID == ItemClass.Tradegoods then
+        return tradeGroupKey(subClassID), 0
     end
     local group = byClass[classID]
     if group then

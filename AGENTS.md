@@ -439,6 +439,15 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+40. Råvaror och släpp (2026-11-11, skissen `.design/sketch-drop-and-crafting.html`): Trade Goods delas i
+    grupper per undertyp (`trade<subClassID>`, namn från `C_Item.GetItemSubClassInfo`); grupper för dina
+    yrken står först med yrkets ikon och namn i grått (`ns.GetTradeGroupKeys`, `GetProfessions`,
+    `SKILL_LINES_CHANGED`). Ädelstenar, förbättringar och recept står kvar i "Trade Goods". ⚠️ Undertypernas
+    och yrkenas nummer är retail-värden, inte i Forevers dokumentation – kontrollera att Cloth hamnar
+    först för en skräddare. Avvikelse från skissen: inga rader "Your professions"/"Other crafting".
+    Håll en sak över väskan: gul kant och "Drop anywhere to put it in your bags"; släpp på tom yta →
+    första lediga plats i en vanlig väska (`C_Container.PickupContainerItem`); full väska → spelets
+    röda "Inventory is full". Inte provat i spelet.
 39. Set i väskan (2026-11-10, skissen `.design/sketch-sets-in-bag.html`): dra setets ikon till en
     actionbar → makrot "TP <namn>" (kontots, `/tidypack equip <namn>`, setets ikon) skapas eller uppdateras
     och läggs på markören (`ns.PickupSetMacro`); släpp på en knapp och klicka – setet tas på. Byt namn eller

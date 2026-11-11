@@ -19,6 +19,9 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Quests**: quest items show how many you have and need ("3/7") and which quest wants them. The
   Quests tab lists your quests with ready ones first – open a quest to see its items and what is
   still missing. Extra stacks of an item that a quest only needs some of can be sold.
+- **Crafting materials** are grouped by type (Cloth, Herb, Leather …), with the ones your
+  professions use first.
+- **Drop anywhere**: hold an item over your bags and drop it on any empty spot.
 - **Special bags** – quivers, ammo pouches, soul bags, profession bags and the reagent bag –
   get their own groups at the bottom, with the bag's icon, name and free slots.
 - **New loot** is shown at the top until you close your bags.

@@ -1,0 +1,65 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tidy Pack – skiss: släpp var som helst och yrken</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1560px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1450px}
+.row{display:flex;gap:18px;align-items:flex-start}.col{width:500px}.col h2{font-size:13px;color:#ffd100;margin:0 0 6px;min-height:34px}
+.bag{position:relative;width:500px;height:330px;background:#1a1816;border:2px solid #6e6252;border-radius:5px;margin-top:24px}
+.tabs{position:absolute;top:-23px;left:10px;display:flex;gap:6px}.tab{padding:2px 16px;background:#2a2622;border:1px solid #6e6252;border-bottom:0;border-radius:4px 4px 0 0;font:12px Georgia;color:#c9b27a}.tab.on{background:#3a3228;color:#ffd100}
+.t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000;position:relative}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;border:1px solid #ffd100;border-radius:3px;background:#1a140c;color:#ffd100;text-align:center;font:12px/16px Arial}
+.in{position:absolute;left:8px;right:8px;top:24px;bottom:24px;background:#0a0a0a;border:1px solid #333;padding:6px 8px}
+.in.glow{border:2px solid #ffd100;box-shadow:inset 0 0 18px rgba(255,209,0,.35),0 0 10px rgba(255,209,0,.5)}
+.gr{display:inline-block;vertical-align:top;margin:0 12px 6px 0}.gr b{display:block;color:#ffd100;font:12px Arial;font-weight:normal;margin-bottom:3px}.gr b em{font-style:normal;color:#9a9a9a;font-size:11px}
+.sl{display:inline-block;width:32px;height:32px;border:1px solid #555;background:#0a0a0a;border-radius:3px;position:relative;margin-right:3px;vertical-align:top}.sl i{position:absolute;inset:3px;border-radius:2px}.sl s{position:absolute;right:2px;bottom:0;font:11px Arial;color:#fff;text-decoration:none}
+.money{position:absolute;bottom:4px;right:12px;font:11px Arial;color:#fff}
+.call{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:11px/1.3 Arial;padding:3px 8px;border-radius:4px;z-index:5;white-space:nowrap}
+.cur{position:absolute;width:30px;height:30px;border:1px solid #ccc;border-radius:3px;background:#c83;opacity:.95;z-index:6}
+.lab{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;background:#000c;border:1px solid #ffd100;color:#ffd100;font:12px Arial;padding:3px 10px;border-radius:3px;z-index:5}
+.pi{display:inline-block;width:13px;height:13px;border-radius:2px;vertical-align:-2px;margin-right:4px}
+.sep{color:#666;font:11px Arial;margin:4px 0 4px}
+.rowp{display:flex;align-items:center;gap:8px;height:42px;border-bottom:1px solid #1d1b19}.rowp .nm{font:13px Arial;color:#ffd100;width:130px}.rowp .nm small{display:block;color:#9a9a9a;font-size:11px}
+</style></head><body>
+<h1>Släpp var som helst i väskan, och råvaror per yrke</h1>
+<p class="n">Skiss, inte spelet. Vänster: du håller en sak över väskan. Mitten: Trade Goods delas upp efter vad sakerna används till, dina yrken först (rekommenderat). Höger: samma sak som en egen flik, som jämförelse.</p>
+<div class="row">
+
+<div class="col"><h2>1. Håller du en sak lyser väskan – släpp var som helst</h2><div class="bag">
+<div class="tabs"><div class="tab on">Bags</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in glow">
+<div class="gr"><b>★ Favorites</b><span class="sl"><i style="background:#9bc"></i></span></div><div class="gr"><b>Add to bag</b><span class="sl"><s>13</s></span></div><div class="gr"><b>Consumables</b><span class="sl"><i style="background:#d82"></i></span><span class="sl"><i style="background:#ddd"></i><s>20</s></span><span class="sl"><i style="background:#764"></i></span></div>
+<div class="gr"><b>Equipment</b><span class="sl"><i style="background:#58a"></i></span><span class="sl"><i style="background:#c62"></i></span><span class="sl"><i style="background:#a83"></i></span></div>
+<div class="gr"><b>Trade Goods</b><span class="sl"><i style="background:#c55"></i><s>9</s></span><span class="sl"><i style="background:#cb8"></i><s>20</s></span></div>
+</div><div class="money">94 ● 73 ●</div>
+<div class="cur" style="left:240px;top:200px"></div>
+<div class="lab">Drop anywhere to put it in your bags</div>
+<div class="call" style="left:20px;top:345px">Släpper du på en sak byter de plats, som i spelet. Släpper du på tom yta hamnar saken på en ledig plats.</div>
+</div></div>
+
+<div class="col"><h2>2. Trade Goods per yrke, i väskan (rekommenderat)</h2><div class="bag">
+<div class="tabs"><div class="tab on">Bags</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="gr"><b>★ Favorites</b><span class="sl"><i style="background:#9bc"></i></span></div><div class="gr"><b>Consumables</b><span class="sl"><i style="background:#d82"></i></span><span class="sl"><i style="background:#ddd"></i><s>20</s></span></div>
+<div class="sep">Your professions</div>
+<div class="gr"><b><span class="pi" style="background:#a6c"></span>Cloth <em>Tailoring</em></b><span class="sl"><i style="background:#cb8"></i><s>20</s></span><span class="sl"><i style="background:#cb8"></i><s>5</s></span><span class="sl"><i style="background:#ddd"></i><s>14</s></span></div>
+<div class="gr"><b><span class="pi" style="background:#c63"></span>Cooking <em>Cooking</em></b><span class="sl"><i style="background:#c55"></i><s>9</s></span><span class="sl"><i style="background:#c75"></i><s>6</s></span><span class="sl"><i style="background:#b84"></i></span></div>
+<div class="sep">Other crafting</div>
+<div class="gr"><b>Leather</b><span class="sl"><i style="background:#875"></i><s>4</s></span></div><div class="gr"><b>Metal &amp; Stone</b><span class="sl"><i style="background:#888"></i><s>2</s></span></div><div class="gr"><b>Herb</b><span class="sl"><i style="background:#6a4"></i><s>3</s></span></div>
+</div><div class="money">94 ● 73 ●</div>
+<div class="call" style="left:120px;top:345px">Namnen kommer från spelet. Dina yrken står först, med yrkets ikon.</div>
+</div></div>
+
+<div class="col"><h2>3. Som en egen flik "Crafting" (jämförelse)</h2><div class="bag">
+<div class="tabs"><div class="tab">Bags</div><div class="tab">Sets</div><div class="tab">Quests</div><div class="tab on">Crafting</div></div>
+<div class="t">Backpack<div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="rowp"><span class="nm"><span class="pi" style="background:#a6c"></span>Tailoring<small>Skill 75 / 150</small></span><span class="sl"><i style="background:#cb8"></i><s>20</s></span><span class="sl"><i style="background:#cb8"></i><s>5</s></span><span class="sl"><i style="background:#ddd"></i><s>14</s></span></div>
+<div class="rowp"><span class="nm"><span class="pi" style="background:#c63"></span>Cooking<small>Skill 40 / 75</small></span><span class="sl"><i style="background:#c55"></i><s>9</s></span><span class="sl"><i style="background:#c75"></i><s>6</s></span></div>
+<div class="rowp"><span class="nm">Other crafting</span><span class="sl"><i style="background:#875"></i><s>4</s></span><span class="sl"><i style="background:#888"></i><s>2</s></span><span class="sl"><i style="background:#6a4"></i><s>3</s></span></div>
+</div><div class="money">94 ● 73 ●</div>
+<div class="call" style="left:60px;top:345px">Råvarorna syns då inte i Bags – lätt att glömma bort.</div>
+</div></div>
+
+</div></body></html>

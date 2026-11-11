@@ -10,6 +10,10 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- Hold an item over your bags and the background lights up: drop it anywhere on an empty spot
+  to put it in your bags.
+- Trade Goods are split by type – Cloth, Leather, Herb, Metal & Stone, Cooking and so on – with
+  the ones your professions use first, marked with the profession's icon and name.
 - Drag a set's icon to an action bar: Tidy Pack makes a macro ("TP <set name>") with the set's
   icon that puts the set on. It uses one of your account's macro slots, and can't be made in
   combat. Renaming the set or changing its icon updates the macro.
