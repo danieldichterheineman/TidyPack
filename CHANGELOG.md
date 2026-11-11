@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 (2026-11-11)
 
 - More room for your items: the search box and the bag icon in the top left corner are gone, and
   the items start right under the title. Your free slots are shown in "Add to bag".
