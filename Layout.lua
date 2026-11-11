@@ -38,7 +38,10 @@ local BLIZZARD_MONEY_GAP = 4 -- spelets avstånd mellan rutorna och raden med pe
 -- Den mörka bakgrunden ligger nära fönstrets kant, och sakerna har INSET_PAD luft innanför
 -- den (användarens önskan 2026-11-10: luften hade försvunnit).
 local PADDING_SIDE = 16      -- från fönstrets inre kant till sakerna (inklusive luften); 14 gav för lite luft vid sidorna
-local INSET_PAD = 12         -- luft mellan bakgrundens kant och sakerna
+local INSET_PAD = 12         -- luft mellan bakgrundens kant och sakerna, upptill och nertill
+-- Bakgrunden (och raden med pengar) når lite närmare fönstrets sidor än sakerna (användarens önskan
+-- 2026-11-11): luften vid sidorna är större innanför bakgrunden än upptill och nertill.
+local INSET_PAD_X = 15
 local PADDING_TOP = 20       -- mellan titelraden och första rubriken (6 till bakgrunden + luften); 16 gav för lite luft
 -- Raden med pengar görs högre, och "17 free" och väskraden står till vänster på den, pengarna till
 -- höger (användarens önskan 2026-11-11). Spelets låga myntruta (MoneyFrame.Border) döljs och ersätts
@@ -388,9 +391,9 @@ local function applySize()
     -- Bakgrunden följer det Tidy Pack lägger ut, och hänger i raden med pengar som allt annat.
     if inset then
         inset:ClearAllPoints()
-        inset:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", -gridWidth - PADDING_SIDE - INSET_PAD + contentShift,
+        inset:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", -gridWidth - PADDING_SIDE - INSET_PAD_X + contentShift,
             MONEY_GAP + contentHeight + INSET_PAD)
-        inset:SetPoint("BOTTOMRIGHT", bagFrame.MoneyFrame, "TOPRIGHT", -PADDING_SIDE + INSET_PAD + contentShift,
+        inset:SetPoint("BOTTOMRIGHT", bagFrame.MoneyFrame, "TOPRIGHT", -PADDING_SIDE + INSET_PAD_X + contentShift,
             MONEY_GAP - INSET_PAD)
         inset:Show()
     end

@@ -443,7 +443,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
 45. Harmoni och rullning (2026-11-11): raden med pengar har samma vänster- och högerkant som bakgrunden
-    (ankrad till `inset`), och luften runt bakgrunden är lika (PADDING_SIDE 16, PADDING_TOP 20, raden 6 från
+    (ankrad till `inset`); bakgrunden når 3 närmare sidorna än sakernas luft upptill, `INSET_PAD_X` 15; luften runt bakgrunden är lika (PADDING_SIDE 16, PADDING_TOP 20, raden 6 från
     nederkanten, MONEY_RAISE 13). Höjden i alla flikar = `sharedHeight` (Bags, minst fem set-platser);
     Quests växer aldrig utan rullas med mushjulet över bakgrunden (`ns.ScrollQuests`, en del i taget),
     med en smal gul markering i ett spår till höger. Raden "...and N more" finns inte längre. Inte provat i spelet.
@@ -505,7 +505,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     i rött under rutan. Med handkontroll öppnas spelets ruta för namn och ikon som förut. Dolda quest-saker i Bags: en ruta med antalet och spelets gula quest-ram
     (`TEXTURE_ITEM_QUEST_BORDER`), tooltip och klick öppnar Quests. Quests saknar sammanfattningsraden.
     Mac: `ns.KeyText` byter "Alt-click" mot "Option-click" (`IsMacClient`). Inte provat i spelet.
-37. Sista granskningen (2026-11-10): kugghjulet är gult med en tunn gul ram på mörk botten (grå bild som
+37. Sista granskningen (2026-11-10): kugghjulet är gult utan ram (ramen togs bort 2026-11-11; grå bild som
     färgas, `SetDesaturated` + `SetVertexColor`), i lagret HIGH så att det syns över titelraden. Quests har
     en rad under titeln ("8 quests need items – 1 ready to turn in"). Inställningssidan: Bag window (nivå och
     BoE, quest-saker i Bags, knappen Your own groups), Merchants (Lock items at merchants), Quests (Questie),
