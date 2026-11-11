@@ -971,7 +971,9 @@ ns.OnLoad(function()
     -- markören håller något (CURSOR_CHANGED), så det kostar inget annars.
     local glow = CreateFrame("Frame", nil, inset)
     glow:SetAllPoints()
-    glow:SetFrameLevel(inset:GetFrameLevel() + 1)
+    -- Över bakgrundens egen ram (InsetFrameTemplate har en ram i ett högre lager; med +1 syntes
+    -- kanten inte, skärmbild 2026-11-11). Linjerna ligger i kanten, utanför rutorna.
+    glow:SetFrameLevel(inset:GetFrameLevel() + 20)
     for _, edge in ipairs({
         { "TOPLEFT", "TOPRIGHT", nil, 2 }, { "BOTTOMLEFT", "BOTTOMRIGHT", nil, 2 },
         { "TOPLEFT", "BOTTOMLEFT", 2, nil }, { "TOPRIGHT", "BOTTOMRIGHT", 2, nil },
@@ -988,14 +990,15 @@ ns.OnLoad(function()
     end
     local label = CreateFrame("Frame", nil, bagFrame)
     label:SetFrameStrata("HIGH")
-    label:SetPoint("BOTTOM", inset, "BOTTOM", 0, 6)
+    -- I raden med pengar, till vänster, där det är tomt – inte bland sakerna.
+    label:SetPoint("BOTTOMLEFT", bagFrame, "BOTTOMLEFT", 12, 6)
     label.bg = label:CreateTexture(nil, "BACKGROUND")
     label.bg:SetAllPoints()
     label.bg:SetColorTexture(0, 0, 0, 0.8)
-    label.text = label:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label.text = label:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     label.text:SetPoint("CENTER")
     label.text:SetText(L["Drop anywhere to put it in your bags"])
-    label:SetSize(label.text:GetStringWidth() + 20, 20)
+    label:SetSize(label.text:GetStringWidth() + 16, 18)
     glow:Hide()
     label:Hide()
     local watcher = CreateFrame("Frame")

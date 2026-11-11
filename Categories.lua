@@ -22,7 +22,7 @@ ns.groupNames = {
     New = L["New"],
     Consumables = L["Consumables"],
     Equipment = L["Equipment"],
-    TradeGoods = L["Trade Goods"],
+    TradeGoods = L["Recipes & Gems"], -- råvarorna har egna grupper; här står recept, ädelstenar och förbättringar
     QuestItems = L["Quest Items"],
     Keys = L["Keys"],
     Bags = L["Spare Bags"], -- inte "Bags", som fliken ovanför fönstret heter
@@ -112,8 +112,13 @@ function ns.GetTradeGroupKeys()
             profession = profession or mine[skillLine]
         end
         if profession then
-            ns.groupNames[key] = ("|T%s:13:13|t %s %s"):format(profession.icon, subName,
-                GRAY_FONT_COLOR:WrapTextInColorCode(profession.name))
+            -- Yrkets namn bara när det skiljer sig från sortens ("Cloth Tailoring", inte "Cooking Cooking").
+            if profession.name and profession.name ~= subName then
+                ns.groupNames[key] = ("|T%s:13:13|t %s %s"):format(profession.icon, subName,
+                    GRAY_FONT_COLOR:WrapTextInColorCode(profession.name))
+            else
+                ns.groupNames[key] = ("|T%s:13:13|t %s"):format(profession.icon, subName)
+            end
             first[#first + 1] = key
         else
             ns.groupNames[key] = subName
