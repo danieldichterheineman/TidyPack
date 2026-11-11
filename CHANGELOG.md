@@ -19,6 +19,9 @@
   on a taller money row with your money on the right.
   Point at one to see what's in it; drop a bigger bag on one to swap it.
 - Holding an item over the Bags, Sets or Quests tab switches to that tab.
+- Bags, Sets and Quests are always exactly the same height, set by your bags (never less than
+  the five places in Sets). When the Quests tab has more than fits, scroll it with the mouse
+  wheel; a thin bar on the right shows where you are.
 - The Bags tab is in five parts, each starting on a new row with a thin line above: your own
   (Favorites, your groups, New), everyday (Consumables, Equipment), crafting materials, quest
   items, and the rest (Keys, Miscellaneous, Spare Bags, Junk). Special bags stay at the bottom.

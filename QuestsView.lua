@@ -23,6 +23,11 @@ local SMALL_ICON = 26         -- en liten ruta i en uppfälld quest
 local SMALL_CELL = 28
 local QUEST_HEIGHT = 24       -- en quests rad när den är hopfälld
 local INDENT = 16             -- quests står indragna under sin rubrik
+local SCROLL_WIDTH = 4        -- rullistens bredd
+local SCROLL_ROOM = 12        -- plats till höger för rullisten
+local scrollOffset = 0        -- hur många delar listan är rullad
+local maxOffset = 0
+local track, thumb            -- rullisten
 local HEADER_HEIGHT = 26      -- ett avsnitts rubrik
 local SECTION_GAP = 6
 local MAX_SLOTS = 4           -- så många rutor (högar av samma sak) visas på en rad
@@ -38,6 +43,12 @@ local function ensureHost()
     if not host and ns.bagFrame then
         host = CreateFrame("Frame", nil, ns.bagFrame)
         host:SetAllPoints()
+        track = host:CreateTexture(nil, "ARTWORK")
+        track:SetColorTexture(1, 1, 1, 0.08)
+        track:Hide()
+        thumb = host:CreateTexture(nil, "OVERLAY")
+        thumb:SetColorTexture(1, 0.82, 0, 0.6)
+        thumb:Hide()
     end
     return host
 end
@@ -131,6 +142,10 @@ function ns.HideQuestsView()
     for _, header in ipairs(headers) do
         header:Hide()
     end
+    if track then
+        track:Hide()
+        thumb:Hide()
+    end
     usedTexts, usedGhosts, usedHeaders = 0, 0, 0
 end
 
@@ -140,6 +155,17 @@ local function progressText(have, need)
         return GREEN_FONT_COLOR:WrapTextInColorCode(text)
     end
     return text
+end
+
+-- Rullar listan en del (mushjulet över väskan, Layout.lua). delta 1 = uppåt.
+function ns.ScrollQuests(delta)
+    local new = math.max(0, math.min(scrollOffset - delta, maxOffset))
+    if new ~= scrollOffset then
+        scrollOffset = new
+        if ns.Refresh then
+            ns.Refresh()
+        end
+    end
 end
 
 -- Lägger ut fliken Quests.
@@ -161,15 +187,13 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
     end
 
     local y = 0
-    local hidden = 0
     local placedEntries = {}  -- en ruta visas bara en gång, även om flera quests behöver saken
 
-    local function fits(height)
-        return not maxHeight or y + height <= maxHeight
-    end
+    -- Plats för rullisten till höger, så att siffrorna inte hamnar under den.
+    local rowWidth = width - SCROLL_ROOM
 
     local function section(key, label, count, open, color)
-        local header = acquireHeader(key, ("%s (%d)"):format(label, count), nil, open, color, width, 0)
+        local header = acquireHeader(key, ("%s (%d)"):format(label, count), nil, open, color, rowWidth, 0)
         placeRegion(header, 0, y)
         y = y + HEADER_HEIGHT
     end
@@ -213,7 +237,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
             end
             local line = acquireText("GameFontHighlightSmall")
             local textX = INDENT + math.max(shown, 1) * SMALL_CELL + 4
-            line:SetWidth(math.max(40, width - textX - 10))
+            line:SetWidth(math.max(40, rowWidth - textX - 10))
             line:SetText(("%s  %s"):format(objective.name, progressText(objective.have, objective.need)))
             placeRegion(line, textX, rowY + 8)
             rowY = rowY + OBJECTIVE_HEIGHT
@@ -229,7 +253,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         local prefix = quest.level > 0 and ("[%d] "):format(quest.level) or ""
         local mark = quest.ready and (CreateAtlasMarkup(CHECK, 12, 12) .. " ") or ""
         local header = acquireHeader(key, mark .. prefix .. quest.title, questTotal(quest), open,
-            NORMAL_FONT_COLOR, width, INDENT)
+            NORMAL_FONT_COLOR, rowWidth, INDENT)
         placeRegion(header, 0, y)
         y = y + QUEST_HEIGHT
         if open then
@@ -237,63 +261,117 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         end
     end
 
-    local function placeSection(key, label, quests, color, defaultOpen)
+    -- Allt som kan visas, som en lista med delar (rubrik, quest, rad med rutor) och deras höjd. Fliken
+    -- är aldrig högre än de andra flikarna; ryms inte allt rullar man med mushjulet (ns.ScrollQuests),
+    -- och en smal rullist till höger visar var man är (användarens önskan 2026-11-11).
+    local units = {}
+    local function addUnit(height, draw)
+        units[#units + 1] = { height = height, draw = draw }
+    end
+
+    local function addSection(key, label, quests, color, defaultOpen)
         if #quests == 0 then
             return
         end
-        if not fits(HEADER_HEIGHT) then
-            hidden = hidden + #quests
-            return
-        end
         local open = isOpen(key, defaultOpen)
-        section(key, label, #quests, open, color)
+        addUnit(HEADER_HEIGHT, function()
+            section(key, label, #quests, open, color)
+        end)
         if open then
             for _, quest in ipairs(quests) do
-                -- En uppfälld quest måste få plats med hela sitt innehåll.
-                local needed = QUEST_HEIGHT
+                local height = QUEST_HEIGHT
                 if isOpen("q" .. quest.questID, false) then
-                    needed = needed + #quest.objectives * OBJECTIVE_HEIGHT + 4
+                    height = height + math.max(#quest.objectives, 1) * OBJECTIVE_HEIGHT + 4
                 end
-                if fits(needed) then
+                addUnit(height, function()
                     placeQuest(quest)
-                else
-                    hidden = hidden + 1
-                end
+                end)
             end
         end
-        y = y + SECTION_GAP
+        addUnit(SECTION_GAP, nil)
     end
 
-    placeSection("ready", L["Ready to turn in"], ready, GREEN_FONT_COLOR, true)
-    placeSection("progress", L["In progress"], progress, NORMAL_FONT_COLOR, false)
+    addSection("ready", L["Ready to turn in"], ready, GREEN_FONT_COLOR, true)
+    addSection("progress", L["In progress"], progress, NORMAL_FONT_COLOR, false)
 
-    -- Quest-saker utan quest ovan, i ett rutnät.
-    if #others > 0 and fits(HEADER_HEIGHT) then
+    -- Quest-saker utan quest ovan, i ett rutnät (en del per rad).
+    if #others > 0 then
         local open = isOpen("other", false)
-        section("other", L["Other quest items"], #others, open, GRAY_FONT_COLOR)
+        addUnit(HEADER_HEIGHT, function()
+            section("other", L["Other quest items"], #others, open, GRAY_FONT_COLOR)
+        end)
         if open then
-            local columns = math.max(1, math.floor((width + 5) / ITEM_CELL))
-            for index, entry in ipairs(others) do
-                local column = (index - 1) % columns
-                local row = math.floor((index - 1) / columns)
-                placeEntry(entry, column * ITEM_CELL, y + row * ITEM_CELL)
-                buttons[#buttons + 1] = entry.button
-                if index == 1 then
-                    firsts[#firsts + 1] = entry.button
-                end
+            local columns = math.max(1, math.floor((width - SCROLL_ROOM + 5) / ITEM_CELL))
+            for rowStart = 1, #others, columns do
+                addUnit(ITEM_CELL, function()
+                    for index = rowStart, math.min(rowStart + columns - 1, #others) do
+                        local entry = others[index]
+                        placeEntry(entry, (index - rowStart) * ITEM_CELL, y)
+                        buttons[#buttons + 1] = entry.button
+                        if index == 1 then
+                            firsts[#firsts + 1] = entry.button
+                        end
+                    end
+                end)
             end
-            y = y + math.ceil(#others / columns) * ITEM_CELL
         end
-        y = y + SECTION_GAP
+        addUnit(SECTION_GAP, nil)
     end
 
-    if hidden > 0 then
-        local more = acquireText("GameFontDisableSmall")
-        more:SetWidth(width)
-        more:SetText(L["...and %d more quests – fold a section above or see your quest log."]:format(hidden))
-        placeRegion(more, 0, y)
-        y = y + HEADER_HEIGHT
+    -- Hur mycket som ryms, och var listan börjar.
+    local total = 0
+    for _, unit in ipairs(units) do
+        total = total + unit.height
     end
+    local scrolling = maxHeight and total > maxHeight
+    local firstUnit = 1
+    if scrolling then
+        -- Den sista platsen man kan rulla till: så att listans slut står längst ner.
+        local lastStart, room = #units, maxHeight
+        for index = #units, 1, -1 do
+            if room - units[index].height < 0 then
+                break
+            end
+            room = room - units[index].height
+            lastStart = index
+        end
+        scrollOffset = math.max(0, math.min(scrollOffset, lastStart - 1))
+        firstUnit = scrollOffset + 1
+        maxOffset = lastStart - 1
+    else
+        scrollOffset, maxOffset = 0, 0
+    end
+
+    y = 0
+    for index = firstUnit, #units do
+        local unit = units[index]
+        if maxHeight and y + unit.height > maxHeight then
+            break
+        end
+        local unitY = y
+        if unit.draw then
+            unit.draw()
+        end
+        y = unitY + unit.height
+    end
+
+    -- Rullisten: ett smalt spår och en markering för den del som syns.
+    if scrolling then
+        local before = 0
+        for index = 1, firstUnit - 1 do
+            before = before + units[index].height
+        end
+        track:SetSize(SCROLL_WIDTH, maxHeight)
+        placeRegion(track, width - SCROLL_WIDTH, 0)
+        track:Show()
+        local thumbHeight = math.max(16, maxHeight * maxHeight / total)
+        local thumbY = (maxHeight - thumbHeight) * (maxOffset > 0 and scrollOffset / maxOffset or 0)
+        thumb:SetSize(SCROLL_WIDTH, thumbHeight)
+        placeRegion(thumb, width - SCROLL_WIDTH, thumbY)
+        thumb:Show()
+        y = maxHeight
+    end
+
     if #list == 0 and #others == 0 then
         local empty = acquireText("GameFontHighlight")
         empty:SetWidth(width)

@@ -442,6 +442,11 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+45. Harmoni och rullning (2026-11-11): raden med pengar har samma vänster- och högerkant som bakgrunden
+    (ankrad till `inset`), och luften runt bakgrunden är lika (PADDING_SIDE 16, PADDING_TOP 20, raden 6 från
+    nederkanten, MONEY_RAISE 13). Höjden i alla flikar = `sharedHeight` (Bags, minst fem set-platser);
+    Quests växer aldrig utan rullas med mushjulet över bakgrunden (`ns.ScrollQuests`, en del i taget),
+    med en smal gul markering i ett spår till höger. Raden "...and N more" finns inte längre. Inte provat i spelet.
 44. Reagensväskan (2026-11-11): med mus visar spelet väskplats 5 i ett eget fönster (`ENDING_BAG_INDEX` sätts
     när spelets fil laddas; att ändra den skulle smitta spelets kod och kan blockera att saker används).
     Fönstret fästs till vänster om Tidy Pack med nederkanterna i linje (`dockReagentBag`, efter

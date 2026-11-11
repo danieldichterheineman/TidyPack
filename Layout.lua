@@ -37,16 +37,16 @@ local SHELF_GAP = 10       -- avstånd mellan rader av grupper (luft ovanför n�
 local BLIZZARD_MONEY_GAP = 4 -- spelets avstånd mellan rutorna och raden med pengar
 -- Den mörka bakgrunden ligger nära fönstrets kant, och sakerna har INSET_PAD luft innanför
 -- den (användarens önskan 2026-11-10: luften hade försvunnit).
-local PADDING_SIDE = 14      -- från fönstrets inre kant till sakerna (inklusive luften)
+local PADDING_SIDE = 16      -- från fönstrets inre kant till sakerna (inklusive luften); 14 gav för lite luft vid sidorna
 local INSET_PAD = 12         -- luft mellan bakgrundens kant och sakerna
-local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till bakgrunden + luften)
+local PADDING_TOP = 20       -- mellan titelraden och första rubriken (6 till bakgrunden + luften); 16 gav för lite luft
 -- Raden med pengar görs högre, och "17 free" och väskraden står till vänster på den, pengarna till
 -- höger (användarens önskan 2026-11-11). Spelets låga myntruta (MoneyFrame.Border) döljs och ersätts
 -- av en högre med samma bilder; pengarna är kvar på spelets plats, mitt i den högre raden.
 local BAR_HEIGHT = 46       -- den högre radens höjd (38 var för lågt: väskorna nådde kanterna)
 -- Spelet sätter pengarna 8 från nederkanten (UpdateCurrencyFrames). De flyttas upp så här mycket, så
--- att de står mitt i den högre raden: (3 + 46 / 2) - (8 + 16 / 2) = 10. Fönstret blir lika mycket högre.
-local MONEY_RAISE = 10
+-- att de står mitt i den högre raden: (6 + 46 / 2) - (8 + 16 / 2) = 13. Fönstret blir lika mycket högre.
+local MONEY_RAISE = 13
 local BAG_ROW = 17          -- luft mellan bakgrunden och den högre raden
 local moneyRaised = false   -- pengarna är flyttade (inte när spelet visar valutor under dem)
 local MONEY_GAP = 16 + BAG_ROW -- mellan sista raden rutor och raden med pengar
@@ -861,7 +861,8 @@ local function layoutQuestsView(atMerchant)
             placements[#placements + 1] = { region, x, y }
         end)
     -- Fönstret är lika högt i alla flikar: minst lika högt som fliken Bags.
-    contentHeight = math.max(height, sharedHeight or MIN_QUESTS_HEIGHT)
+    -- Fliken Quests växer aldrig: det som inte ryms rullar man fram (QuestsView.lua).
+    contentHeight = sharedHeight or math.max(height, MIN_QUESTS_HEIGHT)
     for _, placement in ipairs(placements) do
         anchor(placement[1], placement[2], placement[3])
     end
@@ -1071,6 +1072,13 @@ ns.OnLoad(function()
     end
     ns.PutCursorItemInBags = dropAnywhere -- också loggknappen (LogoButton.lua)
     inset:EnableMouse(true)
+    -- Mushjulet rullar listan i fliken Quests.
+    inset:EnableMouseWheel(true)
+    inset:SetScript("OnMouseWheel", function(_, delta)
+        if ns.GetView and ns.GetView() == "quests" and ns.ScrollQuests then
+            ns.ScrollQuests(delta)
+        end
+    end)
     inset:SetScript("OnReceiveDrag", dropAnywhere)
     inset:SetScript("OnMouseUp", function(_, mouseButton)
         if mouseButton == "LeftButton" then
@@ -1122,10 +1130,11 @@ ns.OnLoad(function()
     local bar = CreateFrame("Frame", nil, bagFrame)
     bar:SetFrameLevel(math.max(bagFrame:GetFrameLevel() + 1, bagFrame.MoneyFrame:GetFrameLevel() - 1))
     bar:SetHeight(BAR_HEIGHT)
-    bar:SetPoint("LEFT", bagFrame, "LEFT", 8, 0)
-    bar:SetPoint("RIGHT", bagFrame, "RIGHT", -8, 0)
+    -- Lika bred som bakgrunden ovanför, så att de står som två kort i en kolumn.
+    bar:SetPoint("LEFT", inset, "LEFT")
+    bar:SetPoint("RIGHT", inset, "RIGHT")
     -- Nederkanten nära fönstrets kant (som spelets egen ruta); pengarna hamnar nästan mitt i.
-    bar:SetPoint("BOTTOM", bagFrame, "BOTTOM", 0, 3)
+    bar:SetPoint("BOTTOM", bagFrame, "BOTTOM", 0, 6)
     local left = bar:CreateTexture(nil, "BACKGROUND")
     left:SetAtlas("common-coinbox-left")
     left:SetPoint("TOPLEFT")
