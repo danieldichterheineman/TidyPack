@@ -765,11 +765,14 @@ ns.OnLoad(function()
 
     -- Håller du en sak över fliken Sets byter fönstret till den, så att du kan släppa
     -- saken på ett set – som spelets egna flikar när man drar något över dem.
-    tabSystem:GetTabButton(2):HookScript("OnEnter", function()
-        if view ~= "sets" and cursorItemID() then
-            ns.SetView("sets")
-        end
-    end)
+    -- Samma för alla tre flikarna, så att man kommer tillbaka till Bags (eller till Quests) på samma sätt.
+    for tabID, tabView in ipairs({ "bags", "sets", "quests" }) do
+        tabSystem:GetTabButton(tabID):HookScript("OnEnter", function()
+            if view ~= tabView and cursorItemID() then
+                ns.SetView(tabView)
+            end
+        end)
+    end
 
     -- Väskfönstret öppnas alltid på fliken Bags.
     bagFrame:HookScript("OnHide", function()

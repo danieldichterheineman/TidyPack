@@ -24,6 +24,7 @@ SetsView.lua
 QuestsView.lua
 Marks.lua
 Tour.lua
+LogoButton.lua
 Junk.lua
 MakeRoom.lua
 GroupsPage.lua

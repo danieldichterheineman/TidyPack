@@ -300,6 +300,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `Locales.lua`: all text som visas i spelet (engelska)
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
+- `LogoButton.lua`: loggan i stället för spelets väskrad nere till höger
+- `Media/Logo.tga`: loggan som spelbild
 - `Tour.lua`: guiden med spelets tipsrutor första gången väskan öppnas
 - `QuestsView.lua`: fliken Quests – rubriker, texter, staplar och rader per quest
 - `Groups.lua`: egna grupper – data, regler, ordning, frågor, kugghjulets menyer och tooltipen
@@ -440,6 +442,14 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+43. Väskor (2026-11-11, skissen `.design/sketch-bag-bar.html`): loggan (`Media/Logo.tga`, 64×64, okomprimerad
+    TGA gjord ur `.design/logo.png`) ersätter spelets väskrad (`BagsBar` döljs efter varje Show,
+    `LogoButton.lua`, inställningen `replaceBagBar`): klick öppnar väskan (`ToggleAllBags`), högerklick
+    inställningarna, en släppt sak läggs i väskorna, siffran är lediga platser. I väskfönstret: "N free"
+    följt av fem små väskikoner (antal platser); musen över en tonar ner allt som inte ligger i den;
+    en väska som släpps på en plats byter ut den (`PutItemInBag`), en vanlig sak läggs i den väskan;
+    medan du håller en väska lyser platserna och raden säger "Drop on one of your bags to swap it".
+    Alla tre flikar byter när du håller en sak över dem. Inte provat i spelet.
 42. Avsnitt (2026-11-11, skissen `.design/sketch-order.html`; innehållet centreras mellan ramens kanter med `contentShift`, eftersom pengaraden sitter längre från höger kant): Bags i fem avsnitt (`ns.GetGroupSection`):
     1 Favorites, egna grupper, New; 2 Consumables, Equipment; 3 råvaror och Recipes & Gems; 4 Quest Items;
     5 Keys, Miscellaneous, Spare Bags, Junk. Nytt avsnitt = ny rad och en tunn gul linje (`sectionYs`,

@@ -21,6 +21,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   still missing. Extra stacks of an item that a quest only needs some of can be sold.
 - **Crafting materials** are grouped by type (Cloth, Herb, Leather …), with the ones your
   professions use first.
+- **Your bags at a glance**: the Tidy Pack logo replaces the game's bag buttons, and your bags
+  are shown as small icons at the bottom of the bag window – drop a bigger bag on one to swap it.
 - **Drop anywhere**: hold an item over your bags and drop it on any empty spot.
 - **Special bags** – quivers, ammo pouches, soul bags, profession bags and the reagent bag –
   get their own groups at the bottom, with the bag's icon, name and free slots.

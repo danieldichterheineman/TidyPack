@@ -257,6 +257,13 @@ ns.OnLoad(function()
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Bag window"]))
     addCheckbox("itemLevelAndBoE", L["Show item level and BoE"],
         L["On uncommon or better weapons and armor."], refresh)
+    addCheckbox("replaceBagBar", L["Replace the game's bag buttons"],
+        L["Shows the Tidy Pack logo instead of the game's backpack and bag buttons at the bottom right. Click it to open your bags; swap bags in the bag row at the bottom of the bag window. Turn off to get the game's buttons back."],
+        function()
+            if ns.ApplyBagBarSetting then
+                ns.ApplyBagBarSetting()
+            end
+        end)
     addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
         L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
         refresh)

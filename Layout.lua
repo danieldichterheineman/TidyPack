@@ -484,12 +484,13 @@ updateFreeText = function()
         freeText:Hide()
         return
     end
+    if ns.UpdateBagBar then
+        ns.UpdateBagBar()
+    end
     local free = C_Container.CalculateTotalNumberOfFreeBagSlots()
     freeText:SetText(L["%d free"]:format(free))
     freeText:SetTextColor((free <= LOW_SPACE and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
-    if not freeText.hiddenByDrop then
-        freeText:Show()
-    end
+    freeText:Show()
 end
 
 -- Listan med set i fliken Sets (SetsView.lua) i stället för sakerna.
@@ -1055,6 +1056,7 @@ ns.OnLoad(function()
         end
         UIErrorsFrame:AddMessage(ERR_INV_FULL, 1.0, 0.1, 0.1, 1.0)
     end
+    ns.PutCursorItemInBags = dropAnywhere -- också loggknappen (LogoButton.lua)
     inset:EnableMouse(true)
     inset:SetScript("OnReceiveDrag", dropAnywhere)
     inset:SetScript("OnMouseUp", function(_, mouseButton)
@@ -1086,8 +1088,7 @@ ns.OnLoad(function()
     end
     local label = CreateFrame("Frame", nil, bagFrame)
     label:SetFrameStrata("HIGH")
-    -- I raden med pengar, till vänster, där det är tomt – inte bland sakerna.
-    label:SetPoint("BOTTOMLEFT", bagFrame, "BOTTOMLEFT", 12, 6)
+    -- I raden med pengar, efter antalet lediga platser och väskraden (ankras längre ner).
     label.bg = label:CreateTexture(nil, "BACKGROUND")
     label.bg:SetAllPoints()
     label.bg:SetColorTexture(0, 0, 0, 0.8)
@@ -1106,6 +1107,110 @@ ns.OnLoad(function()
     freeText = freeHolder:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     freeText:SetPoint("BOTTOMLEFT", bagFrame, "BOTTOMLEFT", 16, 9)
     freeText:Hide()
+
+    -- Väskraden: ryggsäcken och de fyra väskplatserna som små ikoner efter antalet lediga platser
+    -- (användarens önskan 2026-11-11, skissen .design/sketch-bag-bar.html). Siffran är antalet
+    -- platser. Musen över en väska tonar ner allt som inte ligger i den. En större väska som släpps
+    -- på en plats byter ut väskan där (spelet flyttar sakerna); en vanlig sak läggs i den väskan.
+    -- Samma funktioner som spelets egen väskrad: PutItemInBag och PutItemInBackpack.
+    local BAG_ICON = 18
+    local bagButtons = {}
+    local function dimOthers(bagID)
+        for i = 1, entryCount do
+            local entry = entries[i]
+            if entry.placed and not entry.isEmpty then
+                entry.button:SetAlpha((bagID == nil or entry.bagID == bagID) and 1 or 0.25)
+            end
+        end
+    end
+    local function onBagDrop(self)
+        if GetCursorInfo() ~= "item" then
+            return
+        end
+        if self.bagID == 0 then
+            PutItemInBackpack()
+        else
+            PutItemInBag(C_Container.ContainerIDToInventoryID(self.bagID))
+        end
+    end
+    local function showBagTooltip(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        local size = C_Container.GetContainerNumSlots(self.bagID)
+        if self.bagID == 0 then
+            GameTooltip_SetTitle(GameTooltip, BACKPACK_TOOLTIP)
+        elseif size > 0 then
+            GameTooltip:SetInventoryItem("player", C_Container.ContainerIDToInventoryID(self.bagID))
+        else
+            GameTooltip_SetTitle(GameTooltip, L["Empty bag slot"])
+        end
+        if size > 0 then
+            GameTooltip_AddNormalLine(GameTooltip, L["%d slots · %d free"]:format(size,
+                C_Container.GetContainerNumFreeSlots(self.bagID) or 0))
+        end
+        if self.bagID > 0 then
+            GameTooltip_AddInstructionLine(GameTooltip, L["Drop a bag here to swap it."])
+        end
+        GameTooltip:Show()
+        dimOthers(self.bagID)
+    end
+    for bagID = 0, Constants.InventoryConstants.NumBagSlots do
+        local button = CreateFrame("Button", nil, freeHolder)
+        button.bagID = bagID
+        button:SetSize(BAG_ICON, BAG_ICON)
+        if bagID == 0 then
+            button:SetPoint("LEFT", freeText, "RIGHT", 8, 0)
+        else
+            button:SetPoint("LEFT", bagButtons[bagID - 1], "RIGHT", 3, 0)
+        end
+        button.icon = button:CreateTexture(nil, "ARTWORK")
+        button.icon:SetAllPoints()
+        button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+        button.count:SetPoint("BOTTOMRIGHT", 3, -2)
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        button:RegisterForClicks("LeftButtonUp")
+        button:SetScript("OnClick", onBagDrop)
+        button:SetScript("OnReceiveDrag", onBagDrop)
+        button:SetScript("OnEnter", showBagTooltip)
+        button:SetScript("OnLeave", function()
+            GameTooltip_Hide()
+            dimOthers(nil)
+        end)
+        bagButtons[bagID] = button
+    end
+    label:SetPoint("LEFT", bagButtons[#bagButtons], "RIGHT", 10, 0)
+
+    function ns.UpdateBagBar()
+        for bagID, button in pairs(bagButtons) do
+            local size = C_Container.GetContainerNumSlots(bagID)
+            local texture
+            if bagID == 0 then
+                texture = "Interface\\Icons\\INV_Misc_Bag_08"
+            else
+                texture = GetInventoryItemTexture("player", C_Container.ContainerIDToInventoryID(bagID))
+            end
+            if texture then
+                button.icon:SetTexture(texture)
+                button.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+                button.icon:SetAlpha(1)
+            else
+                button.icon:SetTexture("Interface\\Buttons\\UI-EmptySlot")
+                button.icon:SetTexCoord(0.140625, 0.84375, 0.140625, 0.84375)
+                button.icon:SetAlpha(0.7)
+            end
+            button.count:SetText(size > 0 and size or "")
+        end
+    end
+
+    -- Medan du håller en väska lyser de fyra väskplatserna.
+    function ns.SetBagBarSwapHint(on)
+        for bagID, button in pairs(bagButtons) do
+            if on and bagID > 0 then
+                button:LockHighlight()
+            else
+                button:UnlockHighlight()
+            end
+        end
+    end
     local watcher = CreateFrame("Frame")
     watcher:Hide()
     local sinceCheck = 0
@@ -1119,9 +1224,7 @@ ns.OnLoad(function()
         local show = bagFrame:IsShown() and inset:IsShown() and bagFrame:IsMouseOver()
         glow:SetShown(show)
         label:SetShown(show)
-        -- Raden "Drop anywhere" står där antalet lediga platser står.
-        freeText.hiddenByDrop = show
-        freeText:SetShown(not show and not InputUtil.IsGamepadUIEnabled())
+
     end)
     ns.RegisterEvent("CURSOR_CHANGED", function()
         local holding = GetCursorInfo() == "item"
@@ -1129,8 +1232,16 @@ ns.OnLoad(function()
         if not holding then
             glow:Hide()
             label:Hide()
-            freeText.hiddenByDrop = false
-            updateFreeText()
+        end
+        -- Håller du en väska: väskraden lyser där den kan bytas in, och raden säger det.
+        local _, itemID = GetCursorInfo()
+        local classID = holding and itemID and select(6, C_Item.GetItemInfoInstant(itemID))
+        local holdingBag = classID == Enum.ItemClass.Container
+        label.text:SetText(holdingBag and L["Drop on one of your bags to swap it"]
+            or L["Drop anywhere to put it in your bags"])
+        label:SetWidth(label.text:GetStringWidth() + 16)
+        if ns.SetBagBarSwapHint then
+            ns.SetBagBarSwapHint(holdingBag)
         end
     end)
 

@@ -10,6 +10,12 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- The Tidy Pack logo replaces the game's backpack and bag buttons at the bottom right. Click it
+  to open your bags, right-click for the settings, or drop an item on it. Your free slots are
+  shown on it. Turn it off with "Replace the game's bag buttons" in the settings.
+- Your bags are shown as small icons at the bottom of the bag window, next to your free slots.
+  Point at one to see what's in it; drop a bigger bag on one to swap it.
+- Holding an item over the Bags, Sets or Quests tab switches to that tab.
 - The Bags tab is in five parts, each starting on a new row with a thin line above: your own
   (Favorites, your groups, New), everyday (Consumables, Equipment), crafting materials, quest
   items, and the rest (Keys, Miscellaneous, Spare Bags, Junk). Special bags stay at the bottom.
