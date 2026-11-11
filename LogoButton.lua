@@ -5,13 +5,14 @@
 -- byts i stället i väskraden längst ner i väskfönstret (Layout.lua).
 -- Inställningen "Replace the game's bag buttons" (replaceBagBar) tar tillbaka spelets väskrad.
 -- ⚠️ Spelets väskrad döljs efter varje Show, även i Edit Mode. Den går inte att flytta i Edit Mode
---    så länge loggan ersätter den; loggan står där väskraden står.
+--    så länge loggan ersätter den; loggan följer mikromenyn (flyttas den, följer loggan med).
 
 local _, ns = ...
 local L = ns.L
 
 local LOGO = "Interface\\AddOns\\TidyPack\\Media\\Logo"
-local SIZE = 40
+local SIZE = 45
+local FRAME_ATLAS = "ui-hud-actionbar-iconframe-bags" -- spelets ram för väskknapparna i Forever
 local button
 
 local function updateCount()
@@ -40,16 +41,39 @@ ns.OnLoad(function()
         return
     end
     -- Namngiven, så att andra addons och /fstack kan hitta den. Namnet börjar med addonets.
+    -- Ser ut som Forevers egen ryggsäcksknapp (Blizzard_MainMenuBarBagButtons/Camelot): 45×45, ikonen
+    -- beskuren av spelets mask, spelets ram för väskknappar ovanpå och actionbarens ram bakom. Den står
+    -- direkt till höger om mikromenyn, där spelets väskor började, så att det ser ut som att väskraden
+    -- krympt till en väska med Tidy Packs logga.
     button = CreateFrame("Button", "TidyPackBagButton", UIParent)
     button:SetSize(SIZE, SIZE)
-    button:SetPoint("RIGHT", BagsBar, "RIGHT", 0, 0)
+    if MicroMenuContainer then
+        button:SetPoint("LEFT", MicroMenuContainer, "RIGHT", 10, 0)
+    else
+        button:SetPoint("RIGHT", BagsBar, "RIGHT", 0, 0)
+    end
     button:SetFrameStrata(BagsBar:GetFrameStrata())
     button:SetFrameLevel(BagsBar:GetFrameLevel() + 1)
-    button:SetNormalTexture(LOGO)
-    button:SetPushedTexture(LOGO)
-    button:GetPushedTexture():SetPoint("TOPLEFT", 1, -1)
-    button:GetPushedTexture():SetPoint("BOTTOMRIGHT", 1, -1)
-    button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    button.border = button:CreateTexture(nil, "BACKGROUND", nil, -3)
+    button.border:SetAtlas("UI-HUD-ActionBar-Frame")
+    button.border:SetPoint("TOPLEFT", -6, 6)
+    button.border:SetPoint("BOTTOMRIGHT", 5, -5)
+    button.icon = button:CreateTexture(nil, "BORDER")
+    button.icon:SetTexture(LOGO)
+    button.icon:SetAllPoints()
+    button.mask = button:CreateMaskTexture()
+    button.mask:SetAtlas("UI-HUD-ActionBar-IconFrame-Mask")
+    button.mask:SetAllPoints(button.icon)
+    button.icon:AddMaskTexture(button.mask)
+    button:SetNormalAtlas(FRAME_ATLAS)
+    button:SetPushedAtlas(FRAME_ATLAS)
+    button:SetHighlightAtlas(FRAME_ATLAS, "ADD")
+    button:GetHighlightTexture():SetAlpha(0.4)
+    for _, texture in ipairs({ button:GetNormalTexture(), button:GetPushedTexture() }) do
+        texture:ClearAllPoints()
+        texture:SetPoint("TOPLEFT")
+        texture:SetSize(46, 46)
+    end
     button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
     button.count:SetPoint("BOTTOM", 0, -2)
     button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
