@@ -16,6 +16,7 @@ ns.defaults = {
     -- Skräplistan: itemID → true (se Marks.lua).
     junk = {},
     -- Spelarens egna grupper (se Groups.lua) och numret nästa grupp får.
+    upgradeArrows = true,     -- grön pil på bättre utrustning (Layout.lua)
     replaceBagBar = true,     -- loggan i stället för spelets väskrad (LogoButton.lua)
     tourDone = false,         -- guiden med spelets tipsrutor är visad (Tour.lua)
     questOpen = {},           -- vilka avsnitt i fliken Quests som är öppna (QuestsView.lua)

@@ -183,6 +183,85 @@ local headerX, headerY = {}, {}
 -- Märken på rutorna: nivå, BoE, lås och antal tomma platser
 ---------------------------------------------------------------------------
 
+---------------------------------------------------------------------------
+-- Uppgraderingspil (användarens önskan 2026-11-11)
+---------------------------------------------------------------------------
+-- En grön pil (spelets bags-greenarrow) på utrustning som har högre nivå än det du har på dig på
+-- samma plats, och som du kan använda. Ringar, smycken och enhandsvapen jämförs med den sämre av
+-- de två platserna; en tom plats räknas som nivå 0.
+local SLOTS_FOR = {
+    INVTYPE_HEAD = { INVSLOT_HEAD }, INVTYPE_NECK = { INVSLOT_NECK }, INVTYPE_SHOULDER = { INVSLOT_SHOULDER },
+    INVTYPE_CHEST = { INVSLOT_CHEST }, INVTYPE_ROBE = { INVSLOT_CHEST }, INVTYPE_WAIST = { INVSLOT_WAIST },
+    INVTYPE_LEGS = { INVSLOT_LEGS }, INVTYPE_FEET = { INVSLOT_FEET }, INVTYPE_WRIST = { INVSLOT_WRIST },
+    INVTYPE_HAND = { INVSLOT_HAND }, INVTYPE_FINGER = { INVSLOT_FINGER1, INVSLOT_FINGER2 },
+    INVTYPE_TRINKET = { INVSLOT_TRINKET1, INVSLOT_TRINKET2 }, INVTYPE_CLOAK = { INVSLOT_BACK },
+    INVTYPE_WEAPON = { INVSLOT_MAINHAND, INVSLOT_OFFHAND }, INVTYPE_2HWEAPON = { INVSLOT_MAINHAND },
+    INVTYPE_WEAPONMAINHAND = { INVSLOT_MAINHAND }, INVTYPE_WEAPONOFFHAND = { INVSLOT_OFFHAND },
+    INVTYPE_SHIELD = { INVSLOT_OFFHAND }, INVTYPE_HOLDABLE = { INVSLOT_OFFHAND },
+    INVTYPE_RANGED = { INVSLOT_RANGED }, INVTYPE_RANGEDRIGHT = { INVSLOT_RANGED },
+    INVTYPE_THROWN = { INVSLOT_RANGED }, INVTYPE_RELIC = { INVSLOT_RANGED },
+}
+local equipLocation = ItemLocation:CreateEmpty()
+local usableCache = {} -- länk → sant/falskt; töms när du går upp i nivå eller lär dig något
+
+local function equippedLevel(slot)
+    if not slot then
+        return nil
+    end
+    equipLocation:SetEquipmentSlot(slot)
+    if not C_Item.DoesItemExist(equipLocation) then
+        return 0
+    end
+    return C_Item.GetCurrentItemLevel(equipLocation) or 0
+end
+
+-- Kan du använda saken? Spelet skriver det du saknar (fel rustningstyp, för låg nivå) i rött i
+-- sakens tooltip, så det läses därifrån (C_TooltipInfo.GetBagItem).
+local function canUse(entry)
+    local cached = usableCache[entry.link]
+    if cached ~= nil then
+        return cached
+    end
+    local data = C_TooltipInfo and C_TooltipInfo.GetBagItem(entry.bagID, entry.slot)
+    if not data or not data.lines then
+        return false -- vet inte än; frågas igen nästa gång
+    end
+    local usable = true
+    for _, line in ipairs(data.lines) do
+        local color = line.leftColor
+        if color and color.r > 0.9 and color.g < 0.2 and color.b < 0.2 then
+            usable = false
+            break
+        end
+    end
+    usableCache[entry.link] = usable
+    return usable
+end
+
+local function isUpgrade(entry, level)
+    local slots = level and entry.equipLocation and SLOTS_FOR[entry.equipLocation]
+    if not slots or not canUse(entry) then
+        return false
+    end
+    local lowest
+    for _, slot in ipairs(slots) do
+        local equipped = equippedLevel(slot)
+        if equipped then
+            lowest = lowest and math.min(lowest, equipped) or equipped
+        end
+    end
+    return lowest ~= nil and level > lowest
+end
+
+for _, event in ipairs({ "PLAYER_LEVEL_UP", "SKILL_LINES_CHANGED", "PLAYER_EQUIPMENT_CHANGED" }) do
+    ns.RegisterEvent(event, function()
+        wipe(usableCache)
+        if ns.Refresh then
+            ns.Refresh()
+        end
+    end)
+end
+
 -- Våra textrader och bilder per ruta. Rutorna är spelets egna, så Tidy Pack sparar inget i
 -- dem – bara här, i en tabell som släpper rutan om spelet slutar använda den.
 local extras = setmetatable({}, { __mode = "k" })
@@ -219,8 +298,13 @@ local function getExtras(button)
             -- Blått sken runt sakerna i den väska som musen står på i väskraden (spelets glöd för nya
             -- saker, bags-glow-white, färgad blå).
             bagGlow = button:CreateTexture(nil, "OVERLAY", nil, 7),
+            upgrade = button:CreateTexture(nil, "OVERLAY", nil, 6),
             alt = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
         }
+        extra.upgrade:SetAtlas("bags-greenarrow")
+        extra.upgrade:SetSize(14, 16)
+        extra.upgrade:SetPoint("TOPRIGHT", -1, -1)
+        extra.upgrade:Hide()
         extra.bagGlow:SetAtlas("bags-glow-white", true)
         extra.bagGlow:SetPoint("CENTER")
         extra.bagGlow:SetBlendMode("ADD")
@@ -307,7 +391,13 @@ local function updateExtras(entry, atMerchant)
     -- rustningar – på enklare saker säger de sällan något.
     -- Markerat skräp får ingen nivå: där sitter skräpmyntet. Nivå och BoE går att stänga av i
     -- inställningarna (Options.lua).
-    local level, boe
+    local level, boe, upgrade
+    -- Uppgraderingspilen gäller all utrustning som inte är skräp (också vita saker).
+    if ns.db.upgradeArrows and entry.isGear and not entry.isEmpty and not entry.junkMarked
+        and entry.quality > Enum.ItemQuality.Poor and entry.equipLocation and SLOTS_FOR[entry.equipLocation] then
+        location:SetBagAndSlot(entry.bagID, entry.slot)
+        upgrade = isUpgrade(entry, C_Item.GetCurrentItemLevel(location))
+    end
     if ns.db.itemLevelAndBoE and entry.isGear and entry.quality >= Enum.ItemQuality.Uncommon
         and not entry.junkMarked then
         if entry.equipLocation and entry.equipLocation ~= "" and not NO_LEVEL[entry.equipLocation] then
@@ -326,6 +416,7 @@ local function updateExtras(entry, atMerchant)
         extra.level:Hide()
     end
     extra.bind:SetShown(boe == true)
+    extra.upgrade:SetShown(upgrade == true)
 
     -- Antal man har / antal som behövs för en quest-sak, grönt när det räcker. Saken är då
     -- ingen utrustning att visa nivån på. I fliken Quests står siffrorna i raden i stället.
@@ -344,6 +435,9 @@ local function updateExtras(entry, atMerchant)
     -- Låsen går att stänga av i inställningarna (Options.lua).
     local locked = atMerchant and entry.locked == true and ns.db.lockAtMerchant
     extra.lock:SetShown(locked)
+    if locked then
+        extra.upgrade:Hide() -- låset står på samma plats
+    end
     setLocked(button, locked)
     local showAlt = IsAltKeyDown() and not entry.isEmpty and not locked
     extra.alt:SetShown(showAlt)

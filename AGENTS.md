@@ -442,6 +442,12 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+47. Uppgraderingspil (2026-11-11): `bags-greenarrow` uppe till höger på utrustning (inte skräp) vars nivå
+    (`C_Item.GetCurrentItemLevel`) är högre än den sämre av platserna den passar (`SLOTS_FOR`, INVSLOT_*; tom
+    plats = 0) och som du kan använda (ingen röd rad i `C_TooltipInfo.GetBagItem`, sparat per länk tills du går
+    upp i nivå, lär dig något eller byter utrustning). Döljs under låset hos handlaren. Inställningen
+    `upgradeArrows`. ⚠️ Att rådatan har `leftColor` är inte bekräftat; saknas den visas pilen även på saker du
+    inte kan använda. Inte provat i spelet.
 46. Quest-ramen (2026-11-11): spelets gula ram runt quest-saker döljs efter spelets `UpdateQuestItem`
     (hook per ruta); utropstecknet på saker som startar en quest står kvar. Inte provat i spelet.
 45. Harmoni och rullning (2026-11-11): raden med pengar har samma vänster- och högerkant som bakgrunden

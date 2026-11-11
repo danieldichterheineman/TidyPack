@@ -37,6 +37,7 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Junk list**: whenever you loot an item on the list, Tidy Pack asks whether to delete it.
 - **Bags full**: when something can't be looted, Tidy Pack suggests an item to delete.
   Nothing is ever deleted until you press Delete.
+- **Upgrade arrows** on gear you can use that is better than what you wear.
 - **Item level and "BoE"** on uncommon or better gear, and a free-slot count that turns red
   when you run low.
 - **Quick bag swaps**: right-click a bigger bag to replace your smallest one.

@@ -10,6 +10,8 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- A green arrow on weapons and armor you can use that have a higher item level than what you wear
+  in that slot. Turn it off with "Show upgrade arrows" in the settings.
 - Quest items no longer have the game's yellow border – they're already in Quest Items. Items
   that start a quest keep their yellow exclamation mark.
 - The reagent bag's own window is attached to the left of the Tidy Pack window. With a mouse the
