@@ -10,6 +10,8 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- The reagent bag's own window is attached to the left of the Tidy Pack window. With a mouse the
+  game always shows the reagent bag in its own window, so its items aren't sorted into groups.
 - The Tidy Pack logo replaces the game's backpack and bag buttons at the bottom right. Click it
   to open your bags, right-click for the settings, or drop an item on it. Your free slots are
   shown on it. Turn it off with "Replace the game's bag buttons" in the settings.

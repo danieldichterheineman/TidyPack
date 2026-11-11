@@ -386,6 +386,9 @@ local function applySize()
     end
     NineSliceUtil.UpdateCornerCropping(bagFrame, height)
     updateFreeText()
+    if ns.DockReagentBag then
+        ns.DockReagentBag()
+    end
 end
 
 -- Körs efter spelets UpdateFrameSize. Spelet har då gett fönstret storlek efter sitt eget
@@ -1348,6 +1351,27 @@ ns.OnLoad(function()
     hooksecurefunc(bagFrame, "UpdateFrameSize", onFrameSizeUpdated)
     hooksecurefunc(bagFrame, "UpdateItemLayout", safeRelayout)
     hooksecurefunc(bagFrame, "UpdateItems", safeRelayout)
+
+    -- Reagensväskan (väskplats 5) visar spelet i ett eget fönster med mus; Tidy Pack kan inte sortera
+    -- in den utan att ändra spelets egna värden, vilket kan blockera att saker används. I stället fästs
+    -- dess fönster direkt till vänster om Tidy Pack, med nederkanterna i linje (användarens önskan
+    -- 2026-11-11). Spelet placerar sina väskfönster i UpdateContainerFrameAnchors; Tidy Pack flyttar
+    -- reagensväskans fönster direkt efteråt, och när Tidy Packs fönster byter storlek.
+    local REAGENT_BAG = Constants.InventoryConstants.NumBagSlots + 1
+    local function dockReagentBag()
+        if not ContainerFrameUtil_GetShownFrameForID or not bagFrame:IsShown() then
+            return
+        end
+        local reagentFrame = ContainerFrameUtil_GetShownFrameForID(REAGENT_BAG)
+        if reagentFrame and reagentFrame ~= bagFrame then
+            reagentFrame:ClearAllPoints()
+            reagentFrame:SetPoint("BOTTOMRIGHT", bagFrame, "BOTTOMLEFT", -2, 0)
+        end
+    end
+    ns.DockReagentBag = dockReagentBag
+    if UpdateContainerFrameAnchors then
+        hooksecurefunc("UpdateContainerFrameAnchors", dockReagentBag)
+    end
 
     -- När fönstret stängs glöms gruppen New.
     bagFrame:HookScript("OnHide", function()

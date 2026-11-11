@@ -72,6 +72,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   Tidy Pack's locks or your junk list.
 - Quest hints need Questie, whose data for Forever's new quests isn't complete yet.
 - Tidy Pack turns on the game's "Combined Bags" once, at your first login.
+- With a mouse, the game shows the reagent bag in its own window. Tidy Pack attaches that window
+  to its own, but doesn't sort the reagent bag's items into groups.
 - There is no search box: Tidy Pack's groups take its place.
 
 ## Feedback

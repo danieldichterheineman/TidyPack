@@ -442,6 +442,10 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+44. Reagensväskan (2026-11-11): med mus visar spelet väskplats 5 i ett eget fönster (`ENDING_BAG_INDEX` sätts
+    när spelets fil laddas; att ändra den skulle smitta spelets kod och kan blockera att saker används).
+    Fönstret fästs till vänster om Tidy Pack med nederkanterna i linje (`dockReagentBag`, efter
+    `UpdateContainerFrameAnchors` och efter varje storleksändring). Sakerna sorteras inte. Inte provat i spelet.
 43. Väskor (2026-11-11, skissen `.design/sketch-bag-bar.html`): loggan (`Media/Logo.tga`, 64×64, okomprimerad
     TGA gjord ur `.design/logo.png`) ersätter spelets väskrad (`BagsBar` döljs efter varje Show,
     `LogoButton.lua`, inställningen `replaceBagBar`): klick öppnar väskan (`ToggleAllBags`), högerklick
