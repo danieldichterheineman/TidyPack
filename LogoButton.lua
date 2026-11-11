@@ -1,7 +1,8 @@
 -- TidyPack – LogoButton.lua
 -- Tidy Packs logga som knapp i stället för spelets väskrad nere till höger (BagsBar: ryggsäcken och
 -- fyra väskplatser), användarens önskan 2026-11-11. Klick öppnar väskan, högerklick inställningarna,
--- och en sak som släpps på loggan läggs i väskorna. Siffran är antalet lediga platser. Väskorna
+-- och en sak som släpps på loggan läggs i väskorna. Loggan visar ingen siffra (användarens önskan); antalet
+-- lediga platser står i tooltipen och i väskfönstret. Väskorna
 -- byts i stället i väskraden längst ner i väskfönstret (Layout.lua).
 -- Inställningen "Replace the game's bag buttons" (replaceBagBar) tar tillbaka spelets väskrad.
 -- ⚠️ Spelets väskrad döljs efter varje Show, även i Edit Mode. Den går inte att flytta i Edit Mode
@@ -15,12 +16,6 @@ local SIZE = 45
 local FRAME_ATLAS = "ui-hud-actionbar-iconframe-bags" -- spelets ram för väskknapparna i Forever
 local button
 
-local function updateCount()
-    if button then
-        button.count:SetText(("(%d)"):format(C_Container.CalculateTotalNumberOfFreeBagSlots()))
-    end
-end
-
 -- Visar loggan och döljer spelets väskrad, eller tvärtom.
 function ns.ApplyBagBarSetting()
     if not button or not BagsBar then
@@ -29,7 +24,6 @@ function ns.ApplyBagBarSetting()
     if ns.db.replaceBagBar then
         BagsBar:Hide()
         button:Show()
-        updateCount()
     else
         button:Hide()
         BagsBar:Show()
@@ -74,8 +68,6 @@ ns.OnLoad(function()
         texture:SetPoint("TOPLEFT")
         texture:SetSize(46, 46)
     end
-    button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
-    button.count:SetPoint("BOTTOM", 0, -2)
     button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     button:SetScript("OnClick", function(_, mouseButton)
         if GetCursorInfo() == "item" and ns.PutCursorItemInBags then
@@ -108,6 +100,5 @@ ns.OnLoad(function()
             self:Hide()
         end
     end)
-    ns.RegisterEvent("BAG_UPDATE_DELAYED", updateCount)
     ns.ApplyBagBarSetting()
 end)

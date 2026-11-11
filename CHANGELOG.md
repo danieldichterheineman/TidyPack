@@ -13,9 +13,10 @@
 - The reagent bag's own window is attached to the left of the Tidy Pack window. With a mouse the
   game always shows the reagent bag in its own window, so its items aren't sorted into groups.
 - The Tidy Pack logo replaces the game's backpack and bag buttons at the bottom right. Click it
-  to open your bags, right-click for the settings, or drop an item on it. Your free slots are
-  shown on it. Turn it off with "Replace the game's bag buttons" in the settings.
-- Your bags are shown as small icons at the bottom of the bag window, next to your free slots.
+  to open your bags, right-click for the settings, or drop an item on it. It sits right next to
+  the micro menu and looks like the game's own backpack button. Turn it off with "Replace the game's bag buttons" in the settings.
+- Your bags are shown as small icons in a row of their own at the bottom of the bag window, next
+  to your free slots.
   Point at one to see what's in it; drop a bigger bag on one to swap it.
 - Holding an item over the Bags, Sets or Quests tab switches to that tab.
 - The Bags tab is in five parts, each starting on a new row with a thin line above: your own

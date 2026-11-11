@@ -40,7 +40,10 @@ local BLIZZARD_MONEY_GAP = 4 -- spelets avstånd mellan rutorna och raden med pe
 local PADDING_SIDE = 14      -- från fönstrets inre kant till sakerna (inklusive luften)
 local INSET_PAD = 12         -- luft mellan bakgrundens kant och sakerna
 local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till bakgrunden + luften)
-local MONEY_GAP = 16         -- mellan sista raden rutor och raden med pengar
+-- En egen rad mellan bakgrunden och raden med pengar för "17 free" och väskraden, så att de får
+-- luft (användarens önskan 2026-11-11; i raden med pengar blev de trånga).
+local BAG_ROW = 30
+local MONEY_GAP = 16 + BAG_ROW -- mellan sista raden rutor och raden med pengar
 local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
 local TAB_ROOM = 30          -- flikarna ovanför fönstret
 local MIN_QUESTS_HEIGHT = 120 -- fliken Quests är minst så här hög
@@ -1108,7 +1111,8 @@ ns.OnLoad(function()
     freeHolder:SetFrameStrata("HIGH")
     freeHolder:SetAllPoints()
     freeText = freeHolder:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    freeText:SetPoint("BOTTOMLEFT", bagFrame, "BOTTOMLEFT", 16, 9)
+    -- Mitt i raden mellan bakgrunden och raden med pengar.
+    freeText:SetPoint("LEFT", inset, "BOTTOMLEFT", 4, -(BAG_ROW / 2 + 2))
     freeText:Hide()
 
     -- Väskraden: ryggsäcken och de fyra väskplatserna som små ikoner efter antalet lediga platser
@@ -1116,7 +1120,7 @@ ns.OnLoad(function()
     -- platser. Musen över en väska tonar ner allt som inte ligger i den. En större väska som släpps
     -- på en plats byter ut väskan där (spelet flyttar sakerna); en vanlig sak läggs i den väskan.
     -- Samma funktioner som spelets egen väskrad: PutItemInBag och PutItemInBackpack.
-    local BAG_ICON = 18
+    local BAG_ICON = 22
     local bagButtons = {}
     local function dimOthers(bagID)
         for i = 1, entryCount do
@@ -1161,9 +1165,9 @@ ns.OnLoad(function()
         button.bagID = bagID
         button:SetSize(BAG_ICON, BAG_ICON)
         if bagID == 0 then
-            button:SetPoint("LEFT", freeText, "RIGHT", 8, 0)
+            button:SetPoint("LEFT", freeText, "RIGHT", 12, 0)
         else
-            button:SetPoint("LEFT", bagButtons[bagID - 1], "RIGHT", 3, 0)
+            button:SetPoint("LEFT", bagButtons[bagID - 1], "RIGHT", 5, 0)
         end
         button.icon = button:CreateTexture(nil, "ARTWORK")
         button.icon:SetAllPoints()
