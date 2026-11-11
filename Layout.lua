@@ -1188,8 +1188,18 @@ ns.OnLoad(function()
         bagFrame.PortraitButton:Hide()
         hooksecurefunc(bagFrame.PortraitButton, "Show", bagFrame.PortraitButton.Hide)
     end
-    if bagFrame.NineSlice and NineSliceUtil and NineSliceUtil.ApplyLayoutByName then
-        NineSliceUtil.ApplyLayoutByName(bagFrame.NineSlice, "ButtonFrameTemplateNoPortrait")
+    -- Spelets ram utan ikon (ButtonFrameTemplateNoPortrait) lägger vänster kant 5 enheter längre in
+    -- än ramen med ikon som väskfönstret är byggt för (hörnen på x -8 i stället för -13,
+    -- NineSliceLayouts.lua). Då täckte kanten raden med pengar och bakgrunden till vänster
+    -- (skärmbild 2026-11-11). Därför samma ram utan ikon, men med vänster kant där den satt.
+    if bagFrame.NineSlice and NineSliceUtil and NineSliceUtil.GetLayout and NineSliceUtil.ApplyLayout then
+        local base = NineSliceUtil.GetLayout("ButtonFrameTemplateNoPortrait")
+        if base then
+            local layout = CopyTable(base)
+            layout.TopLeftCorner.x = -13
+            layout.BottomLeftCorner.x = -13
+            NineSliceUtil.ApplyLayout(bagFrame.NineSlice, layout)
+        end
     end
 
     -- Medan Alt hålls ner visas märket "..." på varje sak (och försvinner när Alt släpps).
