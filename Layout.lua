@@ -1041,11 +1041,11 @@ ns.OnLoad(function()
 
     -- En gul kant och en rad längst ner medan du håller en sak över väskan. Kollas bara medan
     -- markören håller något (CURSOR_CHANGED), så det kostar inget annars.
-    local glow = CreateFrame("Frame", nil, inset)
-    glow:SetAllPoints()
-    -- Över bakgrundens egen ram (InsetFrameTemplate har en ram i ett högre lager; med +1 syntes
-    -- kanten inte, skärmbild 2026-11-11). Linjerna ligger i kanten, utanför rutorna.
-    glow:SetFrameLevel(inset:GetFrameLevel() + 20)
+    -- I lagret HIGH, som kugghjulet: varken +1 eller +20 i nivå räckte för att synas ovanpå
+    -- bakgrundens ram (skärmbilder 2026-11-11). Linjerna ligger i kanten, utanför rutorna.
+    local glow = CreateFrame("Frame", nil, bagFrame)
+    glow:SetAllPoints(inset)
+    glow:SetFrameStrata("HIGH")
     for _, edge in ipairs({
         { "TOPLEFT", "TOPRIGHT", nil, 2 }, { "BOTTOMLEFT", "BOTTOMRIGHT", nil, 2 },
         { "TOPLEFT", "BOTTOMLEFT", 2, nil }, { "TOPRIGHT", "BOTTOMRIGHT", 2, nil },
