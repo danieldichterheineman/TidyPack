@@ -300,6 +300,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `Locales.lua`: all text som visas i spelet (engelska)
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
+- `Tour.lua`: guiden med spelets tipsrutor första gången väskan öppnas
 - `QuestsView.lua`: fliken Quests – rubriker, texter, staplar och rader per quest
 - `Groups.lua`: egna grupper – data, regler, ordning, frågor, kugghjulets menyer och tooltipen
 - `GroupsPage.lua`: sidan "Groups" i inställningarna
@@ -439,6 +440,13 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+41. Guiden (2026-11-11, `Tour.lua`): spelets tipsrutor (`HelpTip:Show`, samma som HUD Edit Modes guide).
+    Första gången väskan öppnas i Bags: fyra rutor med Next/Got it – en sak (Alt-klick), kugghjulet,
+    fliken Sets, fliken Quests. Saknas något att peka på hoppas steget över. Stängs väskan mitt i börjar
+    guiden om nästa gång. Klar → `tourDone = true`. Esc → Options → AddOns → Tidy Pack → Tips → Show again
+    (`ns.ResetTour`). Visas inte med handkontroll eller med spelets inställning "hideHelptips"
+    (`HelpTip:AreHelpTipsEnabled`). Ersätter den blå tipsraden (`itemTip` används inte längre).
+    Inte provat i spelet.
 40. Råvaror och släpp (2026-11-11, skissen `.design/sketch-drop-and-crafting.html`): Trade Goods delas i
     grupper per undertyp (`trade<subClassID>`, namn från `C_Item.GetItemSubClassInfo`); grupper för dina
     yrken står först med yrkets ikon och namn i grått (`ns.GetTradeGroupKeys`, `GetProfessions`,

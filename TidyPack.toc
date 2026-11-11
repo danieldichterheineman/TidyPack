@@ -23,6 +23,7 @@ Layout.lua
 SetsView.lua
 QuestsView.lua
 Marks.lua
+Tour.lua
 Junk.lua
 MakeRoom.lua
 GroupsPage.lua

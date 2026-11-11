@@ -93,9 +93,6 @@ local function onItemButtonClick(button, mouseButton)
         return
     end
     ClearCursor()
-    if ns.DismissItemTip then
-        ns.DismissItemTip() -- den som använder genvägen behöver inte tipset
-    end
     showItemMenu(button, info.itemID)
 end
 
@@ -263,6 +260,7 @@ ns.OnLoad(function()
     -- Kugghjulet är Tidy Packs enda knapp i fönstret. Det är spelets egen menyknapp (DropdownButton), så menyn öppnas under den och fungerar
     -- med handkontroll som spelets egna menyer.
     gearButton = CreateFrame("DropdownButton", nil, bagFrame)
+    ns.gearButton = gearButton -- guiden i Tour.lua pekar på den
     gearButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
     -- Fönsterhuvudet (titelraden) är en egen ram ovanpå fönstret; kugghjulet måste ligga över den,
     -- annars döljs det bakom titelraden.

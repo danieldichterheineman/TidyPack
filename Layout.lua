@@ -43,8 +43,6 @@ local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till ba
 local MONEY_GAP = 16         -- mellan sista raden rutor och raden med pengar
 local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
 local TAB_ROOM = 30          -- flikarna ovanför fönstret
-local TIP_HEIGHT = 26         -- tipsraden längst ner i Bags (om Alt-klick)
-local TIP_MAX_OPENS = 5       -- så många gånger du öppnar väskan visas tipset, om du inte stänger det
 local MIN_QUESTS_HEIGHT = 120 -- fliken Quests är minst så här hög
 -- Sökrutan visas inte (användarens önskan 2026-11-10), så raden spelet lämnar för den används av
 -- sakerna. Spelet räknar 12 enheter mindre för raden med handkontroll (ContainerFrameCombinedBagsMixin:
@@ -71,7 +69,6 @@ local bagFrame                    -- spelets fönster med alla väskor i ett
 local overlay                     -- vår egen ram i spelets fönster, för rubrikerna
 local inset                       -- den mörka, infällda bakgrunden bakom sakerna
 local contentHeight               -- höjden på det Tidy Pack lägger ut
-local tipStrip                   -- tipsraden om Alt-klick, längst ner i fliken Bags
 local sharedHeight                -- samma höjd i alla tre flikarna (Bags, Sets, Quests)
 local gridCols = MIN_COLUMNS      -- antal kolumner just nu
 local gridWidth = widthOf(MIN_COLUMNS) -- rutnätets bredd just nu
@@ -431,7 +428,6 @@ local function layoutSetsView(atMerchant)
     end
     questNoteState = nil
     questNote:Hide()
-    tipStrip:Hide()
     for _, button in bagFrame:EnumerateValidItems() do
         if lockedButtons[button] or disabledButtons[button] then
             setLocked(button, false)
@@ -715,22 +711,6 @@ local function commit(atMerchant)
     end
 end
 
--- Visas tipsraden? De första gångerna du öppnar väskan, tills du stänger den eller själv Alt-klickar.
-local function tipActive()
-    local tip = ns.db and ns.db.itemTip
-    return tip ~= nil and not tip.dismissed and tip.opens <= TIP_MAX_OPENS
-end
-
-function ns.DismissItemTip()
-    local tip = ns.db and ns.db.itemTip
-    if tip and not tip.dismissed then
-        tip.dismissed = true
-        if ns.Refresh then
-            ns.Refresh()
-        end
-    end
-end
-
 -- Fliken Quests (QuestsView.lua): quest-sakerna ordnade per quest, med de riktiga rutorna.
 local function layoutQuestsView(atMerchant)
     releaseHeaders()
@@ -738,7 +718,6 @@ local function layoutQuestsView(atMerchant)
         divider:Hide()
     end
     questNoteState = nil
-    tipStrip:Hide()
     wipe(groupFirst)
     wipe(groupOfButton)
     newGroupIndex, startGroupIndex = nil, nil
@@ -800,7 +779,7 @@ local function relayout()
     local junkValue = classify()
     gridCols = chooseColumns(junkValue)
     gridWidth = widthOf(gridCols)
-    local bagsHeight = flow(gridCols, false, junkValue) + (tipActive() and TIP_HEIGHT or 0)
+    local bagsHeight = flow(gridCols, false, junkValue)
     sharedHeight = math.max(bagsHeight, ns.SETS_VIEW_HEIGHT or 0, MIN_QUESTS_HEIGHT)
 
     if view == "sets" then
@@ -829,16 +808,8 @@ local function relayout()
     -- i raden med pengar (se anchor). Linjen placerades tidigare före höjden: direkt efter
     -- inloggning eller /reload var höjden då okänd (nil) och genomgången stannade med ett fel
     -- när du bar en specialväska.
-    local flowHeight
     contentHeight = sharedHeight
-    flowHeight, dividerY = flow(gridCols, true, junkValue)
-    if tipActive() then
-        anchor(tipStrip, 0, flowHeight + 4)
-        tipStrip:SetWidth(gridWidth)
-        tipStrip:Show()
-    else
-        tipStrip:Hide()
-    end
+    dividerY = select(2, flow(gridCols, true, junkValue))
     if dividerY then
         anchor(divider, -6, dividerY)
         divider:SetWidth(gridWidth + 12)
@@ -866,6 +837,15 @@ local function safeRelayout()
         end
         geterrorhandler()(problem)
     end
+end
+
+-- Första riktiga saken i väskan (inte "Add to bag"), för guiden i Tour.lua. Nil om väskan är tom.
+function ns.GetFirstItemButton()
+    local first = startGroupIndex and groupFirst[startGroupIndex]
+    if first and first:IsVisible() then
+        return first
+    end
+    return nil
 end
 
 -- Andra filer (t.ex. Marks.lua och QuestLock.lua) ber om en ny genomgång här.
@@ -1103,33 +1083,6 @@ ns.OnLoad(function()
     if bagFrame.NineSlice and NineSliceUtil and NineSliceUtil.ApplyLayoutByName then
         NineSliceUtil.ApplyLayoutByName(bagFrame.NineSlice, "ButtonFrameTemplateNoPortrait")
     end
-
-    -- Tipsraden om Alt-klick längst ner i fliken Bags. Visas de första gångerna du öppnar väskan,
-    -- tills du stänger den med krysset (eller själv Alt-klickar en sak).
-    tipStrip = CreateFrame("Frame", nil, overlay)
-    tipStrip:SetHeight(TIP_HEIGHT - 4)
-    tipStrip.bg = tipStrip:CreateTexture(nil, "BACKGROUND")
-    tipStrip.bg:SetAllPoints()
-    tipStrip.bg:SetColorTexture(0.08, 0.14, 0.22, 0.9)
-    tipStrip.text = tipStrip:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    tipStrip.text:SetPoint("LEFT", 8, 0)
-    tipStrip.text:SetText(ns.KeyText(L["Tip: Alt-click an item for Tidy Pack options."]))
-    tipStrip.close = CreateFrame("Button", nil, tipStrip)
-    tipStrip.close:SetSize(20, TIP_HEIGHT - 4)
-    tipStrip.close:SetPoint("RIGHT", -2, 0)
-    tipStrip.close:SetNormalFontObject("GameFontNormal")
-    tipStrip.close:SetHighlightFontObject("GameFontHighlight")
-    tipStrip.close:SetText("x")
-    tipStrip.close:SetScript("OnClick", ns.DismissItemTip)
-    tipStrip:Hide()
-
-    -- Räknar hur många gånger väskan öppnats, så att tipset slutar visas av sig självt.
-    bagFrame:HookScript("OnShow", function()
-        local tip = ns.db and ns.db.itemTip
-        if tip and not tip.dismissed and tip.opens <= TIP_MAX_OPENS then
-            tip.opens = tip.opens + 1
-        end
-    end)
 
     -- Medan Alt hålls ner visas märket "..." på varje sak (och försvinner när Alt släpps).
     ns.RegisterEvent("MODIFIER_STATE_CHANGED", function(key)

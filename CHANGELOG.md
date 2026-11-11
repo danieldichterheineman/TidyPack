@@ -10,6 +10,10 @@
   empty place, or drop an item on it, type a name and press Enter to make a new set. Its icon is
   its first item's; change it with "..." → Edit Name and Icon. The New Set button is gone. You
   can have at most five sets.
+- A short guide the first time you open your bags, in the game's own yellow tip boxes: Alt-click
+  on items, the gear button, Sets and Quests. Show it again under Esc → Options → AddOns → Tidy
+  Pack → Tips. It replaces the blue tip line at the bottom of the bags. Like the game's own tips,
+  it doesn't show with a controller or when the game's tips are turned off.
 - Hold an item over your bags and the background lights up: drop it anywhere on an empty spot
   to put it in your bags.
 - Trade Goods are split by type – Cloth, Leather, Herb, Metal & Stone, Cooking and so on – with

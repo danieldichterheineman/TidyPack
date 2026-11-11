@@ -260,6 +260,12 @@ ns.OnLoad(function()
     addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
         L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
         refresh)
+    layout:AddInitializer(CreateSettingsButtonInitializer(L["Tips"], L["Show again"], function()
+        if ns.ResetTour then
+            ns.ResetTour()
+            ns.Print(L["The tips show the next time you open your bags."])
+        end
+    end, L["Shows the short guide with the game's yellow tip boxes again."], true))
     layout:AddInitializer(CreateSettingsButtonInitializer(L["Your own groups"], L["Open"], function()
         ns.OpenSettings("groups")
     end, L["Create groups such as Potions, and choose what goes in them."], true))

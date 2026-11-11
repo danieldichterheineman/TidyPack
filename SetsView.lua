@@ -30,6 +30,11 @@ function ns.IsSetsView()
     return view == "sets"
 end
 
+-- Flikens knapp (1 Bags, 2 Sets, 3 Quests), för guiden i Tour.lua.
+function ns.GetTabButton(tabID)
+    return tabSystem and tabSystem:GetTabButton(tabID)
+end
+
 -- Vilken flik som visas: "bags", "sets" eller "quests".
 function ns.GetView()
     return view
