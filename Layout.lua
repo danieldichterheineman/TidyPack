@@ -43,8 +43,12 @@ local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till ba
 -- Raden med pengar görs högre, och "17 free" och väskraden står till vänster på den, pengarna till
 -- höger (användarens önskan 2026-11-11). Spelets låga myntruta (MoneyFrame.Border) döljs och ersätts
 -- av en högre med samma bilder; pengarna är kvar på spelets plats, mitt i den högre raden.
-local BAG_ROW = 12          -- hur mycket högre raden blir uppåt
-local BAR_HEIGHT = 30       -- den högre radens höjd
+local BAR_HEIGHT = 38       -- den högre radens höjd
+-- Spelet sätter pengarna 8 från nederkanten (UpdateCurrencyFrames). De flyttas upp så här mycket, så
+-- att de står mitt i den högre raden: (3 + 38 / 2) - (8 + 16 / 2) = 6. Fönstret blir lika mycket högre.
+local MONEY_RAISE = 6
+local BAG_ROW = 13          -- luft mellan bakgrunden och den högre raden
+local moneyRaised = false   -- pengarna är flyttade (inte när spelet visar valutor under dem)
 local MONEY_GAP = 16 + BAG_ROW -- mellan sista raden rutor och raden med pengar
 local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
 local TAB_ROOM = 30          -- flikarna ovanför fönstret
@@ -379,6 +383,7 @@ local function applySize()
         return
     end
     local height = contentHeight + chromeHeight - searchRoom() + PADDING_TOP + (MONEY_GAP - BLIZZARD_MONEY_GAP)
+        + (moneyRaised and MONEY_RAISE or 0)
     bagFrame:SetSize(gridWidth + chromeWidth + 2 * PADDING_SIDE, height)
     -- Bakgrunden följer det Tidy Pack lägger ut, och hänger i raden med pengar som allt annat.
     if inset then
@@ -656,7 +661,7 @@ local function maxContentHeight()
     end
     -- Under fönstret ligger spelets egen marginal (CONTAINER_OFFSET_Y), ovanför flikarna.
     local room = (GetScreenHeight() - (CONTAINER_OFFSET_Y or 85) - TAB_ROOM) / TARGET_SCALE
-    return room - (chromeHeight - searchRoom() + PADDING_TOP + (MONEY_GAP - BLIZZARD_MONEY_GAP))
+    return room - (chromeHeight - searchRoom() + PADDING_TOP + (MONEY_GAP - BLIZZARD_MONEY_GAP) + MONEY_RAISE)
 end
 
 -- Antal kolumner: så få som möjligt, men fönstret ska inte bli för högt för skärmen och inte
@@ -1137,9 +1142,32 @@ ns.OnLoad(function()
     center:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT")
     local border = bagFrame.MoneyFrame.Border
     if border then
-        border:Hide()
-        hooksecurefunc(border, "Show", border.Hide)
+        hooksecurefunc(border, "Show", function(self)
+            if moneyRaised then
+                self:Hide()
+            end
+        end)
     end
+    -- Pengarna flyttas upp till mitten av den högre raden, efter spelets egen placering. Visar
+    -- spelet valutor under pengarna står de kvar, och då används spelets egen låga myntruta.
+    local function placeMoney()
+        local money = bagFrame.MoneyFrame
+        local _, relativeTo = money:GetPoint(1)
+        moneyRaised = relativeTo == bagFrame
+        if moneyRaised then
+            money:ClearAllPoints()
+            money:SetPoint("BOTTOMLEFT", bagFrame, "BOTTOMLEFT", 8, 8 + MONEY_RAISE)
+            money:SetPoint("BOTTOMRIGHT", bagFrame, "BOTTOMRIGHT", -8, 8 + MONEY_RAISE)
+        end
+        bar:SetShown(moneyRaised)
+        if border then
+            border:SetShown(not moneyRaised)
+        end
+    end
+    if bagFrame.UpdateCurrencyFrames then
+        hooksecurefunc(bagFrame, "UpdateCurrencyFrames", placeMoney)
+    end
+    placeMoney()
     freeText:SetPoint("LEFT", bar, "LEFT", 10, 0)
     freeText:Hide()
 
