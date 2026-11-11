@@ -1098,7 +1098,12 @@ ns.OnLoad(function()
     glow:Hide()
     label:Hide()
 
-    freeText = bagFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    -- I en egen ram i lagret HIGH, som raden "Drop anywhere": direkt i fönstret ritades texten under
+    -- raden med pengar och syntes inte (skärmbild 2026-11-11).
+    local freeHolder = CreateFrame("Frame", nil, bagFrame)
+    freeHolder:SetFrameStrata("HIGH")
+    freeHolder:SetAllPoints()
+    freeText = freeHolder:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     freeText:SetPoint("BOTTOMLEFT", bagFrame, "BOTTOMLEFT", 16, 9)
     freeText:Hide()
     local watcher = CreateFrame("Frame")
