@@ -440,7 +440,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
-42. Avsnitt (2026-11-11, skissen `.design/sketch-order.html`): Bags i fem avsnitt (`ns.GetGroupSection`):
+42. Avsnitt (2026-11-11, skissen `.design/sketch-order.html`; innehållet centreras mellan ramens kanter med `contentShift`, eftersom pengaraden sitter längre från höger kant): Bags i fem avsnitt (`ns.GetGroupSection`):
     1 Favorites, egna grupper, New; 2 Consumables, Equipment; 3 råvaror och Recipes & Gems; 4 Quest Items;
     5 Keys, Miscellaneous, Spare Bags, Junk. Nytt avsnitt = ny rad och en tunn gul linje (`sectionYs`,
     `placeSectionLines`). Med mus visas inte "Add to bag"; "N free" står nere till vänster (rött vid 5 eller

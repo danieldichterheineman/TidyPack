@@ -352,11 +352,16 @@ end
 -- Lägger en ruta eller rubrik på plats. x och y räknas från övre vänstra hörnet av det
 -- Tidy Pack lägger ut. Allt hänger i spelets rad med pengar, precis som spelets eget
 -- rutnät, så att sökrutan, pengarna och spelets andra delar hamnar där de brukar.
+-- Allt hänger i raden med pengar, men den sitter längre från fönstrets högra kant än ramen är tjock
+-- till vänster. Därför flyttas innehållet så att luften blir lika stor på båda sidor (användarens
+-- önskan 2026-11-11: bakgrunden låg närmare vänster kant än höger). Mäts i measureShift.
+local contentShift = 0
+
 -- Har rutan en annan skala (fliken Quests visar små rutor) räknas avståndet i rutans egna enheter.
 local function anchor(region, x, y, scale)
     scale = scale or 1
     region:ClearAllPoints()
-    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", (x - gridWidth - PADDING_SIDE) / scale,
+    region:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", (x - gridWidth - PADDING_SIDE + contentShift) / scale,
         (MONEY_GAP + contentHeight - y) / scale)
 end
 
@@ -373,9 +378,9 @@ local function applySize()
     -- Bakgrunden följer det Tidy Pack lägger ut, och hänger i raden med pengar som allt annat.
     if inset then
         inset:ClearAllPoints()
-        inset:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", -gridWidth - PADDING_SIDE - INSET_PAD,
+        inset:SetPoint("TOPLEFT", bagFrame.MoneyFrame, "TOPRIGHT", -gridWidth - PADDING_SIDE - INSET_PAD + contentShift,
             MONEY_GAP + contentHeight + INSET_PAD)
-        inset:SetPoint("BOTTOMRIGHT", bagFrame.MoneyFrame, "TOPRIGHT", -PADDING_SIDE + INSET_PAD,
+        inset:SetPoint("BOTTOMRIGHT", bagFrame.MoneyFrame, "TOPRIGHT", -PADDING_SIDE + INSET_PAD + contentShift,
             MONEY_GAP - INSET_PAD)
         inset:Show()
     end
@@ -386,11 +391,30 @@ end
 -- Körs efter spelets UpdateFrameSize. Spelet har då gett fönstret storlek efter sitt eget
 -- rutnät (GetColumns kolumner, GetRows rader). Det som är kvar när rutnätet räknas bort är
 -- kanter, titelrad, sökruta och pengar.
+-- Hur långt innehållet ska flyttas åt höger: avståndet mellan pengaradens högra kant och fönstrets,
+-- minus halva ramens bredd (ramen räknas lika på båda sidor). Sant om värdet ändrades.
+local function measureShift()
+    local right, moneyRight = bagFrame:GetRight(), bagFrame.MoneyFrame:GetRight()
+    if not (right and moneyRight and chromeWidth) then
+        return false
+    end
+    local shift = math.floor((right - moneyRight) - chromeWidth / 2 + 0.5)
+    if shift ~= contentShift then
+        contentShift = shift
+        return true
+    end
+    return false
+end
+
 local function onFrameSizeUpdated()
     local columns, rows = bagFrame:GetColumns(), math.max(bagFrame:GetRows(), 1)
     chromeWidth = bagFrame:GetWidth() - (columns * BUTTON + (columns - 1) * SPACING)
     chromeHeight = bagFrame:GetHeight() - (rows * BUTTON + (rows - 1) * SPACING)
     applySize()
+    -- Första gången avståndet är känt läggs allt ut igen med rätt förskjutning.
+    if measureShift() and ns.Refresh then
+        ns.Refresh()
+    end
 end
 
 -- Rubriken för en grupp. Favorites får en stjärna och Junk visar vad skräpet är värt.
