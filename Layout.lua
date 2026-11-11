@@ -216,8 +216,16 @@ local function getExtras(button)
             quest = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall"),
             -- Märket "..." som syns på varje sak medan Alt hålls ner: sakerna går att Alt-klicka.
             altBg = button:CreateTexture(nil, "OVERLAY", nil, 5),
+            -- Blått sken runt sakerna i den väska som musen står på i väskraden (spelets glöd för nya
+            -- saker, bags-glow-white, färgad blå).
+            bagGlow = button:CreateTexture(nil, "OVERLAY", nil, 7),
             alt = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall"),
         }
+        extra.bagGlow:SetAtlas("bags-glow-white", true)
+        extra.bagGlow:SetPoint("CENTER")
+        extra.bagGlow:SetBlendMode("ADD")
+        extra.bagGlow:SetVertexColor(0.25, 0.6, 1)
+        extra.bagGlow:Hide()
         extra.altBg:SetColorTexture(0, 0, 0, 0.75)
         extra.altBg:SetSize(18, 11)
         extra.altBg:SetPoint("TOPRIGHT", -1, -1)
@@ -1200,11 +1208,17 @@ ns.OnLoad(function()
     -- Samma funktioner som spelets egen väskrad: PutItemInBag och PutItemInBackpack.
     local BAG_ICON = 22
     local bagButtons = {}
+    -- Sakerna i väskan får ett blått sken, och resten tonas ner (bagID nil: allt som vanligt).
     local function dimOthers(bagID)
         for i = 1, entryCount do
             local entry = entries[i]
             if entry.placed and not entry.isEmpty then
-                entry.button:SetAlpha((bagID == nil or entry.bagID == bagID) and 1 or 0.25)
+                local inBag = entry.bagID == bagID
+                entry.button:SetAlpha((bagID == nil or inBag) and 1 or 0.35)
+                local extra = extras[entry.button]
+                if extra then
+                    extra.bagGlow:SetShown(bagID ~= nil and inBag)
+                end
             end
         end
     end
