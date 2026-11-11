@@ -40,9 +40,11 @@ local BLIZZARD_MONEY_GAP = 4 -- spelets avstånd mellan rutorna och raden med pe
 local PADDING_SIDE = 14      -- från fönstrets inre kant till sakerna (inklusive luften)
 local INSET_PAD = 12         -- luft mellan bakgrundens kant och sakerna
 local PADDING_TOP = 16       -- mellan sökrutan och första rubriken (4 till bakgrunden + luften)
--- En egen rad mellan bakgrunden och raden med pengar för "17 free" och väskraden, så att de får
--- luft (användarens önskan 2026-11-11; i raden med pengar blev de trånga).
-local BAG_ROW = 30
+-- Raden med pengar görs högre, och "17 free" och väskraden står till vänster på den, pengarna till
+-- höger (användarens önskan 2026-11-11). Spelets låga myntruta (MoneyFrame.Border) döljs och ersätts
+-- av en högre med samma bilder; pengarna är kvar på spelets plats, mitt i den högre raden.
+local BAG_ROW = 12          -- hur mycket högre raden blir uppåt
+local BAR_HEIGHT = 30       -- den högre radens höjd
 local MONEY_GAP = 16 + BAG_ROW -- mellan sista raden rutor och raden med pengar
 local TARGET_SCALE = 0.85    -- så mycket får spelet krympa fönstret för att få plats
 local TAB_ROOM = 30          -- flikarna ovanför fönstret
@@ -1111,8 +1113,34 @@ ns.OnLoad(function()
     freeHolder:SetFrameStrata("HIGH")
     freeHolder:SetAllPoints()
     freeText = freeHolder:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    -- Mitt i raden mellan bakgrunden och raden med pengar.
-    freeText:SetPoint("LEFT", inset, "BOTTOMLEFT", 4, -(BAG_ROW / 2 + 2))
+    -- Den högre raden med spelets bilder för myntrutan (samma som MoneyFrame.Border).
+    local bar = CreateFrame("Frame", nil, bagFrame)
+    bar:SetFrameLevel(math.max(bagFrame:GetFrameLevel() + 1, bagFrame.MoneyFrame:GetFrameLevel() - 1))
+    bar:SetHeight(BAR_HEIGHT)
+    bar:SetPoint("LEFT", bagFrame, "LEFT", 8, 0)
+    bar:SetPoint("RIGHT", bagFrame, "RIGHT", -8, 0)
+    -- Nederkanten nära fönstrets kant (som spelets egen ruta); pengarna hamnar nästan mitt i.
+    bar:SetPoint("BOTTOM", bagFrame, "BOTTOM", 0, 3)
+    local left = bar:CreateTexture(nil, "BACKGROUND")
+    left:SetAtlas("common-coinbox-left")
+    left:SetPoint("TOPLEFT")
+    left:SetPoint("BOTTOMLEFT")
+    left:SetWidth(8)
+    local right = bar:CreateTexture(nil, "BACKGROUND")
+    right:SetAtlas("common-coinbox-right")
+    right:SetPoint("TOPRIGHT")
+    right:SetPoint("BOTTOMRIGHT")
+    right:SetWidth(8)
+    local center = bar:CreateTexture(nil, "BACKGROUND")
+    center:SetAtlas("_common-coinbox-center")
+    center:SetPoint("TOPLEFT", left, "TOPRIGHT")
+    center:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT")
+    local border = bagFrame.MoneyFrame.Border
+    if border then
+        border:Hide()
+        hooksecurefunc(border, "Show", border.Hide)
+    end
+    freeText:SetPoint("LEFT", bar, "LEFT", 10, 0)
     freeText:Hide()
 
     -- Väskraden: ryggsäcken och de fyra väskplatserna som små ikoner efter antalet lediga platser

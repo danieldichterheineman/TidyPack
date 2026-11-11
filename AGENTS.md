@@ -449,8 +449,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 43. Väskor (2026-11-11, skissen `.design/sketch-bag-bar.html`): loggan (`Media/Logo.tga`, 64×64, okomprimerad
     TGA gjord ur `.design/logo.png`) ersätter spelets väskrad (`BagsBar` döljs efter varje Show,
     `LogoButton.lua`, inställningen `replaceBagBar`): klick öppnar väskan (`ToggleAllBags`), högerklick
-    inställningarna, en släppt sak läggs i väskorna, ingen siffra på loggan (användarens önskan). I väskfönstret, på en egen rad mellan bakgrunden och raden
-    med pengar (`BAG_ROW` = 30, 22 stora ikoner): "N free"
+    inställningarna, en släppt sak läggs i väskorna, ingen siffra på loggan (användarens önskan). I väskfönstret, på en högre rad med pengar (spelets myntruta
+    `MoneyFrame.Border` döljs och ritas om 30 hög med samma bilder, `BAR_HEIGHT`; 22 stora ikoner till vänster,
+    pengarna till höger): "N free"
     följt av fem små väskikoner (antal platser); musen över en tonar ner allt som inte ligger i den;
     en väska som släpps på en plats byter ut den (`PutItemInBag`), en vanlig sak läggs i den väskan;
     medan du håller en väska lyser platserna och raden säger "Drop on one of your bags to swap it".
