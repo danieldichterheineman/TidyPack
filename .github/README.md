@@ -31,7 +31,7 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
 - **Bank:** a Bank tab sorts your bank the same way, and remembers it when you're away.
   Tooltips show how many you have in your bags and bank.
 - **Sets:** up to five sets with a name and icon, like "Fishing", in the Sets tab. Click a set
-  to put it on, drag its icon to an action bar, or use its "..." button and choose "Add What I'm
+  to put it on, drag its icon to an action bar, or use its "..." button and choose "Save What I'm
   Wearing". Missing items are greyed out.
 - **Locks:** quest items, items your quests ask for and items in your sets can't be sold by
   mistake at a merchant (can be turned off in the gear button's menu).

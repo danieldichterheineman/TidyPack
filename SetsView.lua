@@ -146,7 +146,7 @@ local function showRowTooltip(row)
     end
     GameTooltip_AddBlankLineToTooltip(GameTooltip)
     GameTooltip_AddInstructionLine(GameTooltip, L["Click to put it on. Drop an item here to add it."])
-    GameTooltip_AddInstructionLine(GameTooltip, L["Use the ... button to add what you wear, edit or delete the set."])
+    GameTooltip_AddInstructionLine(GameTooltip, L["Use the ... button to save what you wear, edit or delete the set."])
     GameTooltip:Show()
 end
 
@@ -188,8 +188,8 @@ local function buildRowMenu(row, rootDescription)
         return
     end
     rootDescription:CreateTitle(set.name)
-    rootDescription:CreateButton(L["Add What I'm Wearing"], function()
-        ns.AddWornToSet(index)
+    rootDescription:CreateButton(L["Save What I'm Wearing"], function()
+        ns.SaveWornToSet(index)
     end)
     -- Namn och ikon byts direkt i väskan. Med handkontroll, där man inte skriver på raden, öppnas
     -- spelets ruta för namn och ikon som förut.

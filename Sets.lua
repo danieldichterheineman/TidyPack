@@ -232,27 +232,69 @@ function ns.SetInSet(index, itemID, inSet)
     end
 end
 
--- Lägger allt du har på dig just nu i setet, utom skjorta och tabard. Returnerar hur många
--- saker som kom till.
-function ns.AddWornToSet(index)
+-- Platser som "Save What I'm Wearing" inte rör: skjorta, tabard, väskor och yrkesutrustning.
+-- Sådant som spelaren själv lagt i setet ligger kvar.
+local KEEP_LOCATIONS = {
+    INVTYPE_BODY = true,
+    INVTYPE_TABARD = true,
+    INVTYPE_BAG = true,
+    INVTYPE_QUIVER = true,
+    INVTYPE_PROFESSION_TOOL = true,
+    INVTYPE_PROFESSION_GEAR = true,
+    INVTYPE_NON_EQUIP_IGNORE = true,
+}
+
+-- Är saken utrustning som byts ut av "Save What I'm Wearing"?
+local function isReplacedGear(itemID)
+    local equipLocation = select(4, C_Item.GetItemInfoInstant(itemID))
+    return equipLocation ~= nil and equipLocation ~= "" and not KEEP_LOCATIONS[equipLocation]
+end
+
+-- Gör setets utrustning till det du har på dig just nu, utom skjorta och tabard. Utrustning
+-- som du inte längre har på dig tas bort. Annat i setet (t.ex. Hearthstone) ligger kvar.
+-- Returnerar hur många saker som kom till och hur många som togs bort.
+function ns.SaveWornToSet(index)
     local set = sets()[index]
     if not set then
-        return 0
+        return 0, 0
     end
-    local added = 0
+    local worn, wornSet = {}, {}
     for slot = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
         local itemID = slot ~= INVSLOT_BODY and slot ~= INVSLOT_TABARD and GetInventoryItemID("player", slot)
-        if itemID and not ns.IsInSet(index, itemID) then
-            set.items[#set.items + 1] = itemID
+        if itemID and not wornSet[itemID] then
+            worn[#worn + 1] = itemID
+            wornSet[itemID] = true
+        end
+    end
+    -- Det du har på dig först, i platsernas ordning, sedan det övriga som ligger kvar.
+    local items, before, removed = {}, {}, 0
+    for _, itemID in ipairs(worn) do
+        items[#items + 1] = itemID
+    end
+    for _, itemID in ipairs(set.items) do
+        before[itemID] = true
+        if not wornSet[itemID] then
+            if isReplacedGear(itemID) then
+                removed = removed + 1
+            else
+                items[#items + 1] = itemID
+            end
+        end
+    end
+    local added = 0
+    for _, itemID in ipairs(worn) do
+        if not before[itemID] then
             added = added + 1
         end
     end
-    if added > 0 then
-        changed()
-    else
-        ns.Print(L["Everything you wear is already in %s."]:format(set.name))
+    if added == 0 and removed == 0 then
+        ns.Print(L["%s already matches what you wear."]:format(set.name))
+        return 0, 0
     end
-    return added
+    set.items = items
+    changed()
+    ns.Print(L["%s now has what you wear: %d added, %d removed."]:format(set.name, added, removed))
+    return added, removed
 end
 
 -- Namnen på seten som en sak ingår i, eller nil.

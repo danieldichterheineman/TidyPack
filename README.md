@@ -61,7 +61,7 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Sets tab**: click an empty place, or drop an item on it, type a name and press Enter. Click
   a set's icon to choose a new one, or drag it to an action bar to put the set on with one
   click there. Then use the set's
-  "..." button and choose "Add What I'm Wearing", or drop items on the set. The "..." button also renames the set, changes its
+  "..." button and choose "Save What I'm Wearing" (it replaces the gear in the set with what you wear), or drop items on the set. The "..." button also renames the set, changes its
   icon, removes an item or deletes it.
 - **Quests tab**: click a heading to open it, then a quest to see its items.
 - **Settings**: `/tidypack` and the minimap's addon menu open the gear button's menu. Esc →

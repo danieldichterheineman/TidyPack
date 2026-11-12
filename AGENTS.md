@@ -45,7 +45,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   missing", antal eller "Drop items here". Klick tar på allt som går att ha på sig
   (`C_Item.EquipItemByName`, ringar, smycken och enhandsvapen på båda platserna). Släpp en
   sak på en rad = lägg till. Ett kugghjul på varje rad (och högerklick) öppnar setets
-  meny: "Add What I'm Wearing" (allt du har på dig utom skjorta och tabard), "Edit Name and
+  meny: "Save What I'm Wearing" (`ns.SaveWornToSet`: setets utrustning blir det du har på dig, utom skjorta och tabard; utrustning du tagit av tas bort, annat i setet ligger kvar – ändrat 2026-11-12, tidigare lade den bara till), "Edit Name and
   Icon…", "Remove Item ▸" och "Delete Set…". "New Set" står på sökrutans plats, och mitt i
   fönstret med en förklaring när det inte finns några set (en sak på markören hamnar i det
   nya setet). Håller man en sak över fliken Sets byter fönstret dit. Kugghjulets "Add to Set"

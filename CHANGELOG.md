@@ -28,6 +28,9 @@
 - Shorter tooltips on the gear button and the Tidy Pack logo, in the same style as the rest.
 - The game's own sounds when the junk list, your groups and the icon grid open and close, and a
   short fade when the content of the bag window changes.
+- Sets: "Add What I'm Wearing" is now "Save What I'm Wearing". It replaces the gear in the set
+  with what you wear, so gear you have swapped out no longer stays in the set as missing. Other
+  items you put in the set, like your Hearthstone, stay.
 - The bank's contents are saved every time they change at a banker, also when the Bank tab isn't
   shown, so the counts in tooltips are always up to date.
 - When you point at one of your bags at the bottom of the bag window, the bag itself now glows
