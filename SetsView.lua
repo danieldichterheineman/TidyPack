@@ -847,34 +847,3 @@ function keys:EquipSet(number)
         ns.Print(L["You have no set number %d."]:format(number))
     end
 end
-
----------------------------------------------------------------------------
--- Esc
----------------------------------------------------------------------------
--- Är skräplistan, grupperna eller ikonvalet öppna i väskan, går Esc först tillbaka till fliken (som
--- Done), och först nästa tryck stänger väskan – som spelets egna fönster (granskning 2026-11-12).
--- Forevers egen kö för Esc (RegisterGameMenuEscHandler, Blizzard_GameMenuEsc.lua) låter addons ta
--- trycket före spelets CloseAllWindows, som stänger väskorna.
-local function escapePressed()
-    local bagFrame = ns.bagFrame
-    if not (bagFrame and bagFrame:IsShown()) then
-        return false
-    end
-    if PANEL_VIEWS[view] then
-        ns.SetView("bags") -- spelar själv ljudet för en panel som stängs
-        return true
-    end
-    if pickerIndex then
-        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
-        closeIconPicker()
-        if ns.Refresh then
-            ns.Refresh()
-        end
-        return true
-    end
-    return false
-end
-
-if RegisterGameMenuEscHandler and GameMenuEscPriority and GameMenuEscPriority.AddOn then
-    RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, escapePressed)
-end

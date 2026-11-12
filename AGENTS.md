@@ -522,8 +522,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     banken: "Visit a banker once …". Inställningen "Use the Bank tab at bankers" av: spelets fönster som
     vanligt. Inget "Interface action failed" och inget felmeddelande om blockerade handlingar
     (`/console taintLog 1`). Med handkontroll: spelets bankfönster som vanligt.
-48. Finputs (2026-11-12): titeln följer vyn (`updateTitle` i relayout); Esc stänger panel eller ikonval före
-    väskan via `RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, ...)` (Forevers kö för Esc); linjen före
+48. Finputs (2026-11-12): titeln följer vyn (`updateTitle` i relayout); Esc-hanteraren via `RegisterGameMenuEscHandler` togs bort
+    samma dag: den gav rutan "blocked from an action" när Esc öppnade spelets meny (addonet ändrar spelets
+    lista över hanterare, som spelets skyddade kod sedan läser); linjen före
     specialväskorna är samma tunna linje som mellan avsnitten (`LINE_COLOR`); tooltip på grupprubrikerna (en
     osynlig ram över rubriken: antal saker, platser, värde; en släppt sak läggs i väskan); kortare tooltip på
     kugghjulet och loggan; spelets ljud (IG_CHARACTER_INFO_OPEN/CLOSE) för paneler och ikonval; en mörk hinna
