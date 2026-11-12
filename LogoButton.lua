@@ -91,6 +91,10 @@ ns.OnLoad(function()
         texture:SetSize(46, 46)
     end
     button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    -- Säkra knappar gör som standard sitt jobb när knappen trycks ned (inställningen
+    -- ActionButtonUseKeyDown, SecureActionButton_OnClick), men knappen lyssnar bara på uppsläpp.
+    -- useOnKeyDown = false: jobbet görs vid uppsläpp, en gång per klick.
+    button:SetAttribute("useOnKeyDown", false)
     button:SetAttribute("type", "click")
     button:SetAttribute("clickbutton", MainMenuBarBackpackButton)
     -- Före klicket: med en sak på markören lägger Tidy Pack den i väskorna, och högerklick när

@@ -214,6 +214,10 @@ local function createAboutPage()
     openBags:SetPoint("TOPLEFT", copyHint, "BOTTOMLEFT", 0, -20)
     openBags:SetText(L["Open Bags"])
     openBags:RegisterForClicks("LeftButtonUp")
+    -- Säkra knappar gör som standard sitt jobb när knappen trycks ned (inställningen
+    -- ActionButtonUseKeyDown, SecureActionButton_OnClick), men knappen lyssnar bara på uppsläpp.
+    -- useOnKeyDown = false: jobbet görs vid uppsläpp, en gång per klick.
+    openBags:SetAttribute("useOnKeyDown", false)
     openBags:SetAttribute("type", "click")
     openBags:SetAttribute("clickbutton", MainMenuBarBackpackButton)
     openBags:SetScript("PreClick", function(self)
