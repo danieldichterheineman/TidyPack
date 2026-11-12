@@ -18,12 +18,16 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   Mappar som heter `Camelot` där är Forevers egna ändringar. Verifiera API:er mot den grenen,
   inte mot `live`.
 - SavedVariables: `TidyPackDB` (per konto)
-- Inställningssida i spelets Options → AddOns → Tidy Pack, med en egen sida för
-  skräplistan (`Options.lua`). Öppnas också med `/tidypack`, från addonmenyn vid minikartan
-  (`## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick`) och från kugghjulet (se Beslut).
-- Projektmapp: `/Users/danhei1104/TidyPack`, med git (gren `main`).
-- GitHub: https://github.com/danieldichterheineman/TidyPack (privat, skapat 2026-11-09).
-  Pusha bara efter ett ja från användaren.
+- Inställningarna finns under kugghjulet i väskfönstret (se Funktioner). Spelets Options → AddOns →
+  Tidy Pack visar bara information och länken till CurseForge (`Options.lua`). `/tidypack` och
+  addonmenyn vid minikartan (`## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick`) öppnar
+  väskan med kugghjulets meny.
+- Projektmapp: `TidyPack` i hemmappen på utvecklarens dator, med git (gren `main`).
+- GitHub: https://github.com/danieldichterheineman/TidyPack (skapat 2026-11-09, **publikt**).
+  Pusha bara efter ett ja från användaren. Allt i repot syns för alla: inga nycklar, lösenord,
+  e-postadresser, sökvägar till hemmappen eller andra privata uppgifter i filer eller commits.
+  Hemligheter (som `CF_API_TOKEN`) ligger bara i GitHubs Secrets. Kontrollerat 2026-11-12: inga
+  nycklar i filerna eller i historiken.
 
 ## Funktioner
 - ✅ Elva grupper i fast ordning: Favorites, Empty ("Add to bag"), New, Consumables, Equipment,
@@ -91,7 +95,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   quest är klar. (4) Inställningen `showQuestItemsInBags` ("Show quest items in Bags", påslagen): avstängd
   ersätts gruppen Quest Items i Bags av en rad "N slots hold quest items – see Quests" (`questNote`) som
   öppnar fliken. Inte provat i spelet.
-- ⚠️ Fliken Bank (`Bank.lua`, `Layout.lua`, byggd 2026-11-12 på grenen `claude/bank-tab`, issue #1,
+- ⚠️ Fliken Bank (`Bank.lua`, `Layout.lua`, byggd 2026-11-12, i `main` sedan 2026-11-12, issue #1,
   skissen `.design/sketch-bank-tab.html`): flik 2 mellan Bags och Sets (flikarna är nu Bags 1, Bank 2,
   Sets 3, Quests 4). Hos bankiren (`BANKFRAME_OPENED`/`CLOSED`) visar fliken bankens saker i samma grupper och
   avsnitt som Bags, med egna rutor av spelets mall `ContainerFrameItemButtonTemplate`, en per plats i varje
@@ -148,8 +152,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   lootfönstrets markör, uppe i mitten blir panelen en fråga
   (`GamepadMode.FrameControlsManager:HandlePopupShown`), bara utanför strid. Måste provas i
   spelet, särskilt med handkontroll.
-- ⚠️ Inställningar i väskan (`Options.lua`, `Marks.lua`, `Panels.lua`, 2026-11-12 på grenen
-  `claude/settings-in-bag`, som utgår från `claude/bank-tab`; skissen `.design/sketch-settings-in-bag.html`):
+- ⚠️ Inställningar i väskan (`Options.lua`, `Marks.lua`, `Panels.lua`, 2026-11-12; skissen `.design/sketch-settings-in-bag.html`):
   allt finns under kugghjulet. Menyn: Junk List…, Groups…, undermenyerna Show (Item level and BoE, Upgrade
   arrows, Quest items in Bags, Marks for later quests – grå utan Questie, Bag and bank counts, Tidy Pack lines in
   tooltips `tooltipLines`, Junk value in the header `junkValue`), Merchants and loot (Lock items at merchants, Ask
@@ -319,7 +322,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `TidyPackCharDB.bank` (ny 2026-11-12, inget standardvärde): `{ time, free, items = { { link, count,
   quality, icon, bag, slot, quest, bound, noValue } } }`, sparas vid varje genomgång hos bankiren.
   `TidyPackDB.bankTab` och `showCounts` (sanna från början). Nya nycklar, ingen migrering.
-- `TidyPackDB.tooltipLines` och `junkValue` (nya 2026-11-12, grenen `claude/settings-in-bag`, sanna från
+- `TidyPackDB.tooltipLines` och `junkValue` (nya 2026-11-12, sanna från
   början). Nya nycklar, ingen migrering.
 - Version 2 (2026-11-10): `sellJunkButton` tas bort ur sparad data (knappen finns inte längre).
 - Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
@@ -493,7 +496,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
-50. Inställningar i väskan (2026-11-12, grenen `claude/settings-in-bag`): klicka på kugghjulet. Menyn har
+50. Inställningar i väskan (2026-11-12): klicka på kugghjulet. Menyn har
     Junk List…, Groups…, Show ▸, Merchants and loot ▸, Bag and bank ▸ och Show Tips Again. Peka på en rad:
     tooltipen förklarar. Klicka i en kryssruta: menyn står kvar och väskan ändras bakom (t.ex. Item level and
     BoE). "Marks for later quests" är grå utan Questie. Junk List…: väskan visar skräplistan, ingen flik är
@@ -508,7 +511,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
     i banken: "Bags N · Bank N · Total N" i blått. En sak som bara finns i väskan: ingen rad. Lägg in eller
     ta ut något hos bankiren: siffrorna följer med. "Show bag and bank counts" av: ingen rad.
-48. Fliken Bank (2026-11-12, grenen `claude/bank-tab`): prata med en bankir. Väskan öppnas på fliken Bank,
+48. Fliken Bank (2026-11-12): prata med en bankir. Väskan öppnas på fliken Bank,
     spelets bankfönster syns inte och banken är sorterad i grupper med linjer mellan avsnitten. Högerklick på
     en sak i Bank: den hamnar i väskan. Byt till Bags, högerklicka på en sak: den hamnar i banken. Dra en sak
     från Bank till fliken Bags och släpp den i väskan, och tvärtom. Släpp en sak på tom yta i Bank: den
@@ -692,7 +695,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   `curseforge.com/wow/addons/tidy-pack`. 1.0.0 laddades upp med "publish manually once
   approved" (bekräftat 2026-11-10), så den släpps inte av sig själv när projektet godkänns;
   den har kraschen och ska inte släppas. Hemligheten `CF_API_TOKEN` ligger i repot
-  (2026-11-10). Nyckeln skrevs av misstag i chatten en gång och byttes ut. Arbetsflödet
+  (2026-11-10). Arbetsflödet
   markerar inga filer för manuell release (packagern har ingen sådan flagga), så 1.0.1 blir
   tillgänglig så fort CurseForge godkänt filen.
 - Automatisk uppladdning (pushad och provbyggd 2026-11-10, men ingen riktig tagg är släppt än):
