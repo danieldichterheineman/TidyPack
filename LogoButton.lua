@@ -139,7 +139,11 @@ ns.OnLoad(function()
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", GameTooltip_Hide)
-    button:Hide()
+    -- En säker knapp kan inte döljas i strid (t.ex. /reload mitt i en strid); ApplyBagBarSetting
+    -- väntar då tills striden är över.
+    if not InCombatLockdown() then
+        button:Hide()
+    end
 
     -- Spelet visar sin väskrad igen bland annat när Edit Mode ändrar något.
     hooksecurefunc(BagsBar, "Show", function(self)

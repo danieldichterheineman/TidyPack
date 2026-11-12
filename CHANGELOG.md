@@ -6,7 +6,8 @@
   from an action" after you opened your bags with the Tidy Pack logo. The logo now opens your bags
   the same way as the game's own backpack button.
 - /tidypack and the addon menu open Tidy Pack's page in the game's options when your bags are
-  closed. Press "Open Bags" there to get the gear button's menu.
+  closed. Press "Open Bags" there to get the gear button's menu. The key binding for the Sets tab
+  switches to Sets while your bags are open.
 - New Bank tab, between Bags and Sets. At a banker, your bank is sorted in the same groups and
   parts as your bags, and the game's bank window is hidden. Right-click an item to move it between
   your bank and your bags, or drag it onto the other tab. Drop an item on an empty spot in the Bank

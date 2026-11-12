@@ -21,7 +21,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - Inställningarna finns under kugghjulet i väskfönstret (se Funktioner). Spelets Options → AddOns →
   Tidy Pack visar bara information och länken till CurseForge (`Options.lua`). `/tidypack` och
   addonmenyn vid minikartan (`## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick`) öppnar
-  väskan med kugghjulets meny.
+  kugghjulets meny när väskan är öppen, annars Tidy Packs sida i spelets inställningar (se "Så fungerar det").
 - Projektmapp: `TidyPack` i hemmappen på utvecklarens dator, med git (gren `main`).
 - GitHub: https://github.com/danieldichterheineman/TidyPack (skapat 2026-11-09, **publikt**).
   Pusha bara efter ett ja från användaren. Allt i repot syns för alla: inga nycklar, lösenord,
@@ -166,8 +166,8 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   utfälld grupp med regler, små rutor, "+" och skrivruta, och "+ New group" (klick eller släppt sak). Spelets
   inställningar: sidan "Tidy Pack" (canvas) med logga, version och författare ur TOC-filen, fyra rader hjälp,
   länken till CurseForge (`## X-Website`) i en markerad ruta att kopiera (ett addon kan inte öppna
-  webbläsaren), Open Bags och Show Tips Again. `/tidypack`, addonmenyn och loggans högerklick öppnar väskan med
-  kugghjulets meny (`ns.OpenGearMenu`). `GroupsPage.lua` och skräplistans sida finns inte längre. Avvikelse
+  webbläsaren), Open Bags och Show Tips Again. Loggans högerklick öppnar väskan med kugghjulets meny; `/tidypack` och
+  addonmenyn gör det bara när väskan redan är öppen, annars öppnar de inställningssidan (`ns.OpenGearMenu`). `GroupsPage.lua` och skräplistans sida finns inte längre. Avvikelse
   från skissen: Rename öppnar Tidy Packs ruta för namn (`ns.AskRenameGroup`) i stället för att skriva på
   raden. Med handkontroll är panelernas knappar inte inkopplade i markören. Inte provat i spelet.
 - ⚠️ Quests i förväg (`QuestHints.lua`): kräver Questie (QuestieDB, `## OptionalDeps`).
@@ -516,8 +516,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     med mushjulet. Done eller en flik går tillbaka. Groups…: "+ New group" (klick, eller släpp en sak), ▲▼,
     Rename, ✕ (frågar), klicka en rad för att fälla ut: regler med kryss, små rutor, "+", skrivruta. Esc →
     Options → AddOns → Tidy Pack: logga, version, "By …", hjälpen och länken; klicka på länken, Cmd+C,
-    klistra in i webbläsaren. Open Bags öppnar väskan med menyn. `/tidypack`, addonmenyn vid minikartan och
-    högerklick på loggan gör samma sak. Show ▸ Tidy Pack lines in tooltips av: inga rader om set och grupp.
+    klistra in i webbläsaren. Open Bags öppnar väskan med menyn. Högerklick på loggan gör samma sak;
+    `/tidypack` och addonmenyn gör det med öppen väska (stängd väska: inställningssidan, test 49). Show ▸ Tidy Pack lines in tooltips av: inga rader om set och grupp.
     Junk value in the header av: rubriken Junk utan pengar. Starta om spelet (TOC-filen ändrad).
 49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
     i banken: "Bags N · Bank N · Total N" i blått. En sak som bara finns i väskan: ingen rad. Lägg in eller
@@ -564,7 +564,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     `UpdateContainerFrameAnchors` och efter varje storleksändring). Sakerna sorteras inte. Inte provat i spelet.
 43. Väskor (2026-11-11, skissen `.design/sketch-bag-bar.html`): loggan (`Media/Logo.tga`, 64×64, okomprimerad
     TGA gjord ur `.design/logo.png`) ersätter spelets väskrad (`BagsBar` döljs efter varje Show,
-    `LogoButton.lua`, inställningen `replaceBagBar`): klick öppnar väskan (`ToggleAllBags`), högerklick
+    `LogoButton.lua`, inställningen `replaceBagBar`): klick öppnar väskan (en säker knapp som klickar på `MainMenuBarBackpackButton`, se "Så fungerar det"), högerklick
     inställningarna, en släppt sak läggs i väskorna, ingen siffra på loggan (användarens önskan). I väskfönstret, på en högre rad med pengar (spelets myntruta
     `MoneyFrame.Border` döljs och ritas om 46 hög med samma bilder, `BAR_HEIGHT`; pengarna flyttas upp 10 till mitten
     av raden, `MONEY_RAISE`, men inte när spelet visar valutor under dem; 22 stora ikoner till vänster,

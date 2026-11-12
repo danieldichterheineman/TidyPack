@@ -64,10 +64,11 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   "..." button and choose "Save What I'm Wearing" (it replaces the gear in the set with what you wear), or drop items on the set. The "..." button also renames the set, changes its
   icon, removes an item or deletes it.
 - **Quests tab**: click a heading to open it, then a quest to see its items.
-- **Settings**: `/tidypack` and the minimap's addon menu open the gear button's menu. Esc →
-  Options → AddOns → Tidy Pack has a short guide.
-- **Key bindings**: Esc → Options → Keybindings → AddOns → Tidy Pack, to open the Sets tab
-  or equip sets 1–5.
+- **Settings**: right-click the Tidy Pack logo, or use `/tidypack` or the minimap's addon menu
+  with your bags open, for the gear button's menu. With your bags closed, `/tidypack` opens
+  Esc → Options → AddOns → Tidy Pack, which has a short guide and an "Open Bags" button.
+- **Key bindings**: Esc → Options → Keybindings → AddOns → Tidy Pack, to switch to the Sets tab
+  while your bags are open, or equip sets 1–5.
 
 ## Known limitations
 
