@@ -17,10 +17,12 @@
   where to find updates (a link to copy). /tidypack and the addon menu open the gear button's menu.
 - New options under Show: "Tidy Pack lines in tooltips" and "Junk value in the header".
 - Item tooltips show how many you have in your bags and in your bank, and the total ("Bags 12 ·
-  Bank 40 · Total 52"), also away from the bank. Only for items in your bank. Turn it off with
-  "Show bag and bank counts" in the settings.
+  Bank 40 · Total 52"), also away from the bank. Only for items in your bank. Turn it off under the
+  gear button: Show → Bag and bank counts.
 - The gear button's menu at a banker can show the game's bank window again, for example to buy a
-  bank slot. Turn the Bank tab off with "Use the Bank tab at bankers" in the settings.
+  bank slot. Turn the Bank tab off under the gear button: Bag and bank → Use the Bank tab at bankers.
+- When you point at one of your bags at the bottom of the bag window, the bag itself now glows
+  blue too, in the same color as the items in it.
 
 ## 1.1.0 (2026-11-11)
 
