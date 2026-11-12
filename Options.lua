@@ -98,17 +98,33 @@ ns.optionMenus = {
 -- Öppna inställningarna: väskan med kugghjulets meny
 ---------------------------------------------------------------------------
 
+local settingsCategory
+
+-- Tidy Packs sida i spelets inställningar. Utanför strid; i strid står en rad i chatten.
+local function openAboutPage()
+    if settingsCategory and not InCombatLockdown() then
+        Settings.OpenToCategory(settingsCategory:GetID())
+    else
+        ns.Print(L["Open your bags, then use the gear button for Tidy Pack's options."])
+    end
+end
+
 -- page = "junk" eller "groups" öppnar den panelen i väskan; utan page öppnas kugghjulets meny.
+-- ⚠️ Väskan öppnas aldrig härifrån med OpenAllBags: öppnas den från addonets kod stoppar spelet
+-- sedan bland annat disenchant på sakerna i den (LogoButton.lua). Är väskan stängd (/tidypack,
+-- addonmenyn) öppnas i stället Tidy Packs sida i spelets inställningar, där knappen "Open Bags"
+-- öppnar väskan på ett säkert sätt.
 function ns.OpenSettings(page)
     if not ns.bagFrame then
+        return
+    end
+    if not ns.bagFrame:IsShown() then
+        openAboutPage()
         return
     end
     if page == "junk" or page == "groups" then
         ns.OpenPanel(page)
         return
-    end
-    if not ns.bagFrame:IsShown() then
-        OpenAllBags()
     end
     -- En bildruta senare, när fönstret och kugghjulet syns.
     C_Timer.After(0, function()
@@ -191,12 +207,24 @@ local function createAboutPage()
     copyHint:SetText((IsMacClient and IsMacClient()) and L["Click the link and press Cmd+C to copy it."]
         or L["Click the link and press Ctrl+C to copy it."])
 
-    local openBags = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
+    -- En säker knapp som klickar på spelets ryggsäcksknapp, som loggan (se LogoButton.lua). Är
+    -- väskan redan öppen klickas inte ryggsäcken, så att väskan inte stängs.
+    local openBags = CreateFrame("Button", nil, page, "UIPanelButtonTemplate, SecureActionButtonTemplate")
     openBags:SetSize(130, 22)
     openBags:SetPoint("TOPLEFT", copyHint, "BOTTOMLEFT", 0, -20)
     openBags:SetText(L["Open Bags"])
-    openBags:SetScript("OnClick", function()
-        ns.OpenSettings()
+    openBags:RegisterForClicks("LeftButtonUp")
+    openBags:SetAttribute("type", "click")
+    openBags:SetAttribute("clickbutton", MainMenuBarBackpackButton)
+    openBags:SetScript("PreClick", function(self)
+        if not InCombatLockdown() then
+            self:SetAttribute("type", not (ns.bagFrame and ns.bagFrame:IsShown()) and "click" or nil)
+        end
+    end)
+    openBags:SetScript("PostClick", function()
+        C_Timer.After(0, function()
+            ns.OpenSettings()
+        end)
     end)
     local tips = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
     tips:SetSize(150, 22)
@@ -216,8 +244,8 @@ local function createAboutPage()
 end
 
 ns.OnLoad(function()
-    local category = Settings.RegisterCanvasLayoutCategory(createAboutPage(), L["Tidy Pack"])
-    Settings.RegisterAddOnCategory(category)
+    settingsCategory = Settings.RegisterCanvasLayoutCategory(createAboutPage(), L["Tidy Pack"])
+    Settings.RegisterAddOnCategory(settingsCategory)
 end)
 
 ---------------------------------------------------------------------------

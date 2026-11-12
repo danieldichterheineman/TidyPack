@@ -360,9 +360,8 @@ local function showBankTab()
     if not atBank or not ns.bagFrame then
         return
     end
-    if not ns.bagFrame:IsShown() then
-        OpenAllBags()
-    end
+    -- Spelet öppnar själv väskan vid bankiren. Tidy Pack öppnar den aldrig från sin egen kod (se
+    -- LogoButton.lua).
     if ns.SetView then
         ns.SetView("bank")
     end

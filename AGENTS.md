@@ -221,6 +221,17 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ⚠️ "Combined Bags" (CVar `combinedBags`) slås på en gång vid första inloggningen.
 
 ## Så fungerar det (viktigt vid nya patchar)
+**Öppna aldrig väskan från addonets kod** (`OpenAllBags`, `ToggleAllBags`, `OpenBag`, `ToggleBag`).
+Spelet bygger väskans rutor när den öppnas (`ContainerFrame_GenerateFrame` → `UpdateItemSlots`, som
+skapar och fyller i knapparna). Körs det från ett addons kod blir knapparna och deras värden
+(`bagID`, `Items`) addonets, och spelet stoppar sedan `C_Container.UseContainerItem` när du klickar på
+en sak: disenchant och andra besvärjelser på en sak ger rutan "TidyPack has been blocked from an
+action" (hittat 2026-11-12). Därför är loggan och knappen "Open Bags" på inställningssidan säkra
+knappar (`SecureActionButtonTemplate`, type `click`) som klickar på spelets egen
+`MainMenuBarBackpackButton`, som finns kvar fast väskraden är dold. `/tidypack` och addonmenyn
+öppnar inställningssidan när väskan är stängd, snabbtangenten för Sets skriver en rad, och vid
+bankiren öppnar spelet väskan själv. Att stänga väskan från addonets kod är ofarligt.
+
 Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
 `ContainerFrameCombinedBags` och använder bara `hooksecurefunc` och `HookScript`, aldrig
 överskrivna funktioner:
@@ -529,6 +540,11 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     osynlig ram över rubriken: antal saker, platser, värde; en släppt sak läggs i väskan); kortare tooltip på
     kugghjulet och loggan; spelets ljud (IG_CHARACTER_INFO_OPEN/CLOSE) för paneler och ikonval; en mörk hinna
     som tonas bort på 0,12 s när innehållet byts (`ns.PlayViewTransition`). Inte provat i spelet.
+49. Disenchant (2026-11-12): öppna väskan med loggan efter `/reload`, disenchanta en sak och använd en sak
+    på en annan (t.ex. en sten på ett vapen): ingen ruta "blocked from an action". Klick på loggan öppnar
+    och stänger, högerklick öppnar kugghjulets meny (väskan öppnas först om den är stängd), en sak på
+    markören läggs i väskorna. `/tidypack` med stängd väska: Tidy Packs sida i spelets inställningar, och
+    "Open Bags" där öppnar väskan med kugghjulets meny. I strid: loggan öppnar och stänger väskan.
 47. Uppgraderingspil (2026-11-11): `bags-greenarrow` uppe till höger på utrustning (inte skräp) vars nivå
     (`C_Item.GetCurrentItemLevel`) är högre än den sämre av platserna den passar (`SLOTS_FOR`, INVSLOT_*; tom
     plats = 0) och som du kan använda (ingen röd rad i `C_TooltipInfo.GetBagItem`, sparat per länk tills du går

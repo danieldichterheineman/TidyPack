@@ -832,8 +832,10 @@ function keys:OpenSets()
     if not ns.bagFrame then
         return
     end
+    -- Väskan öppnas aldrig från addonets kod (se LogoButton.lua): är den stängd står en rad i chatten.
     if not ns.bagFrame:IsShown() then
-        OpenAllBags()
+        ns.Print(L["Open your bags first, then press the key again."])
+        return
     end
     ns.SetView("sets")
 end

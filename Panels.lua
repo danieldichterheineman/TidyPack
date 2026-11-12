@@ -580,11 +580,9 @@ end
 
 -- Kugghjulets meny: öppna skräplistan eller grupperna i väskan.
 function ns.OpenPanel(view)
-    if not ns.bagFrame then
+    -- Bara när väskan är öppen: den öppnas aldrig från addonets kod (se LogoButton.lua).
+    if not ns.bagFrame or not ns.bagFrame:IsShown() then
         return
-    end
-    if not ns.bagFrame:IsShown() then
-        OpenAllBags()
     end
     if ns.SetView then
         ns.SetView(view)

@@ -5,6 +5,12 @@
 -- lediga platser står i tooltipen och i väskfönstret. Väskorna
 -- byts i stället i väskraden längst ner i väskfönstret (Layout.lua).
 -- Inställningen "Replace the game's bag buttons" (replaceBagBar) tar tillbaka spelets väskrad.
+-- ⚠️ Loggan öppnar väskan genom att klicka på spelets egen ryggsäcksknapp (en säker knapp med
+--    type "click"), aldrig med ToggleAllBags från addonets kod. Spelet bygger väskans rutor när den
+--    öppnas, och öppnas den från ett addons kod blir rutorna "addonets". Då stoppar spelet allt som
+--    bara spelet självt får göra med dem, till exempel att disenchanta eller använda en sak på en
+--    annan (rutan "blocked from an action", hittat 2026-11-12). En säker knapp kan inte visas eller
+--    döljas i strid, så inställningen väntar tills striden är över.
 -- ⚠️ Spelets väskrad döljs efter varje Show, även i Edit Mode. Den går inte att flytta i Edit Mode
 --    så länge loggan ersätter den; loggan följer mikromenyn (flyttas den, följer loggan med).
 
@@ -17,8 +23,22 @@ local FRAME_ATLAS = "ui-hud-actionbar-iconframe-bags" -- spelets ram för väskk
 local button
 
 -- Visar loggan och döljer spelets väskrad, eller tvärtom.
+local waitingForCombat = false
+
 function ns.ApplyBagBarSetting()
     if not button or not BagsBar then
+        return
+    end
+    if InCombatLockdown() then
+        if not waitingForCombat then
+            waitingForCombat = true
+            ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
+                if waitingForCombat then
+                    waitingForCombat = false
+                    ns.ApplyBagBarSetting()
+                end
+            end)
+        end
         return
     end
     if ns.db.replaceBagBar then
@@ -39,7 +59,9 @@ ns.OnLoad(function()
     -- beskuren av spelets mask, spelets ram för väskknappar ovanpå och actionbarens ram bakom. Den står
     -- direkt till höger om mikromenyn, där spelets väskor började, så att det ser ut som att väskraden
     -- krympt till en väska med Tidy Packs logga.
-    button = CreateFrame("Button", "TidyPackBagButton", UIParent)
+    -- En säker knapp (SecureActionButtonTemplate) som klickar på spelets ryggsäcksknapp, som finns
+    -- kvar fast väskraden är dold. Se ⚠️ högst upp.
+    button = CreateFrame("Button", "TidyPackBagButton", UIParent, "SecureActionButtonTemplate")
     button:SetSize(SIZE, SIZE)
     if MicroMenuContainer then
         button:SetPoint("LEFT", MicroMenuContainer, "RIGHT", 10, 0)
@@ -69,13 +91,35 @@ ns.OnLoad(function()
         texture:SetSize(46, 46)
     end
     button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-    button:SetScript("OnClick", function(_, mouseButton)
-        if GetCursorInfo() == "item" and ns.PutCursorItemInBags then
+    button:SetAttribute("type", "click")
+    button:SetAttribute("clickbutton", MainMenuBarBackpackButton)
+    -- Före klicket: med en sak på markören lägger Tidy Pack den i väskorna, och högerklick när
+    -- väskan redan är öppen ska bara öppna menyn. Då klickas inte ryggsäcken. Attribut kan inte
+    -- ändras i strid; då gör knappen som spelets ryggsäck (öppnar eller stänger väskan, en sak
+    -- läggs i ryggsäcken).
+    local putItem = false
+    button:SetScript("PreClick", function(self, mouseButton)
+        putItem = false
+        if InCombatLockdown() then
+            return
+        end
+        putItem = GetCursorInfo() == "item" and ns.PutCursorItemInBags ~= nil
+        local bagOpen = ns.bagFrame and ns.bagFrame:IsShown()
+        if putItem or (mouseButton == "RightButton" and bagOpen) then
+            self:SetAttribute("type", nil)
+        else
+            self:SetAttribute("type", "click")
+        end
+    end)
+    button:SetScript("PostClick", function(_, mouseButton)
+        if putItem then
+            putItem = false
             ns.PutCursorItemInBags()
         elseif mouseButton == "RightButton" then
-            ns.OpenSettings()
-        else
-            ToggleAllBags()
+            -- En bildruta senare, när väskan som ryggsäcksknappen öppnade syns.
+            C_Timer.After(0, function()
+                ns.OpenSettings()
+            end)
         end
     end)
     button:SetScript("OnReceiveDrag", function()
