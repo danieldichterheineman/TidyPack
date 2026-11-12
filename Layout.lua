@@ -75,6 +75,10 @@ local LAST_BAG = Constants.InventoryConstants.NumBagSlots + Constants.InventoryC
 -- Utrustning där nivån inte säger något visas utan nivå (skjortor och tabarder).
 local NO_LEVEL = { INVTYPE_BODY = true, INVTYPE_TABARD = true, INVTYPE_NON_EQUIP_IGNORE = true }
 
+-- Det blå skenet när musen står på en väska i väskraden: på sakerna i väskan och på väskan själv.
+local BAG_GLOW_ATLAS = "bags-glow-white" -- spelets glöd för nya saker, färgad blå
+local BAG_GLOW_COLOR = { 0.25, 0.6, 1 }
+
 -- Stjärnan framför rubriken Favorites.
 local FAVORITE_ICON = "|A:auctionhouse-icon-favorite:13:13|a "
 
@@ -305,10 +309,10 @@ local function getExtras(button)
         extra.upgrade:SetSize(14, 16)
         extra.upgrade:SetPoint("TOPRIGHT", -1, -1)
         extra.upgrade:Hide()
-        extra.bagGlow:SetAtlas("bags-glow-white", true)
+        extra.bagGlow:SetAtlas(BAG_GLOW_ATLAS, true)
         extra.bagGlow:SetPoint("CENTER")
         extra.bagGlow:SetBlendMode("ADD")
-        extra.bagGlow:SetVertexColor(0.25, 0.6, 1)
+        extra.bagGlow:SetVertexColor(unpack(BAG_GLOW_COLOR))
         extra.bagGlow:Hide()
         extra.altBg:SetColorTexture(0, 0, 0, 0.75)
         extra.altBg:SetSize(18, 11)
@@ -1345,6 +1349,8 @@ ns.OnLoad(function()
         end
         GameTooltip:Show()
         dimOthers(self.bagID)
+        -- Väskan själv får samma blå sken som sakerna i den (användarens önskan 2026-11-12).
+        self.glow:Show()
     end
     for bagID = 0, Constants.InventoryConstants.NumBagSlots do
         local button = CreateFrame("Button", nil, freeHolder)
@@ -1360,13 +1366,24 @@ ns.OnLoad(function()
         button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
         button.count:SetPoint("BOTTOMRIGHT", 3, -2)
         button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        -- Samma sken som på sakerna (BAG_GLOW_ATLAS). Bilden är gjord för en ruta på 37 enheter, så
+        -- den krymps lika mycket som väskikonen är mindre än en ruta.
+        button.glow = button:CreateTexture(nil, "OVERLAY", nil, 7)
+        button.glow:SetAtlas(BAG_GLOW_ATLAS, true)
+        local glowWidth, glowHeight = button.glow:GetSize()
+        button.glow:SetSize(glowWidth * BAG_ICON / BUTTON, glowHeight * BAG_ICON / BUTTON)
+        button.glow:SetPoint("CENTER")
+        button.glow:SetBlendMode("ADD")
+        button.glow:SetVertexColor(unpack(BAG_GLOW_COLOR))
+        button.glow:Hide()
         button:RegisterForClicks("LeftButtonUp")
         button:SetScript("OnClick", onBagDrop)
         button:SetScript("OnReceiveDrag", onBagDrop)
         button:SetScript("OnEnter", showBagTooltip)
-        button:SetScript("OnLeave", function()
+        button:SetScript("OnLeave", function(self)
             GameTooltip_Hide()
             dimOthers(nil)
+            self.glow:Hide()
         end)
         bagButtons[bagID] = button
     end

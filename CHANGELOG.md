@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- When you point at one of your bags at the bottom of the bag window, the bag itself now glows
+  blue too, in the same color as the items in it.
+
 ## 1.1.0 (2026-11-11)
 
 - More room for your items: the search box and the bag icon in the top left corner are gone, and

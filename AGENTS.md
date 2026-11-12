@@ -466,7 +466,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     `MoneyFrame.Border` döljs och ritas om 46 hög med samma bilder, `BAR_HEIGHT`; pengarna flyttas upp 10 till mitten
     av raden, `MONEY_RAISE`, men inte när spelet visar valutor under dem; 22 stora ikoner till vänster,
     pengarna till höger): "N free"
-    följt av fem små väskikoner (antal platser); musen över en ger sakerna i den ett blått sken (`bagGlow`) och tonar ner resten;
+    följt av fem små väskikoner (antal platser); musen över en ger sakerna i den och väskikonen själv samma blåa sken (`bagGlow` och `button.glow`,
+    färgen `BAG_GLOW_COLOR`; väskikonens sken tillagt 2026-11-12) och tonar ner resten;
     en väska som släpps på en plats byter ut den (`PutItemInBag`), en vanlig sak läggs i den väskan;
     medan du håller en väska lyser platserna och raden säger "Drop on one of your bags to swap it".
     Alla tre flikar byter när du håller en sak över dem. Inte provat i spelet.
