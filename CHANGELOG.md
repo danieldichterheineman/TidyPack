@@ -21,6 +21,8 @@
   gear button: Show → Bag and bank counts.
 - The gear button's menu at a banker can show the game's bank window again, for example to buy a
   bank slot. Turn the Bank tab off under the gear button: Bag and bank → Use the Bank tab at bankers.
+- The bank's contents are saved every time they change at a banker, also when the Bank tab isn't
+  shown, so the counts in tooltips are always up to date.
 - When you point at one of your bags at the bottom of the bag window, the bag itself now glows
   blue too, in the same color as the items in it.
 

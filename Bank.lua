@@ -173,6 +173,33 @@ function ns.GetBankFreeSlots()
     return saved and saved.free or 0
 end
 
+-- Sparar bankens innehåll för senare (borta från banken, och antalen i tooltipen). Körs hos bankiren
+-- varje gång banken ändras, också när fliken Bank inte syns – annars visade tooltipen det gamla
+-- antalet tills fliken öppnades (granskning 2026-11-12).
+local function saveBank()
+    if not atBank or not ns.charDb then
+        return
+    end
+    local items, free = {}, 0
+    for _, containerID in ipairs(bankContainers()) do
+        for slot = 1, C_Container.GetContainerNumSlots(containerID) do
+            local info = C_Container.GetContainerItemInfo(containerID, slot)
+            if info then
+                items[#items + 1] = {
+                    link = info.hyperlink, count = info.stackCount or 1, quality = info.quality,
+                    icon = info.iconFileID, bag = containerID, slot = slot,
+                    quest = ns.IsQuestItem(containerID, slot, info) or nil,
+                    bound = info.isBound or nil, noValue = info.hasNoValue or nil,
+                }
+            else
+                free = free + 1
+            end
+        end
+    end
+    freeSlots = free
+    ns.charDb.bank = { time = time(), free = free, items = items }
+end
+
 -- Går igenom bankens platser. Hos bankiren: varje plats, med spelets data (info nil för en tom
 -- plats), och banken sparas för senare. Borta: de sparade sakerna (offline = true).
 -- callback(button, bagID, slot, info, offline, isQuestItem)
@@ -346,6 +373,7 @@ ns.RegisterEvent("BANKFRAME_OPENED", function()
     atBank = true
     showGameFrame = false
     bankTabShown = false
+    saveBank()
     updateGameBankFrame()
     if takesOverBank() then
         -- En bildruta senare: spelet öppnar själv väskorna när banken öppnas.
@@ -365,9 +393,13 @@ ns.RegisterEvent("BANKFRAME_CLOSED", function()
     end
 end)
 
--- Bankens innehåll ändras: lägg ut igen, men bara när banken syns.
+-- Bankens innehåll ändras: spara det alltid hos bankiren, och lägg ut igen när banken syns.
 local function refreshIfBankShown()
-    if atBank and ns.GetView and ns.GetView() == "bank" and ns.Refresh then
+    if not atBank then
+        return
+    end
+    saveBank()
+    if ns.GetView and ns.GetView() == "bank" and ns.Refresh then
         ns.Refresh()
     end
 end

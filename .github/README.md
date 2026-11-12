@@ -20,22 +20,26 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
 
 ## What it does
 
-- **Groups:** Favorites, New, Consumables, Equipment, Trade Goods, Quest Items, Keys, Spare
-  Bags, Miscellaneous and Junk. An "Add to bag" slot shows your free slots and takes dropped
-  items. Special bags (quivers, soul bags, profession bags, the reagent bag) get their own
-  groups at the bottom.
+- **Groups:** Favorites, New, Consumables, Equipment, crafting materials by type, Quest Items,
+  Keys, Spare Bags, Miscellaneous and Junk, in five parts. Drop an item anywhere in the bag to
+  put it away. Special bags (quivers, soul bags, profession bags) get their own groups at the
+  bottom.
 - **Your own groups:** make groups like "Potions", and put single items or whole item types
   in them by Alt-clicking an item.
 - **Quests:** quest items show "3/7", and the Quests tab lists your quests – open one to see its
   items and what is still missing.
+- **Bank:** a Bank tab sorts your bank the same way, and remembers it when you're away.
+  Tooltips show how many you have in your bags and bank.
 - **Sets:** up to five sets with a name and icon, like "Fishing", in the Sets tab. Click a set
-  to put it on, or use its "..." button and choose "Add What I'm Wearing". Missing items are
-  greyed out.
+  to put it on, drag its icon to an action bar, or use its "..." button and choose "Add What I'm
+  Wearing". Missing items are greyed out.
 - **Locks:** quest items, items your quests ask for and items in your sets can't be sold by
-  mistake at a merchant (can be turned off in the settings).
+  mistake at a merchant (can be turned off in the gear button's menu).
 - **Junk list and full bags:** Tidy Pack asks before deleting anything, and only when you
   press Delete.
-- **Favorites, item level and BoE, quick bag swaps, Questie hints, key bindings and full
+- **Your bags at a glance:** the Tidy Pack logo replaces the game's bag buttons, and your bags
+  are shown at the bottom of the bag window – drop a bigger bag on one to swap it.
+- **Favorites, upgrade arrows, item level and BoE, Questie hints, key bindings and full
   controller support.**
 
 The complete list, usage and known limitations are in [README.md](../README.md), which is also

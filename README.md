@@ -14,11 +14,16 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   The groups come in five parts: your own, everyday, crafting, quests and the rest. Your free
   slots are shown at the bottom left.
 - **Your own groups**: make groups like "Potions" or "Food & Drink" – Alt-click an item to put it
-  in one, or add a whole type at once ("Add all Potion items to Group"). Manage them
-  under Esc → Options → AddOns → Tidy Pack → Groups.
+  in one, or add a whole type at once ("Add all Potion items to Group"). Manage them from the
+  gear button, right in the bag window.
 - **Quests**: quest items show how many you have and need ("3/7") and which quest wants them. The
   Quests tab lists your quests with ready ones first – open a quest to see its items and what is
   still missing. Extra stacks of an item that a quest only needs some of can be sold.
+- **Bank tab**: at a banker, your bank is sorted in the same groups as your bags. Right-click or
+  drag items between your bank and your bags, or drop an item on an empty spot to put it in
+  your bank. Away from the bank, the tab shows what your bank held the last time you were there.
+- **Bag and bank counts**: item tooltips show how many you have in your bags and in your bank
+  ("Bags 12 · Bank 40 · Total 52").
 - **Crafting materials** are grouped by type (Cloth, Herb, Leather …), with the ones your
   professions use first.
 - **Your bags at a glance**: the Tidy Pack logo replaces the game's bag buttons, and your bags
@@ -33,7 +38,7 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   something is missing.
 - **Locked items**: quest items, items your active quests ask for and items in your sets
   can't be sold by mistake at a merchant. Their tooltip tells you why. You can turn the locks
-  off in the settings.
+  off in the gear button's menu.
 - **Junk list**: whenever you loot an item on the list, Tidy Pack asks whether to delete it.
 - **Bags full**: when something can't be looted, Tidy Pack suggests an item to delete.
   Nothing is ever deleted until you press Delete.
@@ -51,15 +56,16 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Item options**: hold Alt (Option on a Mac) to see a small "..." on every item, then
   Alt-click one for a menu: favorite, junk list, sets and your own groups. With a controller, pick the item up and drop
   it on the gear button.
-- **Gear button** (next to the close button): click it for your junk list, groups and settings.
+- **Gear button** (next to the close button): all options, in three menus (Show, Merchants and
+  loot, Bag and bank), plus your junk list and your own groups, which open in the bag window.
 - **Sets tab**: click an empty place, or drop an item on it, type a name and press Enter. Click
   a set's icon to choose a new one, or drag it to an action bar to put the set on with one
   click there. Then use the set's
   "..." button and choose "Add What I'm Wearing", or drop items on the set. The "..." button also renames the set, changes its
   icon, removes an item or deletes it.
 - **Quests tab**: click a heading to open it, then a quest to see its items.
-- **Settings**: type `/tidypack`, use the minimap's addon menu, or go to Esc → Options →
-  AddOns → Tidy Pack.
+- **Settings**: `/tidypack` and the minimap's addon menu open the gear button's menu. Esc →
+  Options → AddOns → Tidy Pack has a short guide.
 - **Key bindings**: Esc → Options → Keybindings → AddOns → Tidy Pack, to open the Sets tab
   or equip sets 1–5.
 
@@ -76,6 +82,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - With a mouse, the game shows the reagent bag in its own window. Tidy Pack attaches that window
   to its own, but doesn't sort the reagent bag's items into groups.
 - There is no search box: Tidy Pack's groups take its place.
+- The Bank tab shows your character's bank, not the account-wide bank. With a controller, the
+  game's own bank window is used.
 
 ## Feedback
 
