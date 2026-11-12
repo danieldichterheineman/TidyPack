@@ -21,6 +21,15 @@
   gear button: Show → Bag and bank counts.
 - The gear button's menu at a banker can show the game's bank window again, for example to buy a
   bank slot. Turn the Bank tab off under the gear button: Bag and bank → Use the Bank tab at bankers.
+- The window's title follows the tab: Backpack, Bank, Sets or Quests (and Junk List or Groups).
+- Esc first closes the junk list, your groups or the icon grid and goes back to the tab, like
+  Done. The next Esc closes your bags, as in the game's own windows.
+- The line above special bags is the same thin line as between the parts of the Bags tab.
+- Point at a group's heading to see how many items it holds, in how many slots, and what they're
+  worth at a merchant.
+- Shorter tooltips on the gear button and the Tidy Pack logo, in the same style as the rest.
+- The game's own sounds when the junk list, your groups and the icon grid open and close, and a
+  short fade when the content of the bag window changes.
 - The bank's contents are saved every time they change at a banker, also when the Bank tab isn't
   shown, so the counts in tooltips are always up to date.
 - When you point at one of your bags at the bottom of the bag window, the bag itself now glows

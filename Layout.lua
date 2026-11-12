@@ -66,8 +66,10 @@ local function searchRoom()
 end
 local LOW_SPACE = 5        -- så här få lediga platser gör siffran för lediga platser röd
 local SECTION_GAP = 8      -- luft ovanför och under linjen mellan två avsnitt
-local DIVIDER_ATLAS = "bank-divider" -- spelets linje i Forevers bankfönster (Camelot/BankFrame.xml)
-local DIVIDER_GAP = 6      -- luft ovanför och under linjen före specialväskorna
+-- Linjen före specialväskorna är samma tunna gula linje som mellan avsnitten (granskning 2026-11-12:
+-- två olika linjer, spelets bredare bank-divider här och en tunn mellan avsnitten).
+local LINE_COLOR = { 1, 0.82, 0, 0.18 }
+local DIVIDER_GAP = 8      -- luft ovanför och under linjen före specialväskorna (som SECTION_GAP)
 -- Väskplatser som kan ha en specialväska: de fyra vanliga och reagensväskan. Med mus visar
 -- spelet reagensväskan i ett eget fönster, och då finns den inte i det här.
 local LAST_BAG = Constants.InventoryConstants.NumBagSlots + Constants.InventoryConstants.NumReagentBagSlots
@@ -164,20 +166,63 @@ end
 
 local headers = { objects = {}, used = 0 }
 
-local function acquireHeader()
+-- Tooltipen på en grupps rubrik: hur många saker, hur många platser de tar och vad de är värda hos en
+-- handlare (granskning 2026-11-12). Rubrikerna själva hålls korta.
+local function showHeaderTooltip(hover)
+    local list = hover.group and groupLists[hover.group]
+    if not list then
+        return
+    end
+    local slots, items, value = 0, 0, 0
+    for _, entry in ipairs(list) do
+        if not entry.isEmpty then
+            slots = slots + 1
+            items = items + (entry.count or 1)
+            local sellPrice = entry.link and select(11, C_Item.GetItemInfo(entry.link))
+            value = value + (sellPrice or 0) * (entry.count or 1)
+        end
+    end
+    GameTooltip:SetOwner(hover, "ANCHOR_TOPLEFT")
+    GameTooltip_SetTitle(GameTooltip, ns.groupNames[hover.group] or hover.text:GetText())
+    GameTooltip_AddNormalLine(GameTooltip, (slots == 1 and L["%d items in 1 slot"] or L["%d items in %d slots"])
+        :format(items, slots))
+    if value > 0 then
+        GameTooltip_AddNormalLine(GameTooltip, L["Worth %s at a merchant"]:format(GetMoneyString(value)))
+    end
+    GameTooltip:Show()
+end
+
+local function acquireHeader(group)
     headers.used = headers.used + 1
     local header = headers.objects[headers.used]
     if not header then
         header = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         headers.objects[headers.used] = header
+        -- En osynlig ram över rubriken tar emot musen. En sak som släpps där läggs i väskan, som på
+        -- tom yta (Layout.lua, dropAnywhere).
+        local hover = CreateFrame("Frame", nil, overlay)
+        hover:SetAllPoints(header)
+        hover:EnableMouse(true)
+        hover.text = header
+        hover:SetScript("OnEnter", showHeaderTooltip)
+        hover:SetScript("OnLeave", GameTooltip_Hide)
+        hover:SetScript("OnReceiveDrag", function()
+            if ns.PutCursorItemInBags then
+                ns.PutCursorItemInBags()
+            end
+        end)
+        header.hover = hover
     end
+    header.hover.group = group
     header:Show()
+    header.hover:Show()
     return header
 end
 
 local function releaseHeaders()
     for _, header in ipairs(headers.objects) do
         header:Hide()
+        header.hover:Hide()
     end
     headers.used = 0
 end
@@ -614,7 +659,7 @@ local function placeSectionLines()
         local line = sectionLines[index]
         if not line then
             line = overlay:CreateTexture(nil, "ARTWORK")
-            line:SetColorTexture(1, 0.82, 0, 0.18)
+            line:SetColorTexture(unpack(LINE_COLOR))
             sectionLines[index] = line
         end
         line:SetSize(gridWidth + 8, 1)
@@ -743,7 +788,7 @@ local function flow(cols, apply, junkValue)
             left, shelfHeight = 0, 0
         end
         if apply then
-            local header = acquireHeader()
+            local header = acquireHeader(group)
             header:SetText(text)
             headerX[headers.used], headerY[headers.used] = left, y
             if hideQuests then
@@ -1165,6 +1210,20 @@ local function layoutBankView(atMerchant, cols)
     commit(atMerchant)
 end
 
+-- Fönstrets titel följer fliken (granskning 2026-11-12: det stod "Backpack" också i Bank, Sets och
+-- Quests). Ordet för ryggsäcken är spelets eget (BACKPACK_TOOLTIP), så det följer spelets språk.
+local function updateTitle()
+    if not bagFrame then
+        return
+    end
+    local titles = {
+        bags = BACKPACK_TOOLTIP, bank = L["Bank"], sets = L["Sets"], quests = L["Quests"],
+        junk = L["Junk List"], groups = L["Groups"],
+    }
+    local view = ns.GetView and ns.GetView() or "bags"
+    bagFrame:SetTitle(titles[view] or BACKPACK_TOOLTIP)
+end
+
 -- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
 -- storlek. Körs efter spelets egen utläggning och varje gång innehållet ändras.
 local function relayout()
@@ -1173,6 +1232,7 @@ local function relayout()
     end
     local atMerchant = ns.IsAtMerchant()
     local view = ns.GetView and ns.GetView() or "bags"
+    updateTitle()
 
     -- 1. Sortera in varje sak i sin grupp, och räkna ut fliken Bags storlek. Alla tre flikarna
     -- får samma bredd och höjd: den högsta av fliken Bags, de fem platserna i Sets och Quests
@@ -1245,8 +1305,8 @@ local function relayout()
     dividerY = select(2, flow(gridCols, true, junkValue))
     placeSectionLines()
     if dividerY then
-        anchor(divider, -6, dividerY)
-        divider:SetWidth(gridWidth + 12)
+        anchor(divider, -4, dividerY)
+        divider:SetWidth(gridWidth + 8)
         divider:Show()
     else
         divider:Hide()
@@ -1402,6 +1462,36 @@ ns.OnLoad(function()
     end
     ns.PutCursorItemInBags = dropAnywhere -- också loggknappen (LogoButton.lua)
     inset:EnableMouse(true)
+    -- En kort övergång när innehållet byts (flik, panel eller ikonval): en mörk hinna över bakgrunden
+    -- som tonas bort på en tiondels sekund, i stället för att allt hoppar på plats (granskning
+    -- 2026-11-12). Den tar inte emot musen, så inget blir svårare att klicka på.
+    local curtain = CreateFrame("Frame", nil, bagFrame)
+    curtain:SetFrameStrata("HIGH")
+    curtain:SetAllPoints(inset)
+    curtain.shade = curtain:CreateTexture(nil, "OVERLAY")
+    curtain.shade:SetAllPoints()
+    curtain.shade:SetColorTexture(0, 0, 0, 1)
+    curtain:SetAlpha(0)
+    curtain:Hide()
+    local fade = curtain:CreateAnimationGroup()
+    local alpha = fade:CreateAnimation("Alpha")
+    alpha:SetFromAlpha(0.6)
+    alpha:SetToAlpha(0)
+    alpha:SetDuration(0.12)
+    alpha:SetSmoothing("OUT")
+    fade:SetScript("OnFinished", function()
+        curtain:SetAlpha(0)
+        curtain:Hide()
+    end)
+    function ns.PlayViewTransition()
+        if not bagFrame:IsShown() then
+            return
+        end
+        fade:Stop()
+        curtain:Show()
+        fade:Play()
+    end
+
     -- Mushjulet rullar listan i fliken Quests.
     inset:EnableMouseWheel(true)
     inset:SetScript("OnMouseWheel", function(_, delta)
@@ -1782,11 +1872,8 @@ ns.OnLoad(function()
     -- Linjen ovanför specialväskorna, lika bred som rutorna och lite till (bredden sätts vid
     -- varje utläggning, eftersom antalet kolumner kan ändras).
     divider = overlay:CreateTexture(nil, "ARTWORK")
-    divider:SetAtlas(DIVIDER_ATLAS)
-    local atlasInfo = C_Texture.GetAtlasInfo(DIVIDER_ATLAS)
-    local dividerWidth = gridWidth + 12
-    divider:SetSize(dividerWidth, atlasInfo and atlasInfo.width > 0
-        and math.max(2, math.floor(atlasInfo.height * dividerWidth / atlasInfo.width + 0.5)) or 8)
+    divider:SetColorTexture(unpack(LINE_COLOR))
+    divider:SetSize(gridWidth + 8, 1)
     divider:Hide()
 
     hooksecurefunc(bagFrame, "UpdateFrameSize", onFrameSizeUpdated)
@@ -1822,11 +1909,8 @@ ns.OnLoad(function()
     -- Rubriken "Backpack" i stället för spelets "Combined Backpack" (användarens önskan).
     -- Spelet sätter sin rubrik i UpdateName, så Tidy Pack byter den direkt efteråt. Ordet
     -- är spelets eget (BACKPACK_TOOLTIP), så det följer spelets språk.
-    local function setTitle()
-        bagFrame:SetTitle(BACKPACK_TOOLTIP)
-    end
-    hooksecurefunc(bagFrame, "UpdateName", setTitle)
-    setTitle()
+    hooksecurefunc(bagFrame, "UpdateName", updateTitle)
+    updateTitle()
 
     -- Spelets knapp för att städa väskorna behövs inte: sakerna visas alltid grupperade.
     -- Spelet visar den igen varje gång fönstret uppdateras, så den döljs direkt efteråt.

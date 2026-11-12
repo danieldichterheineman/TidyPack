@@ -246,18 +246,15 @@ end
 -- (spelet visar den symbol som din kontroll har).
 local function showTooltip(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+    -- Samma stil som Tidy Packs andra knappar: rubrik, en rad om vad knappen är, en rad om hur.
     GameTooltip_SetTitle(GameTooltip, L["Tidy Pack"])
+    GameTooltip_AddNormalLine(GameTooltip, L["Options, your junk list and your own groups."])
     if InputUtil.IsGamepadUIEnabled() then
         local icon = ns.GamepadIcon and ns.GamepadIcon(GAMEPAD_FACE_BOTTOM) or ""
-        local text = L["Pick up an item, then drop it here to make it a favorite, put it on your junk list or add it to a set or group."]
-        GameTooltip_AddNormalLine(GameTooltip, icon ~= "" and (icon .. " " .. text) or text)
+        local text = L["Pick up an item and drop it here for its options."]
+        GameTooltip_AddInstructionLine(GameTooltip, icon ~= "" and (icon .. " " .. text) or text)
     else
-        GameTooltip_AddNormalLine(GameTooltip, L["Drop an item here to make it a favorite, put it on your junk list or add it to a set or group."])
-    end
-    GameTooltip_AddNormalLine(GameTooltip, L["Click for your junk list, groups and settings."])
-    if not InputUtil.IsGamepadUIEnabled() then
-        GameTooltip_AddBlankLineToTooltip(GameTooltip)
-        GameTooltip_AddInstructionLine(GameTooltip, ns.KeyText(L["Alt-click an item for its Tidy Pack options: favorite, junk list, sets and groups."]))
+        GameTooltip_AddInstructionLine(GameTooltip, ns.KeyText(L["Drop an item here, or Alt-click one, for its options."]))
     end
     GameTooltip:Show()
 end

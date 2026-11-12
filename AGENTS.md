@@ -522,6 +522,12 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     banken: "Visit a banker once …". Inställningen "Use the Bank tab at bankers" av: spelets fönster som
     vanligt. Inget "Interface action failed" och inget felmeddelande om blockerade handlingar
     (`/console taintLog 1`). Med handkontroll: spelets bankfönster som vanligt.
+48. Finputs (2026-11-12): titeln följer vyn (`updateTitle` i relayout); Esc stänger panel eller ikonval före
+    väskan via `RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, ...)` (Forevers kö för Esc); linjen före
+    specialväskorna är samma tunna linje som mellan avsnitten (`LINE_COLOR`); tooltip på grupprubrikerna (en
+    osynlig ram över rubriken: antal saker, platser, värde; en släppt sak läggs i väskan); kortare tooltip på
+    kugghjulet och loggan; spelets ljud (IG_CHARACTER_INFO_OPEN/CLOSE) för paneler och ikonval; en mörk hinna
+    som tonas bort på 0,12 s när innehållet byts (`ns.PlayViewTransition`). Inte provat i spelet.
 47. Uppgraderingspil (2026-11-11): `bags-greenarrow` uppe till höger på utrustning (inte skräp) vars nivå
     (`C_Item.GetCurrentItemLevel`) är högre än den sämre av platserna den passar (`SLOTS_FOR`, INVSLOT_*; tom
     plats = 0) och som du kan använda (ingen röd rad i `C_TooltipInfo.GetBagItem`, sparat per länk tills du går

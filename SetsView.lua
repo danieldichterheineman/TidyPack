@@ -76,7 +76,20 @@ end
 local PANEL_VIEWS = { junk = true, groups = true }
 
 function ns.SetView(newView)
+    local oldView = view
     view = (TAB_OF[newView] or PANEL_VIEWS[newView]) and newView or "bags"
+    -- Spelets ljud när en panel (skräplistan, grupperna) öppnas och stängs, som ikonvalet; byte mellan
+    -- flikar har redan flikarnas eget ljud. Och en kort övergång när innehållet byts (Layout.lua).
+    if view ~= oldView then
+        if PANEL_VIEWS[view] and not PANEL_VIEWS[oldView] then
+            PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN)
+        elseif PANEL_VIEWS[oldView] and not PANEL_VIEWS[view] then
+            PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
+        end
+        if ns.PlayViewTransition then
+            ns.PlayViewTransition()
+        end
+    end
     if tabSystem then
         tabSystem:SetTabVisuallySelected(TAB_OF[view] or 0)
     end
@@ -588,6 +601,10 @@ function ns.OpenIconPicker(index)
     if not ns.GetSets()[index] then
         return
     end
+    PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN)
+    if ns.PlayViewTransition then
+        ns.PlayViewTransition()
+    end
     pickerIndex = index
     if ns.Refresh then
         ns.Refresh()
@@ -619,6 +636,7 @@ local function createPicker(width)
     picker.done:SetPoint("RIGHT", -4, 0)
     picker.done:SetText(L["Done"])
     picker.done:SetScript("OnClick", function()
+        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
         closeIconPicker()
         if ns.Refresh then
             ns.Refresh()
@@ -828,4 +846,35 @@ function keys:EquipSet(number)
     else
         ns.Print(L["You have no set number %d."]:format(number))
     end
+end
+
+---------------------------------------------------------------------------
+-- Esc
+---------------------------------------------------------------------------
+-- Är skräplistan, grupperna eller ikonvalet öppna i väskan, går Esc först tillbaka till fliken (som
+-- Done), och först nästa tryck stänger väskan – som spelets egna fönster (granskning 2026-11-12).
+-- Forevers egen kö för Esc (RegisterGameMenuEscHandler, Blizzard_GameMenuEsc.lua) låter addons ta
+-- trycket före spelets CloseAllWindows, som stänger väskorna.
+local function escapePressed()
+    local bagFrame = ns.bagFrame
+    if not (bagFrame and bagFrame:IsShown()) then
+        return false
+    end
+    if PANEL_VIEWS[view] then
+        ns.SetView("bags") -- spelar själv ljudet för en panel som stängs
+        return true
+    end
+    if pickerIndex then
+        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
+        closeIconPicker()
+        if ns.Refresh then
+            ns.Refresh()
+        end
+        return true
+    end
+    return false
+end
+
+if RegisterGameMenuEscHandler and GameMenuEscPriority and GameMenuEscPriority.AddOn then
+    RegisterGameMenuEscHandler(GameMenuEscPriority.AddOn, escapePressed)
 end

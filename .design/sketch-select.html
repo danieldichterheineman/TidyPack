@@ -1,0 +1,66 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tidy Pack – skiss: markera flera</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1580px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1500px}
+.row{display:flex;gap:18px;align-items:flex-start}.col{width:505px}.col h2{font-size:13px;color:#ffd100;margin:0 0 6px;min-height:34px}
+.bag{position:relative;width:505px;background:#1a1816;border:2px solid #6e6252;border-radius:5px;margin-top:24px;padding-bottom:54px}
+.tabs{position:absolute;top:-23px;left:10px;display:flex;gap:6px}.tab{padding:2px 14px;background:#2a2622;border:1px solid #6e6252;border-bottom:0;border-radius:4px 4px 0 0;font:12px Georgia;color:#c9b27a}.tab.on{background:#3a3228;color:#ffd100}
+.t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000;position:relative}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;color:#ffd100;text-align:center;font:13px/18px Arial}
+.selb{position:absolute;top:2px;right:47px;width:18px;height:18px;border:1px solid #c9a227;border-radius:3px;color:#ffd100;font:11px/16px Arial;text-align:center}
+.selb.on{background:#ffd100;color:#000}
+.in{margin:6px 10px 0;background:#0a0a0a;border:1px solid #333;padding:6px 8px}
+.sec{border-top:1px solid #3a3020;padding-top:4px;margin-top:4px}.sec:first-child{border-top:0;margin-top:0}
+.gr{display:inline-block;vertical-align:top;margin:0 10px 4px 0}.gr b{display:block;color:#ffd100;font:11px Arial;font-weight:normal;margin-bottom:2px}
+.sl{display:inline-block;width:30px;height:30px;border:1px solid #555;background:#0a0a0a;border-radius:3px;position:relative;margin-right:2px;vertical-align:top}.sl i{position:absolute;inset:2px;border-radius:2px}.sl s{position:absolute;right:1px;bottom:-1px;font:10px Arial;color:#fff;text-decoration:none}
+.mode .sl:after{content:"";position:absolute;left:1px;top:1px;width:10px;height:10px;border:1px solid #bbb;background:#0008;border-radius:2px}
+.mode .sl.sel{outline:2px solid #ffd100}.mode .sl.sel:after{background:#ffd100;border-color:#ffd100}
+.mode .sl.lock{opacity:.4}
+.foot{position:absolute;left:10px;right:10px;bottom:6px;height:42px;display:flex;align-items:center;gap:6px;font:11px Arial;color:#fff;background:#151210;border:1px solid #4a3a20;border-radius:4px;padding:0 8px}
+.btn{border:1px solid #d4af37;background:#5a0d08;color:#ffd9a0;padding:3px 10px;font:11px Arial;border-radius:3px;white-space:nowrap}.btn.g2{background:#2a2a2a;border-color:#777;color:#ddd}.btn.red{background:#7a0d08}
+.btn i{font-style:normal;color:#ff8a7a}
+.cnt{color:#ffd100;margin-right:4px}.r{margin-left:auto}
+.call{background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:11px/1.35 Arial;padding:5px 8px;border-radius:4px;margin-top:8px}
+.next{font:11px Arial;color:#ffd9a0}
+</style></head><body>
+<h1>Markera flera saker – förslag</h1>
+<p class="n">Skiss, inte spelet. Ett läge för att markera: knappen ☑ bredvid kugghjulet (eller Alt-klick → "Select items"). I läget markerar ett klick en sak i stället för att plocka upp den. Raden med pengar byts mot åtgärder för det markerade. Esc eller Done avslutar.</p>
+<div class="row">
+
+<div class="col"><h2>1. Markera: klicka på sakerna</h2><div class="bag mode">
+<div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="selb on">☑</div><div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="sec"><div class="gr"><b>★ Favorites</b><span class="sl lock"><i style="background:#9bc"></i></span></div><div class="gr"><b>Consumables</b><span class="sl"><i style="background:#d82"></i><s>2</s></span><span class="sl"><i style="background:#ddd"></i><s>20</s></span><span class="sl sel"><i style="background:#764"></i></span></div></div>
+<div class="sec"><div class="gr"><b>Cloth</b><span class="sl sel"><i style="background:#cb8"></i><s>18</s></span><span class="sl sel"><i style="background:#ddd"></i><s>5</s></span></div><div class="gr"><b>Parts</b><span class="sl"><i style="background:#a83"></i><s>20</s></span><span class="sl"><i style="background:#a83"></i><s>5</s></span></div></div>
+<div class="sec"><div class="gr"><b>Junk</b><span class="sl sel"><i style="background:#a83"></i></span><span class="sl sel"><i style="background:#c33"></i></span><span class="sl"><i style="background:#666"></i></span></div></div>
+</div>
+<div class="foot"><span class="cnt">5 selected</span><span class="btn red">🗑 Delete</span><span class="btn g2">Clear</span><span class="r"></span><span class="btn g2">Done</span></div>
+</div>
+<div class="call">Shift-klick markerar alla saker mellan två (som i en lista). Favoriter och låsta saker kan inte markeras. Med handkontroll: A markerar.</div></div>
+
+<div class="col"><h2>2. Radera: ett klick per sak (spelets regel)</h2><div class="bag mode">
+<div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="selb on">☑</div><div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="sec"><div class="gr"><b>Consumables</b><span class="sl"><i style="background:#d82"></i><s>2</s></span><span class="sl"><i style="background:#ddd"></i><s>20</s></span><span class="sl sel"><i style="background:#764"></i></span></div></div>
+<div class="sec"><div class="gr"><b>Cloth</b><span class="sl sel" style="outline-color:#ff5040"><i style="background:#cb8"></i><s>18</s></span><span class="sl sel"><i style="background:#ddd"></i><s>5</s></span></div></div>
+<div class="sec"><div class="gr"><b>Junk</b><span class="sl sel"><i style="background:#a83"></i></span><span class="sl sel"><i style="background:#c33"></i></span></div></div>
+</div>
+<div class="foot"><span class="next">Next: <b style="color:#fff">Linen Cloth ×18</b></span><span class="btn red">🗑 Delete <i>(5 left)</i></span><span class="r"></span><span class="btn g2">Cancel</span></div>
+</div>
+<div class="call">Spelet låter ett addon radera högst en sak per klick. Knappen säger vilken sak som raderas nästa gång (röd ram) och hur många som är kvar. Innan första raderingen frågar Tidy Pack en gång ("Delete 5 items? This can't be undone."), och sällsynta saker (blå eller bättre) markeras med en varning.</div></div>
+
+<div class="col"><h2>3. Hos bankiren och handlaren: allt på en gång</h2><div class="bag mode">
+<div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+<div class="t">Backpack<div class="selb on">☑</div><div class="g">⚙</div><div class="x"></div></div>
+<div class="in">
+<div class="sec"><div class="gr"><b>Cloth</b><span class="sl sel"><i style="background:#cb8"></i><s>18</s></span><span class="sl sel"><i style="background:#ddd"></i><s>5</s></span></div><div class="gr"><b>Parts</b><span class="sl sel"><i style="background:#a83"></i><s>20</s></span></div></div>
+<div class="sec"><div class="gr"><b>Junk</b><span class="sl sel"><i style="background:#a83"></i></span><span class="sl sel"><i style="background:#c33"></i></span></div></div>
+</div>
+<div class="foot"><span class="cnt">5 selected</span><span class="btn">→ Bank</span><span class="btn">Sell <i style="color:#ffd100">12 ●</i></span><span class="btn red">🗑</span><span class="r"></span><span class="btn g2">Done</span></div>
+</div>
+<div class="call">"→ Bank" (i Bank: "→ Bags") flyttar alla markerade med ett klick. "Sell" finns bara hos handlaren och säljer allt markerat som går att sälja, med priset på knappen.</div></div>
+
+</div></body></html>
