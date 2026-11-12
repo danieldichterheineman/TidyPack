@@ -34,6 +34,8 @@ ns.defaults = {
     showQuestItemsInBags = true, -- quest-saker i fliken Bags (annars bara i fliken Quests, Layout.lua)
     bankTab = true,           -- banken i fliken Bank i stället för spelets bankfönster (Bank.lua)
     showCounts = true,        -- antal i väskan och banken i sakens tooltip (Bank.lua)
+    tooltipLines = true,      -- raderna "Tidy Pack set/group: …" i sakens tooltip (Sets.lua, Groups.lua)
+    junkValue = true,         -- skräpets värde vid rubriken Junk (Layout.lua)
     questHints = true,        -- saker som kommande quests behöver (QuestHints.lua)
     itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
 }

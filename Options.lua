@@ -1,329 +1,222 @@
 -- TidyPack – Options.lua
--- Inställningarna i spelets eget fönster: Esc → Options → AddOns → Tidy Pack, med en egen
--- sida för skräplistan. Seten sköts i fliken Sets i väskfönstret (SetsView.lua). Sidan öppnas också med /tidypack, från addonmenyn vid minikartan
--- (## AddonCompartmentFunc i TOC-filen) och från kugghjulet i väskfönstret (Marks.lua).
--- Huvudsidan använder spelets vanliga rader (vertical layout), så att den ser ut som spelets
--- egna sidor. Skräplistans sida är en egen ram (canvas layout) byggd av spelets mallar.
--- Varje kryssruta sparas direkt i ns.db.
+-- Alla inställningar finns under kugghjulet i väskfönstret (användarens önskan 2026-11-12, skissen
+-- .design/sketch-settings-in-bag.html): ns.optionMenus nedan blir undermenyerna Show, Merchants and loot
+-- och Bag and bank (Marks.lua), och skräplistan och grupperna öppnas i väskan (Panels.lua).
+-- Sidan i spelets inställningar (Esc → Options → AddOns → Tidy Pack) har inga val: den berättar vad
+-- Tidy Pack är och vem som gjort det, hur man använder det och var det finns (CurseForge).
+-- /tidypack, addonmenyn vid minikartan och högerklick på loggan öppnar väskan med kugghjulets meny.
 
 local addonName, ns = ...
 local L = ns.L
 
-local ROW_HEIGHT = 30
-local HINT_TEXT -- sätts när L är klar, se createJunkPage
+local WEBSITE_FALLBACK = "https://www.curseforge.com/wow/addons/tidy-pack"
 
-local category, junkCategory, groupsCategory
-local junkPage, junkScrollBox, junkEmptyText, junkInput, junkHint
+local function refresh()
+    if ns.Refresh then
+        ns.Refresh()
+    end
+end
 
--- Öppnar Tidy Packs sida, eller skräplistans sida med page = "junk".
+---------------------------------------------------------------------------
+-- Inställningarna i kugghjulets meny
+---------------------------------------------------------------------------
+-- key är nyckeln i ns.db (Core.lua har standardvärdena, alla sanna). onChange körs efter en ändring.
+-- enabled (en funktion) gör raden grå när den inte går att ändra.
+
+ns.optionMenus = {
+    {
+        title = L["Show"],
+        options = {
+            { key = "itemLevelAndBoE", name = L["Item level and BoE"],
+                tooltip = L["On uncommon or better weapons and armor."], onChange = refresh },
+            { key = "upgradeArrows", name = L["Upgrade arrows"],
+                tooltip = L["A green arrow on weapons and armor you can use that have a higher item level than what you wear in that slot."],
+                onChange = refresh },
+            { key = "showQuestItemsInBags", name = L["Quest items in Bags"],
+                tooltip = L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
+                onChange = refresh },
+            { key = "questHints", name = L["Marks for later quests"],
+                tooltip = L["Requires the addon Questie. Items needed for quests you can take now or within 5 levels get a yellow exclamation mark and a line in their tooltip."],
+                onChange = function()
+                    if ns.QuestHintsChanged then
+                        ns.QuestHintsChanged()
+                    end
+                end,
+                enabled = function()
+                    return ns.HasQuestie ~= nil and ns.HasQuestie()
+                end },
+            { key = "showCounts", name = L["Bag and bank counts"],
+                tooltip = L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank, and only for this character."] },
+            { key = "tooltipLines", name = L["Tidy Pack lines in tooltips"],
+                tooltip = L["The lines \"Tidy Pack set: ...\" and \"Tidy Pack group: ...\" in item tooltips. Lines about quests and locks always show."] },
+            { key = "junkValue", name = L["Junk value in the header"],
+                tooltip = L["What your junk sells for, next to the Junk header."], onChange = refresh },
+        },
+    },
+    {
+        title = L["Merchants and loot"],
+        options = {
+            { key = "lockAtMerchant", name = L["Lock items at merchants"],
+                tooltip = L["At merchants, items your quests need and items in your sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
+                onChange = refresh },
+            { key = "suggestOnLoot", name = L["Ask to delete junk list loot"],
+                tooltip = L["When you loot an item on your junk list, Tidy Pack asks right away whether to delete it. Nothing is deleted until you press Delete."] },
+            { key = "suggestWhenFull", name = L["Suggest a deletion when full"],
+                tooltip = L["When your bags are full and something can't be looted, a panel under the loot window suggests an item to delete: your junk list first, then your cheapest grey item if the new loot is worth more. Nothing is deleted until you press Delete."] },
+        },
+    },
+    {
+        title = L["Bag and bank"],
+        options = {
+            { key = "replaceBagBar", name = L["Replace the game's bag buttons"],
+                tooltip = L["Shows the Tidy Pack logo instead of the game's backpack and bag buttons at the bottom right. Click it to open your bags; swap bags in the bag row at the bottom of the bag window. Turn off to get the game's buttons back."],
+                onChange = function()
+                    if ns.ApplyBagBarSetting then
+                        ns.ApplyBagBarSetting()
+                    end
+                end },
+            { key = "bankTab", name = L["Use the Bank tab at bankers"],
+                tooltip = L["At a banker, your bank is shown sorted in the Bank tab, and the game's bank window is hidden. Turn off to use the game's bank window; the Bank tab still shows what's in your bank."],
+                onChange = function()
+                    if ns.ApplyBankSetting then
+                        ns.ApplyBankSetting()
+                    end
+                    refresh()
+                end },
+        },
+        -- Hos bankiren: spelets eget bankfönster, t.ex. för att köpa en bankplats (Bank.lua).
+        extra = function(submenu)
+            if ns.IsAtBank and ns.IsAtBank() and ns.TakesOverBank and ns.TakesOverBank() then
+                submenu:CreateCheckbox(L["Show the game's bank window"], ns.IsGameBankFrameShown,
+                    ns.ToggleGameBankFrame)
+            end
+        end,
+    },
+}
+
+---------------------------------------------------------------------------
+-- Öppna inställningarna: väskan med kugghjulets meny
+---------------------------------------------------------------------------
+
+-- page = "junk" eller "groups" öppnar den panelen i väskan; utan page öppnas kugghjulets meny.
 function ns.OpenSettings(page)
-    if InCombatLockdown() then
-        ns.Print(L["The settings can't be opened in combat."])
+    if not ns.bagFrame then
         return
     end
-    local target = (page == "junk" and junkCategory) or (page == "groups" and groupsCategory) or category
-    if target then
-        Settings.OpenToCategory(target:GetID())
+    if page == "junk" or page == "groups" then
+        ns.OpenPanel(page)
+        return
     end
-end
-
----------------------------------------------------------------------------
--- Skräplistans sida
----------------------------------------------------------------------------
-
--- Skräplistan sorterad efter namn.
-local function sortedJunkList()
-    local list = {}
-    for itemID in pairs(ns.db.junk) do
-        list[#list + 1] = itemID
+    if not ns.bagFrame:IsShown() then
+        OpenAllBags()
     end
-    table.sort(list, function(a, b)
-        local nameA, nameB = C_Item.GetItemNameByID(a) or "", C_Item.GetItemNameByID(b) or ""
-        if nameA ~= nameB then
-            return nameA < nameB
+    -- En bildruta senare, när fönstret och kugghjulet syns.
+    C_Timer.After(0, function()
+        if ns.OpenGearMenu then
+            ns.OpenGearMenu()
         end
-        return a < b
     end)
-    return list
 end
 
--- Ritar om listan om sidan syns. Marks.lua anropar den när listan ändras.
-function ns.RefreshJunkListPage()
-    if not junkPage or not junkPage:IsVisible() then
-        return
-    end
-    junkScrollBox:SetDataProvider(CreateDataProvider(sortedJunkList()), ScrollBoxConstants.RetainScrollPosition)
-    junkEmptyText:SetShown(next(ns.db.junk) == nil)
+---------------------------------------------------------------------------
+-- Sidan i spelets inställningar: om Tidy Pack
+---------------------------------------------------------------------------
+
+local function metadata(field)
+    local get = C_AddOns and C_AddOns.GetAddOnMetadata
+    return get and get(addonName, field) or nil
 end
 
-local function showItemTooltip(row)
-    GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
-    GameTooltip:SetItemByID(row.itemID)
-    GameTooltip:Show()
-end
-
--- En rad i listan: ikon, namn i kvalitetens färg och ett rött kryss som tar bort saken.
--- Raderna återanvänds av listan, så delarna skapas bara första gången.
-local function initRow(row, itemID)
-    if not row.icon then
-        row:EnableMouse(true)
-        row:SetScript("OnEnter", showItemTooltip)
-        row:SetScript("OnLeave", GameTooltip_Hide)
-        row.icon = row:CreateTexture(nil, "ARTWORK")
-        row.icon:SetSize(24, 24)
-        row.icon:SetPoint("LEFT", 4, 0)
-        row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-        row.name:SetPoint("LEFT", row.icon, "RIGHT", 8, 0)
-        row.name:SetPoint("RIGHT", -40, 0)
-        row.name:SetJustifyH("LEFT")
-        row.name:SetWordWrap(false)
-        -- Samma röda kryss som spelets egna frågor stängs med.
-        row.remove = CreateFrame("Button", nil, row)
-        row.remove:SetSize(22, 22)
-        row.remove:SetPoint("RIGHT", -6, 0)
-        row.remove:SetNormalAtlas("RedButton-Exit")
-        row.remove:SetPushedAtlas("RedButton-exit-pressed")
-        row.remove:SetHighlightAtlas("RedButton-Exit", "ADD")
-        row.remove:SetScript("OnClick", function(self)
-            ns.SetJunk(self:GetParent().itemID, false)
-        end)
-        row.remove:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip_SetTitle(GameTooltip, L["Remove from the junk list"])
-            GameTooltip:Show()
-        end)
-        row.remove:SetScript("OnLeave", GameTooltip_Hide)
-    end
-    row.itemID = itemID
-    row.icon:SetTexture(C_Item.GetItemIconByID(itemID))
-    local name = C_Item.GetItemNameByID(itemID)
-    if name then
-        local r, g, b = C_Item.GetItemQualityColor(C_Item.GetItemQualityByID(itemID) or Enum.ItemQuality.Common)
-        row.name:SetText(name)
-        row.name:SetTextColor(r, g, b)
-    else
-        -- Spelet har inte sakens data än: visa numret och rita om när datan kommit.
-        row.name:SetText(L["Item %d"]:format(itemID))
-        row.name:SetTextColor(GRAY_FONT_COLOR:GetRGB())
-        Item:CreateFromItemID(itemID):ContinueOnItemLoad(ns.RefreshJunkListPage)
-    end
-end
-
--- Sakens id ur en länk, ett nummer eller ett namn (ett namn bara om spelet känner till
--- saken). Nil om det inte är en riktig sak.
-local function itemIDFromText(text)
-    text = strtrim(text or "")
-    if text == "" then
-        return nil
-    end
-    local id = tonumber(text:match("item:(%d+)") or text:match("^#?(%d+)$"))
-    if not id then
-        id = C_Item.GetItemInfoInstant(text)
-    end
-    if id and C_Item.GetItemInfoInstant(id) then
-        return id
-    end
-    return nil
-end
-
--- Groups-sidan (GroupsPage.lua) använder samma tolkning av länkar, namn och nummer.
-ns.ItemIDFromText = itemIDFromText
-
-local function setHint(text, color)
-    junkHint:SetText(text)
-    junkHint:SetTextColor(color:GetRGB())
-end
-
-local function addFromInput()
-    local itemID = itemIDFromText(junkInput:GetText())
-    if itemID then
-        ns.SetJunk(itemID, true)
-        junkInput:SetText("")
-        setHint(HINT_TEXT, GRAY_FONT_COLOR)
-    else
-        setHint(L["Couldn't find that item. Try Shift-clicking its link instead."], RED_FONT_COLOR)
-    end
-end
-
--- En sak som släpps på sidan (eller klickas dit) hamnar på listan.
-local function addFromCursor()
-    local kind, itemID = GetCursorInfo()
-    if kind == "item" and itemID then
-        ClearCursor() -- saken går tillbaka till sin plats
-        ns.SetJunk(itemID, true)
-    end
-end
-
-local function createJunkPage()
-    HINT_TEXT = L["Shift-click an item link, type an item name or ID, or drop an item here."]
-
+local function createAboutPage()
     local page = CreateFrame("Frame")
-    page:EnableMouse(true)
-    page:SetScript("OnReceiveDrag", addFromCursor)
-    page:SetScript("OnMouseUp", addFromCursor)
 
-    -- Rubrik och förklaring, som på spelets egna sidor.
+    local logo = page:CreateTexture(nil, "ARTWORK")
+    logo:SetSize(56, 56)
+    logo:SetPoint("TOPLEFT", 14, -16)
+    logo:SetTexture("Interface\\AddOns\\" .. addonName .. "\\Media\\Logo")
+
     local title = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightHuge")
-    title:SetPoint("TOPLEFT", 10, -15)
-    title:SetText(L["Junk List"])
+    title:SetPoint("TOPLEFT", logo, "TOPRIGHT", 12, -4)
+    title:SetText(L["Tidy Pack"])
+    local version = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    version:SetPoint("BOTTOMLEFT", title, "BOTTOMRIGHT", 8, 2)
+    version:SetTextColor(GRAY_FONT_COLOR:GetRGB())
+    version:SetText(metadata("Version") or "")
+    local author = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    author:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+    author:SetText(L["By %s"]:format(metadata("Author") or ""))
 
-    local intro = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    intro:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
-    intro:SetPoint("RIGHT", page, "RIGHT", -20, 0)
-    intro:SetJustifyH("LEFT")
-    intro:SetText(ns.KeyText(L["Items on your junk list are suggested for deletion when you loot them, and sorted last in Junk. Alt-click an item in your bags and choose Add to Junk List, or drop it on the gear button, to add or remove it."]))
+    local howTitle = page:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    howTitle:SetPoint("TOPLEFT", logo, "BOTTOMLEFT", 0, -20)
+    howTitle:SetText(L["How to use it"])
+    local how = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    how:SetPoint("TOPLEFT", howTitle, "BOTTOMLEFT", 0, -8)
+    how:SetPoint("RIGHT", page, "RIGHT", -20, 0)
+    how:SetJustifyH("LEFT")
+    how:SetSpacing(4)
+    how:SetText(ns.KeyText(table.concat({
+        L["• Open your bags (B): your items are sorted into groups."],
+        L["• Alt-click an item: favorite, junk list, set or group."],
+        L["• The gear button at the top of the bag window has every option, the junk list and your groups."],
+        L["• The tabs above the bags: Bank (sorted at a banker), Sets and Quests."],
+    }, "\n")))
 
-    -- Lägg till en sak utan att ha den: länk, namn eller nummer.
-    junkInput = CreateFrame("EditBox", nil, page, "InputBoxTemplate")
-    junkInput:SetSize(300, 22)
-    junkInput:SetAutoFocus(false)
-    junkInput:SetPoint("TOPLEFT", intro, "BOTTOMLEFT", 6, -16)
-    junkInput:SetScript("OnEnterPressed", addFromInput)
-
-    local addButton = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
-    addButton:SetSize(90, 22)
-    addButton:SetText(L["Add"])
-    addButton:SetPoint("LEFT", junkInput, "RIGHT", 10, 0)
-    addButton:SetScript("OnClick", addFromInput)
-
-    junkHint = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-    junkHint:SetPoint("TOPLEFT", junkInput, "BOTTOMLEFT", -6, -8)
-    setHint(HINT_TEXT, GRAY_FONT_COLOR)
-
-    -- Listan, med spelets egen rullning (samma mallar som lootfönstret).
-    junkScrollBox = CreateFrame("Frame", nil, page, "WowScrollBoxList")
-    junkScrollBox:SetPoint("TOPLEFT", junkHint, "BOTTOMLEFT", 0, -12)
-    junkScrollBox:SetPoint("BOTTOMRIGHT", page, "BOTTOMRIGHT", -36, 16)
-    local scrollBar = CreateFrame("EventFrame", nil, page, "MinimalScrollBar")
-    scrollBar:SetPoint("TOPLEFT", junkScrollBox, "TOPRIGHT", 8, 0)
-    scrollBar:SetPoint("BOTTOMLEFT", junkScrollBox, "BOTTOMRIGHT", 8, 0)
-    local view = CreateScrollBoxListLinearView()
-    view:SetElementExtent(ROW_HEIGHT)
-    view:SetElementInitializer("Frame", initRow)
-    ScrollUtil.InitScrollBoxListWithScrollBar(junkScrollBox, scrollBar, view)
-    -- Rullningslisten syns bara när listan inte får plats, som på spelets egna sidor.
-    ScrollUtil.AddManagedScrollBarVisibilityBehavior(junkScrollBox, scrollBar)
-
-    junkEmptyText = page:CreateFontString(nil, "ARTWORK", "GameFontDisable")
-    junkEmptyText:SetPoint("TOPLEFT", junkScrollBox, "TOPLEFT", 4, -8)
-    junkEmptyText:SetText(L["Your junk list is empty."])
-
-    page:SetScript("OnShow", ns.RefreshJunkListPage)
-    page:SetScript("OnHide", function()
-        junkInput:ClearFocus()
-    end)
-
-    -- Shift-klick på en länk medan rutan är aktiv. Spelet lägger själv bara länkar i chatten
-    -- och några egna fält (ChatFrameUtil.InsertLink), så Tidy Pack lyssnar efteråt.
-    if ChatFrameUtil and ChatFrameUtil.InsertLink then
-        hooksecurefunc(ChatFrameUtil, "InsertLink", function(text)
-            if junkInput:HasFocus() and type(text) == "string" and text:find("item:", 1, true) then
-                junkInput:SetText(text)
-                addFromInput()
-            end
-        end)
-    end
-    return page
-end
-
----------------------------------------------------------------------------
--- Huvudsidan
----------------------------------------------------------------------------
-
--- En kryssruta kopplad till ns.db[key]. onChange körs när spelaren ändrar den.
-local function addCheckbox(key, name, tooltip, onChange)
-    local setting = Settings.RegisterAddOnSetting(category, addonName .. "_" .. key, key, ns.db,
-        Settings.VarType.Boolean, name, ns.defaults[key])
-    if onChange then
-        setting:SetValueChangedCallback(onChange)
-    end
-    return Settings.CreateCheckbox(category, setting, tooltip)
-end
-
-ns.OnLoad(function()
-    local layout
-    category, layout = Settings.RegisterVerticalLayoutCategory(L["Tidy Pack"])
-    layout = layout or SettingsPanel:GetLayout(category)
-
-    -- Etiketterna hålls korta. Spelet kortar av en etikett som är längre än ungefär
-    -- "Show item level and BoE on gear" med "...", så förklaringen står i tooltipen.
-    local function refresh()
-        if ns.Refresh then
-            ns.Refresh()
+    local linkTitle = page:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    linkTitle:SetPoint("TOPLEFT", how, "BOTTOMLEFT", 0, -20)
+    linkTitle:SetText(L["Updates and feedback"])
+    -- Ett addon kan inte öppna webbläsaren, så adressen står markerad i en ruta och kopieras.
+    local website = metadata("X-Website") or WEBSITE_FALLBACK
+    local link = CreateFrame("EditBox", nil, page, "InputBoxTemplate")
+    link:SetSize(380, 22)
+    link:SetAutoFocus(false)
+    link:SetPoint("TOPLEFT", linkTitle, "BOTTOMLEFT", 6, -8)
+    link:SetText(website)
+    link:SetCursorPosition(0)
+    -- Rutan går inte att skriva i: allt som ändras sätts tillbaka.
+    link:SetScript("OnTextChanged", function(self, userInput)
+        if userInput then
+            self:SetText(website)
+            self:HighlightText()
         end
-    end
+    end)
+    link:SetScript("OnEditFocusGained", link.HighlightText)
+    link:SetScript("OnMouseUp", function(self)
+        self:SetFocus()
+        self:HighlightText()
+    end)
+    link:SetScript("OnEscapePressed", link.ClearFocus)
+    local copyHint = page:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    copyHint:SetPoint("TOPLEFT", link, "BOTTOMLEFT", -6, -6)
+    copyHint:SetTextColor(GRAY_FONT_COLOR:GetRGB())
+    copyHint:SetText((IsMacClient and IsMacClient()) and L["Click the link and press Cmd+C to copy it."]
+        or L["Click the link and press Ctrl+C to copy it."])
 
-    -- Ordningen följer hur man möter addonet: väskfönstret, handlaren, quests och sist skräp.
-    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Bag window"]))
-    addCheckbox("itemLevelAndBoE", L["Show item level and BoE"],
-        L["On uncommon or better weapons and armor."], refresh)
-    addCheckbox("upgradeArrows", L["Show upgrade arrows"],
-        L["A green arrow on weapons and armor you can use that have a higher item level than what you wear in that slot."], refresh)
-    addCheckbox("replaceBagBar", L["Replace the game's bag buttons"],
-        L["Shows the Tidy Pack logo instead of the game's backpack and bag buttons at the bottom right. Click it to open your bags; swap bags in the bag row at the bottom of the bag window. Turn off to get the game's buttons back."],
-        function()
-            if ns.ApplyBagBarSetting then
-                ns.ApplyBagBarSetting()
-            end
-        end)
-    addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
-        L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
-        refresh)
-    addCheckbox("showCounts", L["Show bag and bank counts"],
-        L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank, and only for this character."])
-    addCheckbox("bankTab", L["Use the Bank tab at bankers"],
-        L["At a banker, your bank is shown sorted in the Bank tab, and the game's bank window is hidden. Turn off to use the game's bank window; the Bank tab still shows what's in your bank."],
-        function()
-            if ns.ApplyBankSetting then
-                ns.ApplyBankSetting()
-            end
-            refresh()
-        end)
-    layout:AddInitializer(CreateSettingsButtonInitializer(L["Tips"], L["Show again"], function()
+    local openBags = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
+    openBags:SetSize(130, 22)
+    openBags:SetPoint("TOPLEFT", copyHint, "BOTTOMLEFT", 0, -20)
+    openBags:SetText(L["Open Bags"])
+    openBags:SetScript("OnClick", function()
+        ns.OpenSettings()
+    end)
+    local tips = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
+    tips:SetSize(150, 22)
+    tips:SetPoint("LEFT", openBags, "RIGHT", 10, 0)
+    tips:SetText(L["Show Tips Again"])
+    tips:SetScript("OnClick", function()
         if ns.ResetTour then
             ns.ResetTour()
             ns.Print(L["The tips show the next time you open your bags."])
         end
-    end, L["Shows the short guide with the game's yellow tip boxes again."], true))
-    layout:AddInitializer(CreateSettingsButtonInitializer(L["Your own groups"], L["Open"], function()
-        ns.OpenSettings("groups")
-    end, L["Create groups such as Potions, and choose what goes in them."], true))
-
-    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Merchants"]))
-    addCheckbox("lockAtMerchant", L["Lock items at merchants"],
-        L["At merchants, items your quests need and items in your sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
-        refresh)
-
-    -- Raden visar om Questie finns. Utan Questie går kryssrutan inte att ändra.
-    local hasQuestie = ns.HasQuestie ~= nil and ns.HasQuestie()
-    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(
-        hasQuestie and L["Quests – Questie is installed"] or L["Quests – Questie is not installed"]))
-    local questCheckbox = addCheckbox("questHints", L["Mark items for later quests"],
-        L["Requires the addon Questie. Items needed for quests you can take now or within 5 levels get a yellow exclamation mark and a line in their tooltip."],
-        function()
-            if ns.QuestHintsChanged then
-                ns.QuestHintsChanged()
-            end
-        end)
-    questCheckbox:AddModifyPredicate(function()
-        return ns.HasQuestie ~= nil and ns.HasQuestie()
     end)
 
-    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["Junk"]))
-    addCheckbox("suggestOnLoot", L["Ask to delete junk list loot"],
-        L["When you loot an item on your junk list, Tidy Pack asks right away whether to delete it. Nothing is deleted until you press Delete."])
-    addCheckbox("suggestWhenFull", L["Suggest a deletion when full"],
-        L["When your bags are full and something can't be looted, a panel under the loot window suggests an item to delete: your junk list first, then your cheapest grey item if the new loot is worth more. Nothing is deleted until you press Delete."])
-    layout:AddInitializer(CreateSettingsButtonInitializer(L["Junk List"], L["Open"], function()
-        ns.OpenSettings("junk")
-    end, L["See, add and remove the items on your junk list."], true))
+    page:SetScript("OnHide", function()
+        link:ClearFocus()
+    end)
+    return page
+end
 
-    junkPage = createJunkPage()
-    junkCategory = Settings.RegisterCanvasLayoutSubcategory(category, junkPage, L["Junk List"])
-    -- Sidan för egna grupper (GroupsPage.lua).
-    if ns.CreateGroupsPage then
-        groupsCategory = Settings.RegisterCanvasLayoutSubcategory(category, ns.CreateGroupsPage(), L["Groups"])
-    end
+ns.OnLoad(function()
+    local category = Settings.RegisterCanvasLayoutCategory(createAboutPage(), L["Tidy Pack"])
     Settings.RegisterAddOnCategory(category)
 end)
 

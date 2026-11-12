@@ -119,7 +119,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   `C_Item.GetItemInfoInstant`, typens namn ur `C_Item.GetItemSubClassInfo`). En sak eller
   typ ligger i högst en grupp (en bockruta flyttar den). Företräde i `ns.GetGroup`: Favorites,
   New, Quest Items och Junk först, sedan de egna grupperna (enskild sak före typregel, sedan
-  den grupp som står högst), sedan spelets typer. Sidan "Groups" i inställningarna: välj en
+  den grupp som står högst), sedan spelets typer. Grupperna i väskan (kugghjulet → Groups…, sedan 2026-11-12; förut sidan "Groups" i inställningarna): välj en
   grupp, ändra ordning (▲▼), byt namn, ta bort, och se och ändra vad den innehåller (länk,
   namn, nummer eller släpp en sak). Tooltipen visar "Tidy Pack group: …". Rubrikerna kommer ur
   `ns.groupNames`, ordningen ur `ns.groupOrder`, som `ns.RebuildGroupOrder` bygger om. Inte
@@ -133,8 +133,8 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   "Add to Set ▸", annars "Junk List…" / "Settings…" (med handkontroll också "Show Sets"
   eller "Show Bags"). Svagt tills man håller en sak, pekar på det eller har menyn öppen.
 - ✅ Favorites (`Marks.lua`): Alt-klick (mus, öppnar menyn för saken) eller via kugghjulet. Sparas per itemID och konto.
-- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-klick-menyn, via kugghjulet eller på skräplistans
-  sida i inställningarna (lägg till med länk, namn, nummer eller genom att släppa en sak;
+- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-klick-menyn, via kugghjulet eller i skräplistan i väskan
+  (kugghjulet → Junk List…, sedan 2026-11-12; förut en sida i inställningarna) (lägg till med länk, namn, nummer eller genom att släppa en sak;
   ta bort med det röda krysset). Saker på listan hamnar sist i Junk, får spelets eget
   skräpmynt (`JunkIcon` på rutan) och föreslås först när väskorna är fulla. En sak kan inte vara både favorit och på listan. Sparas per itemID och konto.
 - ⚠️ Frågor om radering (`MakeRoom.lua`), i en panel med samma mall som lootfönstret
@@ -148,9 +148,25 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   lootfönstrets markör, uppe i mitten blir panelen en fråga
   (`GamepadMode.FrameControlsManager:HandlePopupShown`), bara utanför strid. Måste provas i
   spelet, särskilt med handkontroll.
-- ✅ Inställningar (`Options.lua`), allt påslaget från början: fråga när skräp lootas,
-  förslag vid fulla väskor, lås för quest- och set-saker hos handlaren, quests i förväg (går inte att ändra utan
-  Questie, och rubriken säger om Questie finns), nivå och BoE.
+- ⚠️ Inställningar i väskan (`Options.lua`, `Marks.lua`, `Panels.lua`, 2026-11-12 på grenen
+  `claude/settings-in-bag`, som utgår från `claude/bank-tab`; skissen `.design/sketch-settings-in-bag.html`):
+  allt finns under kugghjulet. Menyn: Junk List…, Groups…, undermenyerna Show (Item level and BoE, Upgrade
+  arrows, Quest items in Bags, Marks for later quests – grå utan Questie, Bag and bank counts, Tidy Pack lines in
+  tooltips `tooltipLines`, Junk value in the header `junkValue`), Merchants and loot (Lock items at merchants, Ask
+  to delete junk list loot, Suggest a deletion when full) och Bag and bank (Replace the game's bag buttons, Use the
+  Bank tab at bankers, hos bankiren Show the game's bank window), och Show Tips Again. Valen definieras i
+  `ns.optionMenus` (Options.lua); varje rad har en tooltip (`SetTooltip`), och kryssrutorna lämnar menyn öppen
+  (`MenuResponse.Refresh`). Junk List och Groups öppnas i väskan som vyerna "junk" och "groups"
+  (`ns.OpenPanel`, `layoutPanelView` i Layout.lua, ingen flik vald – `SetTabVisuallySelected(0)`): rubrikrad med
+  Done, en `ScrollFrameTemplate` som rullas med mushjulet, skräplistan som rutor med rött kryss, "+", skrivruta
+  (namn, länk, nummer, shift-klick) och de två frågorna om skräp; grupperna som rader med ▲▼, Rename och ✕, en
+  utfälld grupp med regler, små rutor, "+" och skrivruta, och "+ New group" (klick eller släppt sak). Spelets
+  inställningar: sidan "Tidy Pack" (canvas) med logga, version och författare ur TOC-filen, fyra rader hjälp,
+  länken till CurseForge (`## X-Website`) i en markerad ruta att kopiera (ett addon kan inte öppna
+  webbläsaren), Open Bags och Show Tips Again. `/tidypack`, addonmenyn och loggans högerklick öppnar väskan med
+  kugghjulets meny (`ns.OpenGearMenu`). `GroupsPage.lua` och skräplistans sida finns inte längre. Avvikelse
+  från skissen: Rename öppnar Tidy Packs ruta för namn (`ns.AskRenameGroup`) i stället för att skriva på
+  raden. Med handkontroll är panelernas knappar inte inkopplade i markören. Inte provat i spelet.
 - ⚠️ Quests i förväg (`QuestHints.lua`): kräver Questie (QuestieDB, `## OptionalDeps`).
   Saker som behövs för quests man inte har gjort, för ens ras och klass, som man kan ta nu
   eller inom 5 nivåer (och som inte är mer än 5 nivåer under en), får kartans gula
@@ -303,6 +319,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `TidyPackCharDB.bank` (ny 2026-11-12, inget standardvärde): `{ time, free, items = { { link, count,
   quality, icon, bag, slot, quest, bound, noValue } } }`, sparas vid varje genomgång hos bankiren.
   `TidyPackDB.bankTab` och `showCounts` (sanna från början). Nya nycklar, ingen migrering.
+- `TidyPackDB.tooltipLines` och `junkValue` (nya 2026-11-12, grenen `claude/settings-in-bag`, sanna från
+  början). Nya nycklar, ingen migrering.
 - Version 2 (2026-11-10): `sellJunkButton` tas bort ur sparad data (knappen finns inte längre).
 - Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
   nya nycklar med standardvärden, så ingen migrering behövdes.
@@ -336,7 +354,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `Tour.lua`: guiden med spelets tipsrutor första gången väskan öppnas
 - `QuestsView.lua`: fliken Quests – rubriker, texter, staplar och rader per quest
 - `Groups.lua`: egna grupper – data, regler, ordning, frågor, kugghjulets menyer och tooltipen
-- `GroupsPage.lua`: sidan "Groups" i inställningarna
+- `Panels.lua`: skräplistan och de egna grupperna i väskans fönster (öppnas från kugghjulet)
 - `QuestLock.lua`: vilka saker som är låsta (quest, utrustningsset och egna set),
   handlarläget och raden i tooltipen
 - `Sets.lua`: egna set – data, ta på ett set, rutan för namn och frågor, raden i tooltipen
@@ -350,7 +368,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   `Favorites.lua` före 2026-11-09)
 - `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`)
 - `MakeRoom.lua`: frågorna om radering, när skräp lootas och när väskorna är fulla
-- `Options.lua`: inställningssidan, skräplistans sida, `/tidypack` och addonmenyn
+- `Options.lua`: inställningarna i kugghjulets meny (`ns.optionMenus`), sidan om Tidy Pack i spelets
+  inställningar, `/tidypack` och addonmenyn
 - `Gamepad.lua`: handkontrollens markör (start, LB/RB, fri navigering, dolda rutor), låsen
   för markören och knappsymboler i text
 - `CHANGELOG.md`: ändringarna, på engelska, för spelare
@@ -474,6 +493,18 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+50. Inställningar i väskan (2026-11-12, grenen `claude/settings-in-bag`): klicka på kugghjulet. Menyn har
+    Junk List…, Groups…, Show ▸, Merchants and loot ▸, Bag and bank ▸ och Show Tips Again. Peka på en rad:
+    tooltipen förklarar. Klicka i en kryssruta: menyn står kvar och väskan ändras bakom (t.ex. Item level and
+    BoE). "Marks for later quests" är grå utan Questie. Junk List…: väskan visar skräplistan, ingen flik är
+    vald; släpp en sak (på "+" eller var som helst), skriv ett namn och tryck Enter, shift-klicka en länk i
+    chatten medan rutan är aktiv, ta bort med krysset, och kryssa i/ur de två frågorna. Många saker: rulla
+    med mushjulet. Done eller en flik går tillbaka. Groups…: "+ New group" (klick, eller släpp en sak), ▲▼,
+    Rename, ✕ (frågar), klicka en rad för att fälla ut: regler med kryss, små rutor, "+", skrivruta. Esc →
+    Options → AddOns → Tidy Pack: logga, version, "By …", hjälpen och länken; klicka på länken, Cmd+C,
+    klistra in i webbläsaren. Open Bags öppnar väskan med menyn. `/tidypack`, addonmenyn vid minikartan och
+    högerklick på loggan gör samma sak. Show ▸ Tidy Pack lines in tooltips av: inga rader om set och grupp.
+    Junk value in the header av: rubriken Junk utan pengar. Starta om spelet (TOC-filen ändrad).
 49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
     i banken: "Bags N · Bank N · Total N" i blått. En sak som bara finns i väskan: ingen rad. Lägg in eller
     ta ut något hos bankiren: siffrorna följer med. "Show bag and bank counts" av: ingen rad.
@@ -858,6 +889,12 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   `gearButton` i stället för `starButton`; gamla kommentarer om ★-knappen och Sell Junk rättade;
   migrering 2 tar bort `sellJunkButton` ur sparad data; `.design/sketch.html` märkt som gammal.
   Kvar med avsikt: `locale` i `Locales.lua` (mall för översättningar) och `migrations` (mall).
+
+## Beslut (forts.)
+- 2026-11-12: Alla inställningar under kugghjulet i väskan, och skräplistan och grupperna i väskans eget fönster
+  (användarens önskan efter skissen `.design/sketch-settings-in-bag.html`). Spelets inställningssida behålls,
+  men bara med information: vem som gjort Tidy Pack, en kort hjälp och länken till CurseForge (användarens
+  förslag). Antalet i tooltipen är den korta varianten på en rad (1c, användarens val).
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1

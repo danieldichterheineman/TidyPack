@@ -71,10 +71,14 @@ function ns.UpdateSetsNotice()
 end
 
 -- Byter mellan "bags", "bank", "sets" och "quests".
+-- Skräplistan och grupperna (Panels.lua) visas i fönstret utan egen flik; då är ingen flik vald,
+-- så att varje flik går att klicka på för att komma tillbaka.
+local PANEL_VIEWS = { junk = true, groups = true }
+
 function ns.SetView(newView)
-    view = TAB_OF[newView] and newView or "bags"
+    view = (TAB_OF[newView] or PANEL_VIEWS[newView]) and newView or "bags"
     if tabSystem then
-        tabSystem:SetTabVisuallySelected(TAB_OF[view])
+        tabSystem:SetTabVisuallySelected(TAB_OF[view] or 0)
     end
     for _, row in ipairs(rows) do
         row:Hide()

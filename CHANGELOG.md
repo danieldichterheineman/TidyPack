@@ -8,6 +8,14 @@
   tab to put it in your bank.
 - Away from the bank, the Bank tab shows what your bank held the last time you were there (for
   each character). You can see the items and their tooltips, but not move them.
+- All options are in the gear button's menu on the bag window, in three submenus: Show, Merchants
+  and loot, and Bag and bank. Each option explains itself when you point at it, and the menu stays
+  open so you can see the change right away.
+- The junk list and your groups open right in the bag window from the gear button, like the icon
+  grid in Sets. Drop items, type a name or link, remove with the red cross, and press Done.
+- The Tidy Pack page in the game's options now tells you who made Tidy Pack, how to use it and
+  where to find updates (a link to copy). /tidypack and the addon menu open the gear button's menu.
+- New options under Show: "Tidy Pack lines in tooltips" and "Junk value in the header".
 - Item tooltips show how many you have in your bags and in your bank, and the total ("Bags 12 ·
   Bank 40 · Total 52"), also away from the bank. Only for items in your bank. Turn it off with
   "Show bag and bank counts" in the settings.

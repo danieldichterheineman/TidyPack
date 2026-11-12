@@ -9,7 +9,7 @@
 -- Junk. Bland de egna grupperna går en enskild sak före en typregel, och därefter den grupp
 -- som står högst upp. Grupperna står efter Favorites och "Add to bag" (Layout.lua läser
 -- ns.groupOrder, som RebuildGroupOrder bygger om).
--- Inställningssidan med hantering av grupperna ligger i GroupsPage.lua.
+-- Grupperna sköts i väskan (Panels.lua), som kugghjulets meny öppnar.
 -- Spelets frågerutor (StaticPopup) används inte; namnet frågas i Tidy Packs egen ruta
 -- (ns.ShowDialog i Sets.lua).
 
@@ -87,7 +87,7 @@ function ns.RebuildGroupOrder()
     ns.groupOrder = order
 end
 
--- Alla ändringar går hit: bygg om ordningen, lägg ut väskan och rita om inställningssidan.
+-- Alla ändringar går hit: bygg om ordningen, lägg ut väskan och rita om panelen i väskan (Panels.lua).
 local function changed()
     ns.RebuildGroupOrder()
     if ns.Refresh then
@@ -354,7 +354,8 @@ end
 
 -- En rad i sakens tooltip med den egna gruppen, om saken ligger i en.
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-    if not data or type(data.id) ~= "number" or ns.db == nil then
+    -- Inställningen "Tidy Pack lines in tooltips" (kugghjulets Show ▸).
+    if not data or type(data.id) ~= "number" or ns.db == nil or ns.db.tooltipLines == false then
         return
     end
     if ns.IsFavorite(data.id) or ns.IsJunkMarked(data.id) then

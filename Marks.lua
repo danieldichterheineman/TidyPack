@@ -97,6 +97,13 @@ local function onItemButtonClick(button, mouseButton)
 end
 
 -- Layout.lua anropar den här för varje ruta det visar. Varje ruta får Alt-klicken en gång.
+-- Öppnar kugghjulets meny (Options.lua: /tidypack, addonmenyn och loggan).
+function ns.OpenGearMenu()
+    if gearButton and gearButton:IsVisible() then
+        gearButton:OpenMenu()
+    end
+end
+
 function ns.HookItemButton(button)
     if not hookedButtons[button] then
         hookedButtons[button] = true
@@ -185,36 +192,46 @@ local function buildMenu(_, rootDescription, itemOverride)
                 end)
             end
         end
+        -- Skräplistan och grupperna öppnas i väskan (Panels.lua).
         rootDescription:CreateButton(L["Junk List..."], function()
-            ns.OpenSettings("junk")
+            ns.OpenPanel("junk")
         end)
         rootDescription:CreateButton(L["Groups..."], function()
-            ns.OpenSettings("groups")
+            ns.OpenPanel("groups")
         end)
-        rootDescription:CreateButton(L["Settings..."], function()
-            ns.OpenSettings()
-        end)
-        -- Hos bankiren: spelets eget bankfönster, t.ex. för att köpa en bankplats (Bank.lua).
-        if ns.IsAtBank and ns.IsAtBank() and ns.TakesOverBank and ns.TakesOverBank() then
-            rootDescription:CreateCheckbox(L["Show the game's bank window"], ns.IsGameBankFrameShown,
-                ns.ToggleGameBankFrame)
-        end
-        -- De vanligaste valen direkt i menyn (samma värden som på inställningssidan).
+        -- Alla inställningar, i tre undermenyer (ns.optionMenus i Options.lua). Menyn står kvar när
+        -- en kryssruta klickas (spelets MenuResponse.Refresh), så ändringen syns direkt i väskan.
         rootDescription:CreateDivider()
-        for _, option in ipairs({
-            { "showQuestItemsInBags", L["Show quest items in Bags"] },
-            { "lockAtMerchant", L["Lock items at merchants"] },
-        }) do
-            local key = option[1]
-            rootDescription:CreateCheckbox(option[2], function()
-                return ns.db[key] == true
-            end, function()
-                ns.db[key] = not ns.db[key]
-                if ns.Refresh then
-                    ns.Refresh()
+        for _, menu in ipairs(ns.optionMenus or {}) do
+            local submenu = rootDescription:CreateButton(menu.title)
+            for _, option in ipairs(menu.options) do
+                local checkbox = submenu:CreateCheckbox(option.name, function()
+                    return ns.db[option.key] ~= false
+                end, function()
+                    ns.db[option.key] = ns.db[option.key] == false
+                    if option.onChange then
+                        option.onChange()
+                    end
+                end)
+                checkbox:SetTooltip(function(tooltip, elementDescription)
+                    GameTooltip_SetTitle(tooltip, MenuUtil.GetElementText(elementDescription))
+                    GameTooltip_AddNormalLine(tooltip, option.tooltip)
+                end)
+                if option.enabled then
+                    checkbox:SetEnabled(option.enabled)
                 end
-            end)
+            end
+            if menu.extra then
+                menu.extra(submenu)
+            end
         end
+        rootDescription:CreateDivider()
+        rootDescription:CreateButton(L["Show Tips Again"], function()
+            if ns.ResetTour then
+                ns.ResetTour()
+                ns.Print(L["The tips show the next time you open your bags."])
+            end
+        end)
     end
 end
 

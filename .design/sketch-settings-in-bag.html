@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="sv"><head><meta charset="utf-8"><title>Inställningar i väskan</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1600px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1500px}
+.row{display:flex;gap:22px;align-items:flex-start;margin-bottom:26px}.col{width:500px}.col h2{font-size:13px;color:#ffd100;margin:0 0 6px;min-height:34px}
+.bag{position:relative;width:500px;height:350px;background:#1a1816;border:2px solid #6e6252;border-radius:5px;margin-top:24px}
+.tabs{position:absolute;top:-23px;left:10px;display:flex;gap:6px}.tab{padding:2px 14px;background:#2a2622;border:1px solid #6e6252;border-bottom:0;border-radius:4px 4px 0 0;font:12px Georgia;color:#c9b27a}.tab.on{background:#3a3228;color:#ffd100}
+.t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000;position:relative}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;color:#ffd100;text-align:center;font:13px/18px Arial}
+.in{position:absolute;left:8px;right:8px;top:24px;bottom:50px;background:#0a0a0a;border:1px solid #333;padding:6px 8px;overflow:hidden}
+.foot{position:absolute;left:8px;right:8px;bottom:5px;height:40px;display:flex;align-items:center;gap:8px;font:11px Arial;color:#fff;background:#151210;border:1px solid #4a3a20;border-radius:4px;padding:0 8px}
+.head{display:flex;align-items:center;gap:8px;height:40px;border-bottom:1px solid #2a2520;margin-bottom:6px}.head .nm{font:13px Arial;color:#ffd100}.head .ct{color:#999;font:11px Arial}
+.btn{border:1px solid #d4af37;background:#5a0d08;color:#ffd9a0;padding:2px 14px;font:11px Arial;border-radius:3px}.ml{margin-left:auto}
+.ic{width:36px;height:36px;border:1px solid #555;border-radius:3px;position:relative;display:inline-block;vertical-align:top}
+.ic.drop{border-style:dashed;background:#0a0a0a;color:#888;text-align:center;font:20px/34px Arial}
+.ic .rx{position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:#a01010;border:1px solid #d4af37;color:#fff;font:9px/12px Arial;text-align:center}
+.grid{display:flex;flex-wrap:wrap;gap:5px}
+.lbl{font:11px Arial;color:#9a9a9a;margin:8px 0 4px}
+.input{display:flex;gap:6px;align-items:center;margin-top:8px}.input .box{flex:1;height:22px;border:1px solid #555;background:#000;border-radius:2px;color:#777;font:11px/20px Arial;padding:0 6px}
+.cb{font:11px Arial;color:#ddd;margin:3px 0}.cb b{display:inline-block;width:12px;height:12px;border:1px solid #888;background:#111;margin-right:6px;vertical-align:-2px;color:#ffd100;font:10px/10px Arial;text-align:center}
+.grp{display:flex;align-items:center;gap:8px;height:34px;border-bottom:1px solid #1d1b19;padding:0 4px;font:12px Arial}
+.grp .ar{color:#ffd100;font:10px Arial;width:22px}.grp .nm{color:#fff}.grp .n2{color:#888;font-size:11px}.grp .rx{margin-left:auto;width:14px;height:14px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.grp.open{background:#14120f}.grp.empty .nm{color:#777}
+.sub{padding:4px 4px 6px 34px;border-bottom:1px solid #1d1b19;background:#14120f}
+.rule{display:inline-block;font:11px Arial;color:#ddd;border:1px solid #444;border-radius:10px;padding:1px 8px;margin:0 4px 4px 0}.rule i{color:#e55;font-style:normal;margin-left:4px}
+.hl{outline:2px solid #4aa3ff;outline-offset:1px}
+.call{background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:11px/1.35 Arial;padding:5px 8px;border-radius:4px;margin-top:8px}
+.menu{position:absolute;background:#0d0d0d;border:1px solid #777;border-radius:3px;padding:4px 0;font:12px/1.2 Arial;color:#fff;z-index:5;width:210px}
+.menu div{padding:3px 10px 3px 26px;position:relative}.menu .ti{color:#ffd100;padding-left:10px}.menu .sep{border-top:1px solid #333;margin:3px 0;padding:0}
+.menu .ck::before{content:"";position:absolute;left:9px;top:5px;width:9px;height:9px;border:1px solid #999;background:#111}
+.menu .ck.on::before{background:#ffd100}.menu .sm::after{content:"▸";position:absolute;right:8px;color:#ccc}.menu .hov{background:#2a3a5a}
+.menu .new{color:#7fd7ff}.menu .new::after{content:" ny";color:#4aa3ff;font-size:10px}
+.tt{background:#0c0c0c;border:1px solid #777;padding:6px 9px;font:12px/1.45 Arial;color:#fff;width:330px;border-radius:3px}
+.tt .w{color:#fff;font-size:13px}.tt .gr{color:#bbb}.tt .y{color:#ffd100}.tt .bl{color:#6fb5ff}.tt .sep{border-top:1px solid #333;margin:5px 0}
+.tt .cnt{display:flex;justify-content:space-between;color:#6fb5ff}
+.alt{font:11px Arial;color:#aaa;margin-top:10px}
+table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px solid #333;padding:4px 8px;text-align:left;vertical-align:top}th{color:#ffd100;font-weight:normal;background:#15130f}
+</style></head><body>
+<h1>Tidy Pack – skiss: antal i tooltipen, kugghjulets meny och inställningar i väskan</h1>
+<p class="n">Skiss, inte spelet. Tre förslag. 1: kollegans idé – tooltipen visar hur många du har i väskan och i banken, och totalen. 2: kugghjulets meny samlar alla "Show …"-val i en undermeny. 3: skräplistan och grupperna öppnas i väskans eget fönster, som ikonvalet i Sets, så att Tidy Pack inte behöver någon egen sida i spelets inställningar.</p>
+
+<!-- 1. Tooltip -->
+<div class="row">
+ <div class="col">
+  <h2>1a. Kollegans förslag: antal i väskan och banken i tooltipen</h2>
+  <div class="tt">
+   <div class="w">Linen Cloth</div>
+   <div class="gr">Trade Goods</div>
+   <div class="gr">Max Stack: 20</div>
+   <div class="y">Needed for: A Bundle of Cloth (12/20)</div>
+   <div class="sep"></div>
+   <div class="cnt"><span>Bags</span><span>12</span></div>
+   <div class="cnt"><span>Bank</span><span>40</span></div>
+   <div class="cnt"><span>Total</span><span>52</span></div>
+  </div>
+  <div class="call">Visas bara när saken finns i banken – annars säger raderna inget nytt. Väskan räknas av spelet (<code>C_Item.GetItemCount</code>). Banken räknas ur Tidy Packs egen sparade bank, så antalet syns också långt från bankiren.</div>
+ </div>
+ <div class="col">
+  <h2>1b. Borta från banken: hur gammalt antalet är</h2>
+  <div class="tt">
+   <div class="w">Linen Cloth</div>
+   <div class="gr">Trade Goods</div>
+   <div class="sep"></div>
+   <div class="cnt"><span>Bags</span><span>12</span></div>
+   <div class="cnt"><span>Bank (2 days ago)</span><span>40</span></div>
+   <div class="cnt"><span>Total</span><span>52</span></div>
+  </div>
+  <div class="call">Hos bankiren står bara "Bank". Längre bort står när banken sparades, samma ord som fliken Bank använder. Bara den här karaktären: andra karaktärers väskor är bortvalt (AGENTS.md).</div>
+ </div>
+ <div class="col">
+  <h2>1c. Kortare variant, en rad (vald)</h2>
+  <div class="tt">
+   <div class="w">Linen Cloth</div>
+   <div class="gr">Trade Goods</div>
+   <div class="sep"></div>
+   <div class="bl">Bags 12 · Bank 40 · Total 52</div>
+  </div>
+  <div class="call">Tar mindre plats i en tooltip som redan har rader från Tidy Pack (set, grupp, quest). 1a är lättare att läsa på en tv; 1c tar en rad i stället för tre. Jag föreslår 1c.</div>
+ </div>
+</div>
+
+<!-- 2. Gear menu -->
+<div class="row">
+ <div class="col">
+  <h2>2a. I dag: kugghjulets meny</h2>
+  <div class="bag" style="height:250px">
+   <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+   <div class="t">Backpack<span class="g hl">⚙</span><span class="x"></span></div>
+   <div class="menu" style="right:6px;top:24px">
+    <div class="ti">Tidy Pack</div>
+    <div>Junk List…</div><div>Groups…</div><div>Settings…</div>
+    <div class="sep"></div>
+    <div class="ck on">Show quest items in Bags</div>
+    <div class="ck on">Lock items at merchants</div>
+   </div>
+  </div>
+  <div class="call">Resten av valen finns bara på sidan i spelets inställningar (Esc → Options → AddOns → Tidy Pack), som öppnas i ett eget fönster.</div>
+ </div>
+ <div class="col">
+  <h2>2b. Förslag: "Show ▸" med alla val om vad som syns</h2>
+  <div class="bag" style="height:250px">
+   <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+   <div class="t">Backpack<span class="g hl">⚙</span><span class="x"></span></div>
+   <div class="menu" style="right:6px;top:24px;width:190px">
+    <div class="ti">Tidy Pack</div>
+    <div>Junk List…</div><div>Groups…</div>
+    <div class="sep"></div>
+    <div class="sm hov">Show</div>
+    <div class="sm">Merchants and loot</div>
+    <div class="sm">Bag and bank</div>
+    <div class="sep"></div>
+    <div>Show Tips Again</div>
+   </div>
+   <div class="menu" style="right:198px;top:96px;width:230px">
+    <div class="ck on">Item level and BoE</div>
+    <div class="ck on">Upgrade arrows</div>
+    <div class="ck on">Quest items in Bags</div>
+    <div class="ck on">Marks for later quests</div>
+    <div class="ck on new">Bag and bank counts</div>
+    <div class="ck on new">Tidy Pack lines in tooltips</div>
+    <div class="ck on new">Junk value in the header</div>
+   </div>
+  </div>
+ </div>
+ <div class="col">
+  <h2>2c. De andra undermenyerna</h2>
+  <table>
+   <tr><th>Undermeny</th><th>Val (dagens namn i inställningarna)</th></tr>
+   <tr><td>Show</td><td>Item level and BoE · Upgrade arrows · Quest items in Bags · Marks for later quests (grå utan Questie) · <b class="bl">nya:</b> Bag and bank counts (1), Tidy Pack lines in tooltips ("Tidy Pack set/group: …"), Junk value in the header</td></tr>
+   <tr><td>Merchants and loot</td><td>Lock items at merchants · Ask to delete junk list loot · Suggest a deletion when full</td></tr>
+   <tr><td>Bag and bank</td><td>Replace the game's bag buttons · Use the Bank tab at bankers · (hos bankiren) Show the game's bank window</td></tr>
+  </table>
+  <div class="call">Varje val har en tooltip i menyn, som raderna i spelets inställningar har i dag. Menyn stängs inte när du klickar i en kryssruta, så du ser ändringen direkt i väskan bakom. Mina tre nya "Show"-förslag är valfria; antalet (1) är det enda jag tycker behövs.</div>
+ </div>
+</div>
+
+<!-- 3. Junk + groups in bag -->
+<div class="row">
+ <div class="col">
+  <h2>3a. Junk List… öppnas i väskan (i stället för ett eget fönster)</h2>
+  <div class="bag">
+   <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+   <div class="t">Backpack<span class="g">⚙</span><span class="x"></span></div>
+   <div class="in">
+    <div class="head"><span class="ic" style="background:#6b5a2a"></span><span class="nm">Junk List</span><span class="ct">7 items</span><span class="btn ml">Done</span></div>
+    <div class="grid">
+     <span class="ic" style="background:#556"></span>
+     <span class="ic hl" style="background:#7a5"><span class="rx">✕</span></span>
+     <span class="ic" style="background:#865"></span><span class="ic" style="background:#558"></span>
+     <span class="ic" style="background:#776"></span><span class="ic" style="background:#a64"></span>
+     <span class="ic" style="background:#567"></span>
+     <span class="ic drop">+</span>
+    </div>
+    <div class="input"><span class="box">Name, link or item number</span><span class="btn">Add</span></div>
+    <div class="lbl">When you loot something on the list</div>
+    <div class="cb"><b>✓</b>Ask to delete it</div>
+    <div class="cb"><b>✓</b>Suggest a deletion when your bags are full</div>
+   </div>
+   <div class="foot"><span>17 free</span><span style="margin-left:auto">12g 40s 5c</span></div>
+  </div>
+  <div class="call">Samma rutor som i väskan, med sakens bild också när du inte har den. ✕ syns på rutan musen står på. Släpp en sak på "+" eller var som helst. Shift-klicka en länk medan rutan är aktiv. Done (eller en flik) går tillbaka.</div>
+ </div>
+ <div class="col">
+  <h2>3b. Groups… öppnas i väskan, en rad per grupp</h2>
+  <div class="bag">
+   <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
+   <div class="t">Backpack<span class="g">⚙</span><span class="x"></span></div>
+   <div class="in" style="padding-top:0">
+    <div class="head"><span class="nm">Your groups</span><span class="ct">3 of 8</span><span class="btn ml">Done</span></div>
+    <div class="grp open"><span class="ar">▲▼</span><span class="nm">Potions</span><span class="n2">1 rule · 2 items</span><span class="rx"></span></div>
+    <div class="sub">
+     <span class="rule">All "Potion" items<i>✕</i></span><br>
+     <span class="ic" style="background:#a33;width:26px;height:26px"></span>
+     <span class="ic" style="background:#33a;width:26px;height:26px"></span>
+     <span class="ic drop" style="width:26px;height:26px;font:14px/24px Arial">+</span>
+    </div>
+    <div class="grp"><span class="ar">▲▼</span><span class="nm">Fishing</span><span class="n2">4 items</span><span class="rx"></span></div>
+    <div class="grp"><span class="ar">▲▼</span><span class="nm">Hearth &amp; Travel</span><span class="n2">2 items</span><span class="rx"></span></div>
+    <div class="grp empty"><span class="ar"></span><span class="nm">+ New group – click, or drop an item</span></div>
+   </div>
+   <div class="foot"><span>17 free</span><span style="margin-left:auto">12g 40s 5c</span></div>
+  </div>
+  <div class="call">Som raderna i Sets: klick på namnet byter namn på raden (Enter/Esc), klick på raden fäller ut den. En sak som släpps på en rad läggs i gruppen. ✕ frågar först, med Tidy Packs egen fråga (inte spelets StaticPopup).</div>
+ </div>
+ <div class="col">
+  <h2>3c. Spelets inställningar: om Tidy Pack, länk och kort hjälp (vald)</h2>
+  <div class="bag" style="height:330px;background:#111">
+   <div class="t">Options – AddOns – Tidy Pack</div>
+   <div style="padding:12px 14px;font:12px/1.5 Arial;color:#ddd">
+    <div style="display:flex;gap:10px;align-items:center"><span class="ic" style="background:#6b5a2a;width:40px;height:40px"></span>
+     <div><span style="color:#ffd100;font:15px Georgia">Tidy Pack</span> <span style="color:#999">1.2.0</span><br>
+     <span style="color:#aaa">By Daniel Dichter Heineman</span></div></div>
+    <div class="lbl" style="margin-top:10px;color:#ffd100">How to use it</div>
+    <div>• Press B: your items are sorted into groups.<br>
+    • Alt-click an item: favorite, junk list, set or group.<br>
+    • The gear button <span style="color:#ffd100">⚙</span> on the bag window has every option.<br>
+    • Tabs: Bank (at a banker), Sets and Quests.</div>
+    <div class="lbl" style="margin-top:10px;color:#ffd100">Updates and feedback</div>
+    <div class="input" style="margin-top:2px"><span class="box hl" style="color:#fff;background:#203050">https://www.curseforge.com/wow/addons/tidy-pack</span></div>
+    <div style="color:#999;font-size:11px">Press Cmd+C to copy the link.</div>
+    <div style="margin-top:10px"><span class="btn">Open Bags</span> <span class="btn">Show Tips Again</span></div>
+   </div>
+  </div>
+  <div class="call">Inga val här: allt finns under kugghjulet. Namn och version läses ur TOC-filen (<code>## Author</code>, <code>## Version</code>). Länken står i en ruta där den redan är markerad, eftersom ett addon inte kan öppna webbläsaren; på Windows står det Ctrl+C. Adressen kan också läggas som <code>## X-Website</code> i TOC-filen.</div>
+  <h2 style="margin-top:14px">Att tänka på</h2>
+  <table>
+   <tr><td>Handkontroll</td><td>Att skriva ett namn går trögt både här och på dagens sida. Släppa en sak fungerar.</td></tr>
+   <tr><td>Långa listor</td><td>Rullas med mushjulet, som fliken Quests. Fönstret byter inte storlek.</td></tr>
+   <tr><td>Kod</td><td>Junk-sidan (Options.lua) och GroupsPage.lua (410 rader) flyttas in i väskan; logiken i Marks.lua och Groups.lua är densamma.</td></tr>
+  </table>
+ </div>
+</div>
+</body></html>

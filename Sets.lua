@@ -584,7 +584,8 @@ end
 
 -- En rad i sakens tooltip med seten den ingår i.
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-    if not data or type(data.id) ~= "number" then
+    -- Inställningen "Tidy Pack lines in tooltips" (kugghjulets Show ▸).
+    if not data or type(data.id) ~= "number" or (ns.db and ns.db.tooltipLines == false) then
         return
     end
     local names = ns.GetSetNamesForItem(data.id)

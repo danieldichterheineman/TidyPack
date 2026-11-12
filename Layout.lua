@@ -566,7 +566,7 @@ local function headerText(group, junkValue)
     local text = ns.groupNames[group]
     if group == "Favorites" then
         return FAVORITE_ICON .. text
-    elseif group == "Junk" and junkValue > 0 then
+    elseif group == "Junk" and junkValue > 0 and ns.db.junkValue ~= false then
         return text .. "  " .. GetMoneyString(junkValue)
     end
     return text
@@ -1069,6 +1069,40 @@ local function layoutQuestsView(atMerchant)
     commit(atMerchant)
 end
 
+-- Skräplistan eller de egna grupperna (Panels.lua) i stället för sakerna, som listan i fliken Sets.
+local function layoutPanelView(view)
+    releaseHeaders()
+    hideSectionLines()
+    if divider then
+        divider:Hide()
+    end
+    questNoteState = nil
+    questNote:Hide()
+    for _, button in bagFrame:EnumerateValidItems() do
+        if lockedButtons[button] or disabledButtons[button] then
+            setLocked(button, false)
+        end
+        button:Hide()
+    end
+    wipe(shownButtons)
+    hideBankButtons()
+    bankNote:Hide()
+    wipe(groupFirst)
+    wipe(groupOfButton)
+    newGroupIndex, startGroupIndex = nil, nil
+    -- Lika högt som de andra flikarna; listan rullas om den är längre.
+    contentHeight = math.max(sharedHeight or 0, ns.PANEL_MIN_HEIGHT or 0)
+    if ns.LayoutPanel then
+        ns.LayoutPanel(view, function(region)
+            anchor(region, 0, 0)
+        end, gridWidth, contentHeight)
+    end
+    applySize()
+    if ns.OnLayoutChanged then
+        ns.OnLayoutChanged()
+    end
+end
+
 -- Fliken Bank (Bank.lua): bankens saker i samma grupper och avsnitt som i Bags. Hos bankiren är
 -- rutorna riktiga; borta står en rad överst om när banken sparades, och rutorna visar bara saken.
 local function layoutBankView(atMerchant, cols)
@@ -1158,6 +1192,16 @@ local function relayout()
         atBank and bankHeight or 0)
     if view ~= "bank" then
         bankNote:Hide()
+    end
+    if view == "junk" or view == "groups" then
+        if ns.HideQuestsView then
+            ns.HideQuestsView()
+        end
+        layoutPanelView(view)
+        return
+    end
+    if ns.HidePanel then
+        ns.HidePanel()
     end
 
     if view == "bank" then
