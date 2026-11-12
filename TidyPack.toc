@@ -20,6 +20,7 @@ Sets.lua
 QuestHints.lua
 BagSwap.lua
 Layout.lua
+Bank.lua
 SetsView.lua
 QuestsView.lua
 Marks.lua

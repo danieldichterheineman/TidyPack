@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- New Bank tab, between Bags and Sets. At a banker, your bank is sorted in the same groups and
+  parts as your bags, and the game's bank window is hidden. Right-click an item to move it between
+  your bank and your bags, or drag it onto the other tab. Drop an item on an empty spot in the Bank
+  tab to put it in your bank.
+- Away from the bank, the Bank tab shows what your bank held the last time you were there (for
+  each character). You can see the items and their tooltips, but not move them.
+- The gear button's menu at a banker can show the game's bank window again, for example to buy a
+  bank slot. Turn the Bank tab off with "Use the Bank tab at bankers" in the settings.
+
 ## 1.1.0 (2026-11-11)
 
 - More room for your items: the search box and the bag icon in the top left corner are gone, and

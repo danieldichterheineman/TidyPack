@@ -269,6 +269,14 @@ ns.OnLoad(function()
     addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
         L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
         refresh)
+    addCheckbox("bankTab", L["Use the Bank tab at bankers"],
+        L["At a banker, your bank is shown sorted in the Bank tab, and the game's bank window is hidden. Turn off to use the game's bank window; the Bank tab still shows what's in your bank."],
+        function()
+            if ns.ApplyBankSetting then
+                ns.ApplyBankSetting()
+            end
+            refresh()
+        end)
     layout:AddInitializer(CreateSettingsButtonInitializer(L["Tips"], L["Show again"], function()
         if ns.ResetTour then
             ns.ResetTour()

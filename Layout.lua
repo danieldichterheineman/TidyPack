@@ -88,6 +88,8 @@ local gridWidth = widthOf(MIN_COLUMNS) -- rutnätets bredd just nu
 local measurer                    -- osynlig text som mäter hur breda rubrikerna är
 local questNote                   -- raden som ersätter quest-sakerna när de är dolda i väskan
 local questNoteState              -- var raden ligger och vad den säger, eller nil
+local bankNote                    -- texten i fliken Bank borta från banken (Bank.lua)
+local BANK_NOTE_HEIGHT = 34       -- plats för texten, ovanför bankens saker
 local chromeWidth, chromeHeight   -- fönstrets kanter, titelrad, sökruta och pengar
 local location = ItemLocation:CreateEmpty() -- återanvänds för att läsa en saks nivå
 
@@ -222,7 +224,13 @@ local function canUse(entry)
     if cached ~= nil then
         return cached
     end
-    local data = C_TooltipInfo and C_TooltipInfo.GetBagItem(entry.bagID, entry.slot)
+    -- En sparad sak i banken (Bank.lua) har ingen plats just nu; dess tooltip läses från länken.
+    local data
+    if entry.offline then
+        data = C_TooltipInfo and C_TooltipInfo.GetHyperlink(entry.link)
+    else
+        data = C_TooltipInfo and C_TooltipInfo.GetBagItem(entry.bagID, entry.slot)
+    end
     if not data or not data.lines then
         return false -- vet inte än; frågas igen nästa gång
     end
@@ -392,17 +400,24 @@ local function updateExtras(entry, atMerchant)
     -- Markerat skräp får ingen nivå: där sitter skräpmyntet. Nivå och BoE går att stänga av i
     -- inställningarna (Options.lua).
     local level, boe, upgrade
+    -- Sakens nivå: från platsen, eller från länken för en sparad sak i banken (Bank.lua), som inte
+    -- finns på någon plats just nu.
+    local function itemLevel()
+        if entry.offline then
+            return (C_Item.GetDetailedItemLevelInfo(entry.link))
+        end
+        location:SetBagAndSlot(entry.bagID, entry.slot)
+        return C_Item.GetCurrentItemLevel(location)
+    end
     -- Uppgraderingspilen gäller all utrustning som inte är skräp (också vita saker).
     if ns.db.upgradeArrows and entry.isGear and not entry.isEmpty and not entry.junkMarked
         and entry.quality > Enum.ItemQuality.Poor and entry.equipLocation and SLOTS_FOR[entry.equipLocation] then
-        location:SetBagAndSlot(entry.bagID, entry.slot)
-        upgrade = isUpgrade(entry, C_Item.GetCurrentItemLevel(location))
+        upgrade = isUpgrade(entry, itemLevel())
     end
     if ns.db.itemLevelAndBoE and entry.isGear and entry.quality >= Enum.ItemQuality.Uncommon
         and not entry.junkMarked then
         if entry.equipLocation and entry.equipLocation ~= "" and not NO_LEVEL[entry.equipLocation] then
-            location:SetBagAndSlot(entry.bagID, entry.slot)
-            level = C_Item.GetCurrentItemLevel(location)
+            level = itemLevel()
         end
         -- Bindningen är det 14:e värdet från GetItemInfo. Saknas sakens data ännu blir
         -- det nil, och då visas BoE nästa gång väskorna uppdateras.
@@ -463,8 +478,9 @@ local function updateExtras(entry, atMerchant)
         button.UpgradeIcon:SetShown(isUpgrade == true)
     end
 
-    -- Alt-klick för favoriter och skräp (se Marks.lua).
-    if ns.HookItemButton then
+    -- Alt-klick för favoriter och skräp (se Marks.lua). Inte på sparade saker i banken: de har
+    -- ingen plats att läsa saken från.
+    if ns.HookItemButton and not entry.offline then
         ns.HookItemButton(button)
     end
 end
@@ -579,6 +595,7 @@ end
 -- Linjerna mellan avsnitten i fliken Bags. flow fyller sectionYs, placeSectionLines ritar dem.
 local sectionYs = {}
 local sectionLines = {}
+local bankFlow = false -- sant medan flow lägger ut bankens saker (fliken Bank)
 local freeText -- antalet lediga platser nere till vänster (med mus, i stället för "Add to bag")
 
 local function hideSectionLines()
@@ -616,9 +633,24 @@ updateFreeText = function()
         ns.UpdateBagBar()
     end
     local free = C_Container.CalculateTotalNumberOfFreeBagSlots()
+    -- I fliken Bank: bankens lediga platser (Bank.lua).
+    if ns.GetView and ns.GetView() == "bank" and ns.GetBankFreeSlots then
+        free = ns.GetBankFreeSlots()
+    end
     freeText:SetText(L["%d free"]:format(free))
     freeText:SetTextColor((free <= LOW_SPACE and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
     freeText:Show()
+end
+
+-- Döljer bankens rutor (Bank.lua) som inte syns efter den här genomgången. Alla, utom i fliken Bank.
+local function hideBankButtons()
+    if ns.EnumerateBankButtons then
+        for _, button in ns.EnumerateBankButtons() do
+            if not shownButtons[button] then
+                button:Hide()
+            end
+        end
+    end
 end
 
 -- Listan med set i fliken Sets (SetsView.lua) i stället för sakerna.
@@ -637,6 +669,8 @@ local function layoutSetsView(atMerchant)
         button:Hide()
     end
     wipe(shownButtons)
+    hideBankButtons()
+    bankNote:Hide()
     wipe(groupFirst)
     wipe(groupOfButton)
     newGroupIndex, startGroupIndex = nil, nil
@@ -681,8 +715,9 @@ local function flow(cols, apply, junkValue)
         if not (list and #list > 0) then
             return
         end
-        -- Är quest-sakerna dolda i väskan (inställningen) står en rad i stället för rutorna.
-        local hideQuests = group == "QuestItems" and ns.db.showQuestItemsInBags == false
+        -- Är quest-sakerna dolda i väskan (inställningen) står en rad i stället för rutorna. Inte i
+        -- banken: där finns de inte i fliken Quests.
+        local hideQuests = group == "QuestItems" and ns.db.showQuestItemsInBags == false and not bankFlow
         measurer:SetText(text)
         local headerWidth = math.ceil(measurer:GetStringWidth())
         local groupWidth, height
@@ -797,6 +832,79 @@ local function chooseColumns(junkValue)
     return chosen
 end
 
+-- Tömmer grupperna inför en ny genomgång.
+local function resetGroups()
+    entryCount = 0
+    for _, list in pairs(groupLists) do
+        wipe(list)
+    end
+    wipe(emptyByFamily)
+end
+
+-- Sorterar in en sak i sin grupp. Returnerar vad den är värd som skräp (0 om den inte är skräp).
+-- isQuestItem kan ges (sparade saker i banken, Bank.lua); annars frågas spelet. offline = sant för
+-- en sak i den sparade banken: rutan visar bara bild och tooltip, och platsen finns inte just nu.
+local function addItem(button, bagID, slot, info, isQuestItem, offline)
+    local _, _, _, equipLocation, _, classID, subClassID = C_Item.GetItemInfoInstant(info.itemID)
+    local entry = newEntry()
+    entry.button, entry.bagID, entry.slot = button, bagID, slot
+    entry.isEmpty, entry.offline = false, offline == true
+    if isQuestItem == nil then
+        isQuestItem = ns.IsQuestItem(bagID, slot, info)
+    end
+    if specialBags[bagID] then
+        -- Allt i en specialväska stannar i väskans egen grupp.
+        entry.group, entry.subOrder = "bag" .. bagID, 0
+    else
+        entry.group, entry.subOrder = ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
+    end
+    entry.quality = info.quality or 0
+    entry.name = ns.GetItemName(info.hyperlink)
+    entry.count = info.stackCount or 1
+    entry.itemID, entry.link, entry.isBound = info.itemID, info.hyperlink, info.isBound
+    entry.isGear = classID == Enum.ItemClass.Weapon or classID == Enum.ItemClass.Armor
+    entry.equipLocation = equipLocation
+    entry.locked = isQuestItem or ns.IsInEquipmentSet(info.itemID) or ns.IsInAnySet(info.itemID)
+    entry.junkMarked = ns.IsJunkMarked(info.itemID)
+    entry.noValue = info.hasNoValue
+    entry.neededLater = ns.IsNeededLater ~= nil and ns.IsNeededLater(info.itemID)
+    -- Vad en quest kräver av saken (antal man har och behöver), för siffran på rutan.
+    entry.questRecord = isQuestItem and ns.GetQuestRecord(entry.name) or nil
+    entry.hideProgress = false
+    addToGroup(entry.group, entry)
+    if entry.group == "Junk" and not info.hasNoValue then
+        local sellPrice = select(11, C_Item.GetItemInfo(info.hyperlink))
+        return (sellPrice or 0) * entry.count
+    end
+    return 0
+end
+
+-- Räknar en tom plats. Bara en ruta per väsktyp visas: den första lediga platsen.
+local function addEmpty(button, bagID, slot, key, group, family)
+    local empty = emptyByFamily[key]
+    if not empty then
+        empty = newEntry()
+        empty.button, empty.bagID, empty.slot = button, bagID, slot
+        empty.isEmpty, empty.offline, empty.group, empty.family, empty.free = true, false, group, family, 0
+        -- Tabellen kan ha använts för en sak förut, så allt som märkena läser nollställs.
+        empty.locked, empty.isGear, empty.junkMarked, empty.neededLater = false, false, false, false
+        empty.quality, empty.noValue = 0, true
+        empty.questRecord, empty.hideProgress = nil, false
+        emptyByFamily[key] = empty
+        addToGroup(group, empty)
+    elseif bagID < empty.bagID or (bagID == empty.bagID and slot < empty.slot) then
+        -- Rutan som syns är den första lediga platsen, där spelet lägger nya saker.
+        empty.button, empty.bagID, empty.slot = button, bagID, slot
+    end
+    empty.free = empty.free + 1
+end
+
+local function sortGroups()
+    for _, list in pairs(groupLists) do
+        table.sort(list, ns.CompareEntries)
+    end
+end
+
 -- Sorterar in varje sak i sin grupp och räknar ut vad skräpet är värt (första steget i en
 -- genomgång av fliken Bags eller Quests).
 local function classify()
@@ -811,73 +919,45 @@ local function classify()
     ns.UpdateQuestStacks()
 
     -- Sortera in varje sak i sin grupp. Tomma platser räknas per väsktyp.
-    entryCount = 0
-    for _, list in pairs(groupLists) do
-        wipe(list)
-    end
-    wipe(emptyByFamily)
+    resetGroups()
     local junkValue = 0
     for _, button in bagFrame:EnumerateValidItems() do
         local bagID, slot = button:GetBagID(), button:GetID()
         local info = C_Container.GetContainerItemInfo(bagID, slot)
         if info then
             rememberNew(bagID, slot, info.itemID)
-            local _, _, _, equipLocation, _, classID, subClassID = C_Item.GetItemInfoInstant(info.itemID)
-            local entry = newEntry()
-            entry.button, entry.bagID, entry.slot = button, bagID, slot
-            entry.isEmpty = false
-            local isQuestItem = ns.IsQuestItem(bagID, slot, info)
-            if specialBags[bagID] then
-                -- Allt i en specialväska stannar i väskans egen grupp.
-                entry.group, entry.subOrder = "bag" .. bagID, 0
-            else
-                entry.group, entry.subOrder = ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
-            end
-            entry.quality = info.quality or 0
-            entry.name = ns.GetItemName(info.hyperlink)
-            entry.count = info.stackCount or 1
-            entry.itemID, entry.link, entry.isBound = info.itemID, info.hyperlink, info.isBound
-            entry.isGear = classID == Enum.ItemClass.Weapon or classID == Enum.ItemClass.Armor
-            entry.equipLocation = equipLocation
-            entry.locked = isQuestItem or ns.IsInEquipmentSet(info.itemID) or ns.IsInAnySet(info.itemID)
-            entry.junkMarked = ns.IsJunkMarked(info.itemID)
-            entry.noValue = info.hasNoValue
-            entry.neededLater = ns.IsNeededLater ~= nil and ns.IsNeededLater(info.itemID)
-            -- Vad en quest kräver av saken (antal man har och behöver), för siffran på rutan.
-            entry.questRecord = isQuestItem and ns.GetQuestRecord(entry.name) or nil
-            entry.hideProgress = false
-            if entry.group == "Junk" and not info.hasNoValue then
-                local sellPrice = select(11, C_Item.GetItemInfo(info.hyperlink))
-                junkValue = junkValue + (sellPrice or 0) * entry.count
-            end
-            addToGroup(entry.group, entry)
+            junkValue = junkValue + addItem(button, bagID, slot, info)
         elseif bagID ~= KEYRING_CONTAINER then -- tomma platser på nyckelringen visas inte
             local _, family = C_Container.GetContainerNumFreeSlots(bagID)
             family = family or 0
             -- En specialväskas tomma platser räknas för sig, i väskans egen grupp.
             local key = specialBags[bagID] and ("bag" .. bagID) or family
             local group = specialBags[bagID] and ("bag" .. bagID) or "Empty"
-            local empty = emptyByFamily[key]
-            if not empty then
-                empty = newEntry()
-                empty.button, empty.bagID, empty.slot = button, bagID, slot
-                empty.isEmpty, empty.group, empty.family, empty.free = true, group, family, 0
-                -- Tabellen kan ha använts för en sak förut, så allt som märkena läser nollställs.
-                empty.locked, empty.isGear, empty.junkMarked, empty.neededLater = false, false, false, false
-                empty.quality, empty.noValue = 0, true
-                empty.questRecord, empty.hideProgress = nil, false
-                emptyByFamily[key] = empty
-                addToGroup(group, empty)
-            elseif bagID < empty.bagID or (bagID == empty.bagID and slot < empty.slot) then
-                -- Rutan som syns är den första lediga platsen, där spelet lägger nya saker.
-                empty.button, empty.bagID, empty.slot = button, bagID, slot
-            end
-            empty.free = empty.free + 1
+            addEmpty(button, bagID, slot, key, group, family)
         end
     end
-    for _, list in pairs(groupLists) do
-        table.sort(list, ns.CompareEntries)
+    sortGroups()
+    return junkValue
+end
+
+-- Samma sak för banken (Bank.lua): hos bankiren bankens platser, annars det som sparades senast.
+-- Banken har inga specialväskor i Tidy Pack: allt sorteras i de vanliga grupperna, och de lediga
+-- platserna räknas tillsammans.
+local function classifyBank()
+    wipe(specialBags)
+    ns.UpdateQuestStacks()
+    resetGroups()
+    local junkValue = 0
+    if ns.ForEachBankSlot then
+        ns.ForEachBankSlot(function(button, bagID, slot, info, offline, isQuestItem)
+            if info then
+                junkValue = junkValue + addItem(button, bagID, slot, info, isQuestItem, offline)
+            else
+                addEmpty(button, bagID, slot, "bank", "Empty", 0)
+            end
+        end)
     end
+    sortGroups()
     return junkValue
 end
 
@@ -903,6 +983,7 @@ local function commit(atMerchant)
             button:Hide()
         end
     end
+    hideBankButtons()
 
     -- Raden som ersätter quest-sakerna när de är dolda i väskan. Ett klick öppnar fliken Quests.
     if questNoteState then
@@ -988,6 +1069,64 @@ local function layoutQuestsView(atMerchant)
     commit(atMerchant)
 end
 
+-- Fliken Bank (Bank.lua): bankens saker i samma grupper och avsnitt som i Bags. Hos bankiren är
+-- rutorna riktiga; borta står en rad överst om när banken sparades, och rutorna visar bara saken.
+local function layoutBankView(atMerchant, cols)
+    releaseHeaders()
+    hideSectionLines()
+    if divider then
+        divider:Hide()
+    end
+    wipe(groupFirst)
+    wipe(groupOfButton)
+    newGroupIndex, startGroupIndex = nil, nil
+    questNoteState = nil
+
+    local junkValue = classifyBank()
+    bankFlow = true
+    local ok, height = pcall(flow, cols, true, junkValue)
+    bankFlow = false
+    if not ok then
+        error(height, 0)
+    end
+
+    -- Borta från banken: en rad överst, och sakerna flyttas ned under den.
+    local noteText
+    if not ns.IsAtBank() then
+        local age = ns.SavedBankAge and ns.SavedBankAge()
+        noteText = age and L["You're not at a banker – this is what your bank held %s. Visit a banker to move items."]:format(age)
+            or L["Visit a banker once, and Tidy Pack shows your bank here."]
+    end
+    local offset = noteText and BANK_NOTE_HEIGHT or 0
+    if offset > 0 then
+        for i = 1, headers.used do
+            headerY[i] = headerY[i] + offset
+        end
+        for i = 1, entryCount do
+            local entry = entries[i]
+            if entry.placed then
+                entry.y = entry.y + offset
+            end
+        end
+        for index, lineY in ipairs(sectionYs) do
+            sectionYs[index] = lineY + offset
+        end
+    end
+
+    -- Hos bankiren är alla flikar lika höga (se relayout); borta kan fliken Bank bli högre.
+    contentHeight = math.max(height + offset, sharedHeight or 0)
+    if noteText then
+        bankNote:SetText(noteText)
+        bankNote:SetWidth(gridWidth)
+        anchor(bankNote, 0, 0)
+        bankNote:Show()
+    else
+        bankNote:Hide()
+    end
+    placeSectionLines()
+    commit(atMerchant)
+end
+
 -- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
 -- storlek. Körs efter spelets egen utläggning och varje gång innehållet ändras.
 local function relayout()
@@ -1003,10 +1142,31 @@ local function relayout()
     -- när du byter flik (användarens önskan 2026-11-10).
     local junkValue = classify()
     gridCols = chooseColumns(junkValue)
+    -- Banken (Bank.lua) räknas med när fliken Bank visas eller du står hos bankiren: flikarna är lika
+    -- breda, och hos bankiren lika höga, även när banken har mer än väskan.
+    local atBank = ns.IsAtBank ~= nil and ns.IsAtBank()
+    local bankJunk, bankHeight
+    if view == "bank" or atBank then
+        bankJunk = classifyBank()
+        gridCols = math.max(gridCols, chooseColumns(bankJunk))
+        bankHeight = flow(gridCols, false, bankJunk)
+        junkValue = classify()
+    end
     gridWidth = widthOf(gridCols)
     local bagsHeight = flow(gridCols, false, junkValue)
-    sharedHeight = math.max(bagsHeight, ns.SETS_VIEW_HEIGHT or 0, MIN_QUESTS_HEIGHT)
+    sharedHeight = math.max(bagsHeight, ns.SETS_VIEW_HEIGHT or 0, MIN_QUESTS_HEIGHT,
+        atBank and bankHeight or 0)
+    if view ~= "bank" then
+        bankNote:Hide()
+    end
 
+    if view == "bank" then
+        if ns.HideQuestsView then
+            ns.HideQuestsView()
+        end
+        layoutBankView(atMerchant, gridCols)
+        return
+    end
     if view == "sets" then
         if ns.HideQuestsView then
             ns.HideQuestsView()
@@ -1172,6 +1332,13 @@ ns.OnLoad(function()
         if kind ~= "item" then
             return
         end
+        -- I fliken Bank läggs saken i banken (bara hos bankiren, Bank.lua).
+        if ns.GetView and ns.GetView() == "bank" then
+            if ns.PutCursorItemInBank then
+                ns.PutCursorItemInBank()
+            end
+            return
+        end
         for bagID = 0, Constants.InventoryConstants.NumBagSlots do
             local free, family = C_Container.GetContainerNumFreeSlots(bagID)
             if free and free > 0 and (family == nil or family == 0) then
@@ -1304,6 +1471,10 @@ ns.OnLoad(function()
     local bagButtons = {}
     -- Sakerna i väskan får ett blått sken, och resten tonas ner (bagID nil: allt som vanligt).
     local function dimOthers(bagID)
+        -- Väskraden gäller dina väskor, inte banken: i fliken Bank tonas inget ner.
+        if bagID ~= nil and ns.GetView and ns.GetView() == "bank" then
+            return
+        end
         for i = 1, entryCount do
             local entry = entries[i]
             if entry.placed and not entry.isEmpty then
@@ -1415,6 +1586,15 @@ ns.OnLoad(function()
         end
         sinceCheck = 0
         local show = bagFrame:IsShown() and inset:IsShown() and bagFrame:IsMouseOver()
+        -- I fliken Bank går det bara att lägga in saker hos bankiren.
+        local inBank = ns.GetView and ns.GetView() == "bank"
+        if inBank and not (ns.IsAtBank and ns.IsAtBank()) then
+            show = false
+        end
+        if show then
+            label.text:SetText(inBank and L["Drop anywhere to put it in your bank"] or label.bagText)
+            label:SetWidth(label.text:GetStringWidth() + 16)
+        end
         glow:SetShown(show)
         label:SetShown(show)
 
@@ -1430,8 +1610,10 @@ ns.OnLoad(function()
         local _, itemID = GetCursorInfo()
         local classID = holding and itemID and select(6, C_Item.GetItemInfoInstant(itemID))
         local holdingBag = classID == Enum.ItemClass.Container
-        label.text:SetText(holdingBag and L["Drop on one of your bags to swap it"]
-            or L["Drop anywhere to put it in your bags"])
+        -- Texten för Bags; i fliken Bank byter watcher ovan den mot bankens.
+        label.bagText = holdingBag and L["Drop on one of your bags to swap it"]
+            or L["Drop anywhere to put it in your bags"]
+        label.text:SetText(label.bagText)
         label:SetWidth(label.text:GetStringWidth() + 16)
         if ns.SetBagBarSwapHint then
             ns.SetBagBarSwapHint(holdingBag)
@@ -1472,6 +1654,14 @@ ns.OnLoad(function()
     end)
     questNote:SetScript("OnLeave", GameTooltip_Hide)
     questNote:Hide()
+
+    -- Raden överst i fliken Bank när du inte står hos en bankir (layoutBankView).
+    bankNote = overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    bankNote:SetJustifyH("LEFT")
+    bankNote:SetJustifyV("TOP")
+    bankNote:SetWordWrap(true)
+    bankNote:SetTextColor(1, 0.85, 0.63)
+    bankNote:Hide()
 
     -- Ingen sökruta och ingen väskikon (användarens önskan 2026-11-10): mer plats för sakerna.
     -- Spelet visar sökrutan igen varje gång fönstret uppdateras, så den döljs direkt efteråt.

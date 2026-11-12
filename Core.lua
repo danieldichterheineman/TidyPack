@@ -32,6 +32,7 @@ ns.defaults = {
     suggestWhenFull = true,   -- föreslå en sak att radera när väskorna är fulla (MakeRoom.lua)
     lockAtMerchant = true,    -- lås quest- och set-saker hos en handlare (Layout.lua)
     showQuestItemsInBags = true, -- quest-saker i fliken Bags (annars bara i fliken Quests, Layout.lua)
+    bankTab = true,           -- banken i fliken Bank i stället för spelets bankfönster (Bank.lua)
     questHints = true,        -- saker som kommande quests behöver (QuestHints.lua)
     itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
 }
@@ -40,6 +41,9 @@ ns.defaults = {
 ns.charDefaults = {
     -- Egna set: { { name = "Fishing", items = { itemID, ... } }, ... } (se Sets.lua).
     sets = {},
+    -- bank (ny 2026-11-12, inget standardvärde): det banken höll senast, för fliken Bank borta från
+    -- banken. { time, free, items = { { link, count, quality, icon, bag, slot, quest, bound, noValue } } }
+    -- (se Bank.lua).
 }
 
 -- Skriver ett meddelande i användarens eget chattfönster, med addonets namn först.

@@ -194,6 +194,11 @@ local function buildMenu(_, rootDescription, itemOverride)
         rootDescription:CreateButton(L["Settings..."], function()
             ns.OpenSettings()
         end)
+        -- Hos bankiren: spelets eget bankfönster, t.ex. för att köpa en bankplats (Bank.lua).
+        if ns.IsAtBank and ns.IsAtBank() and ns.TakesOverBank and ns.TakesOverBank() then
+            rootDescription:CreateCheckbox(L["Show the game's bank window"], ns.IsGameBankFrameShown,
+                ns.ToggleGameBankFrame)
+        end
         -- De vanligaste valen direkt i menyn (samma värden som på inställningssidan).
         rootDescription:CreateDivider()
         for _, option in ipairs({

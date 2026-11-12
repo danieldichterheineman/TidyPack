@@ -27,12 +27,12 @@ local function steps()
             point = HelpTip.Point.BottomEdgeCenter, alignment = HelpTip.Alignment.Right,
         },
         {
-            target = function() return ns.GetTabButton(2) end,
+            target = function() return ns.GetTabButton(3) end,
             text = L["Sets: save what you wear and put it on with one click."],
             point = HelpTip.Point.TopEdgeCenter, alignment = HelpTip.Alignment.Left,
         },
         {
-            target = function() return ns.GetTabButton(3) end,
+            target = function() return ns.GetTabButton(4) end,
             text = L["Quests: see what your quests need and what is ready to turn in."],
             point = HelpTip.Point.TopEdgeCenter, alignment = HelpTip.Alignment.Center,
         },

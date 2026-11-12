@@ -30,24 +30,26 @@ function ns.IsSetsView()
     return view == "sets"
 end
 
--- Flikens knapp (1 Bags, 2 Sets, 3 Quests), för guiden i Tour.lua.
+-- Flikens knapp (1 Bags, 2 Bank, 3 Sets, 4 Quests), för guiden i Tour.lua.
 function ns.GetTabButton(tabID)
     return tabSystem and tabSystem:GetTabButton(tabID)
 end
 
--- Vilken flik som visas: "bags", "sets" eller "quests".
+-- Vilken flik som visas: "bags", "bank", "sets" eller "quests".
 function ns.GetView()
     return view
 end
 
 -- Numret på varje flik i flikraden.
-local TAB_OF = { bags = 1, sets = 2, quests = 3 }
+-- Bank står mellan Bags och Sets (skissen .design/sketch-bank-tab.html).
+local TAB_OF = { bags = 1, bank = 2, sets = 3, quests = 4 }
+local VIEW_OF = { "bags", "bank", "sets", "quests" }
 
 -- Pricken på fliken Quests lyser när minst en quest med saker är klar att lämna in.
 -- Layout.lua anropar den efter varje genomgång.
 function ns.UpdateQuestsNotice()
     if tabSystem then
-        tabSystem:SetTabNotification(3, ns.HasReadyQuest ~= nil and ns.HasReadyQuest())
+        tabSystem:SetTabNotification(TAB_OF.quests, ns.HasReadyQuest ~= nil and ns.HasReadyQuest())
     end
 end
 
@@ -65,10 +67,10 @@ function ns.UpdateSetsNotice()
             break
         end
     end
-    tabSystem:SetTabNotification(2, anyMissing)
+    tabSystem:SetTabNotification(TAB_OF.sets, anyMissing)
 end
 
--- Byter mellan "bags", "sets" och "quests".
+-- Byter mellan "bags", "bank", "sets" och "quests".
 function ns.SetView(newView)
     view = TAB_OF[newView] and newView or "bags"
     if tabSystem then
@@ -748,10 +750,10 @@ ns.OnLoad(function()
     tabSystem.tabSelectSound = SOUNDKIT.IG_CHARACTER_INFO_TAB
     tabSystem:SetPoint("BOTTOMLEFT", bagFrame, "TOPLEFT", TAB_LEFT, -TAB_OVERLAP)
     tabSystem:SetTabSelectedCallback(function(tabID)
-        ns.SetView(tabID == 2 and "sets" or (tabID == 3 and "quests" or "bags"))
+        ns.SetView(VIEW_OF[tabID] or "bags")
         return true -- ns.SetView har redan markerat fliken
     end)
-    for _, label in ipairs({ L["Bags"], L["Sets"], L["Quests"] }) do
+    for _, label in ipairs({ L["Bags"], L["Bank"], L["Sets"], L["Quests"] }) do
         local tabID = tabSystem:AddTab(label)
         -- Lite större text än spelets standard, som i trollboken.
         local tab = tabSystem:GetTabButton(tabID)
@@ -765,8 +767,9 @@ ns.OnLoad(function()
 
     -- Håller du en sak över fliken Sets byter fönstret till den, så att du kan släppa
     -- saken på ett set – som spelets egna flikar när man drar något över dem.
-    -- Samma för alla tre flikarna, så att man kommer tillbaka till Bags (eller till Quests) på samma sätt.
-    for tabID, tabView in ipairs({ "bags", "sets", "quests" }) do
+    -- Samma för alla flikarna, så att man kommer tillbaka till Bags (eller till Quests) på samma sätt.
+    -- Över fliken Bank kan du sedan släppa saken i banken.
+    for tabID, tabView in ipairs(VIEW_OF) do
         tabSystem:GetTabButton(tabID):HookScript("OnEnter", function()
             if view ~= tabView and cursorItemID() then
                 ns.SetView(tabView)

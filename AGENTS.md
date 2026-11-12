@@ -91,6 +91,23 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   quest är klar. (4) Inställningen `showQuestItemsInBags` ("Show quest items in Bags", påslagen): avstängd
   ersätts gruppen Quest Items i Bags av en rad "N slots hold quest items – see Quests" (`questNote`) som
   öppnar fliken. Inte provat i spelet.
+- ⚠️ Fliken Bank (`Bank.lua`, `Layout.lua`, byggd 2026-11-12 på grenen `claude/bank-tab`, issue #1,
+  skissen `.design/sketch-bank-tab.html`): flik 2 mellan Bags och Sets (flikarna är nu Bags 1, Bank 2,
+  Sets 3, Quests 4). Hos bankiren (`BANKFRAME_OPENED`/`CLOSED`) visar fliken bankens saker i samma grupper och
+  avsnitt som Bags, med egna rutor av spelets mall `ContainerFrameItemButtonTemplate`, en per plats i varje
+  köpt bankflik (`C_Bank.FetchPurchasedBankTabIDs(Enum.BankType.Character)`, behållare 6–14). Väskans nummer
+  sätts med `SetID` på en osynlig föräldraram och platsen med `SetID` på rutan, så spelets klick är otaintat:
+  högerklick flyttar mellan bank och väskor, och "släpp var som helst" lägger saken på första lediga
+  bankplats. Spelets `BankFrame` görs osynligt och litet (`SetAlpha(0)`, `SetScale(0.01)`), aldrig dolt:
+  dess `OnHide` stänger banken. Stängs väskan stängs banken (`C_Bank.CloseBankFrame`). Kugghjulets meny har
+  "Show the game's bank window" hos bankiren (köpa bankplats, byta väska i banken). Inställningen `bankTab`
+  ("Use the Bank tab at bankers"). Borta från banken: senast kända innehåll ur `TidyPackCharDB.bank`, vanliga
+  `ItemButton` med bild, antal, kvalitet och tooltip (`SetHyperlink`), och en rad överst om när det sparades.
+  Hos bankiren räknas bankens höjd in i den gemensamma höjden, så flikarna är lika höga; borta kan fliken
+  Bank bli högre. Inte byggt än: bankens väskor och "+" för att köpa i raden längst ner (spelets fönster
+  via kugghjulet i stället), kontogemensam bank (Warband; Forevers kod har `Enum.BankType.Account`),
+  handkontroll (Tidy Pack tar då inte över spelets fönster), specialväskor i banken (sorteras som vanliga
+  saker). Inte provat i spelet.
 - ✅ Egna grupper (`Groups.lua`, `GroupsPage.lua`, byggda 2026-11-10 efter skissen
   `.design/sketch-groups.html`): upp till 8 per konto, efter Favorites och "Add to bag". En sak
   läggs dit med kugghjulets meny ("Add to Group ▸", med en bockruta per grupp och "New
@@ -252,12 +269,19 @@ Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
   `UIPanelButtonTemplate`, och atlasbilderna `auctionhouse-icon-favorite`, `bags-junkcoin`,
   `QuestNormal` och `LFG-lock`.
 
+- Fliken Bank (`Bank.lua`): egna rutor av `ContainerFrameItemButtonTemplate` (klicket läser
+  `GetParent():GetID()` och `GetID()`, `ContainerFrameItemButtonMixin:GetBagID`), `C_Bank.FetchPurchasedBankTabIDs`,
+  `C_Bank.CloseBankFrame`, eventen `BANKFRAME_OPENED`, `BANKFRAME_CLOSED`, `PLAYERBANKSLOTS_CHANGED`,
+  `BANK_TABS_CHANGED` och `BAG_CONTAINER_UPDATE`, och spelets `BankFrame` (osynligt med `SetAlpha` och
+  `SetScale`; `BankFrameBaseMixin:OnHide` stänger banken, så det döljs aldrig).
+
 Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 (`Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua` och `.xml`,
 `Blizzard_MainMenuBarBagButtons/Camelot/`, `Blizzard_FrameXML/SecureTemplates.lua`,
 `Blizzard_GamepadSmartNavigation/SmartNavigation.lua`, `Utility.lua` och `SecureHelper.lua`,
 `Blizzard_UIPanels_Game/Mainline/LootFrame.lua` och `.xml`,
-`Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.xml`), att väskfönstrets
+`Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.xml`, `Blizzard_UIPanels_Game/Camelot/BankFrame.lua` och
+`Mainline/BankFrameTemplates.lua`), att väskfönstrets
 `SmartNavPanelInfoAdded` och `Gamepad_SetCursorToBag` fungerar som förut, att rutans storlek
 (37) och avstånd (5) är oförändrade, och att QuestieDB fortfarande klarar kontrakt 3.
 
@@ -272,6 +296,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
 - `TidyPackCharDB` (per karaktär, ny 2026-11-09): `sets` = lista med
   `{ name = "...", items = { itemID, ... } }` i den ordning seten skapades. Kräver omstart
   av spelet första gången, eftersom TOC-filen fick en ny rad.
+- `TidyPackCharDB.bank` (ny 2026-11-12, inget standardvärde): `{ time, free, items = { { link, count,
+  quality, icon, bag, slot, quest, bound, noValue } } }`, sparas vid varje genomgång hos bankiren.
+  `TidyPackDB.bankTab` (sant från början). Nya nycklar, ingen migrering.
 - Version 2 (2026-11-10): `sellJunkButton` tas bort ur sparad data (knappen finns inte längre).
 - Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
   nya nycklar med standardvärden, så ingen migrering behövdes.
@@ -288,7 +315,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
 - Möjliga senare: slå ihop högar av samma sak till en ruta, fälla ihop grupper, visa
   antalet pilar och kulor i rubriken.
-- Valt bort för att hålla addonet avskalat: banken, andra karaktärers väskor, egna grupper
+- Valt bort för att hålla addonet avskalat: andra karaktärers väskor (banken byggs nu som fliken Bank, issue #1), egna grupper
   (egna set finns i stället, i en egen flik),
   flera utseenden, val av ordning, flytt till post och handel, uppgraderingspilar på
   utrustning (nivån säger för lite i Forevers föremål).
@@ -310,6 +337,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   handlarläget och raden i tooltipen
 - `Sets.lua`: egna set – data, ta på ett set, rutan för namn och frågor, raden i tooltipen
 - `BagSwap.lua`: byter ut den minsta väskan, och avgör vilka väskor som får en grön pil
+- `Bank.lua`: fliken Bank – bankens rutor, sparad bank per karaktär och spelets bankfönster
 - `Layout.lua`: ordnar om spelets väskfönster: grupper, specialväskor, rubriker, New,
   märken, lås, tomma platser, listläget för fliken Sets, varningen för fulla väskor och att städknappen och väskmenyn döljs
 - `SetsView.lua`: flikarna Bags och Sets och listan med set i väskfönstret
@@ -442,6 +470,17 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+48. Fliken Bank (2026-11-12, grenen `claude/bank-tab`): prata med en bankir. Väskan öppnas på fliken Bank,
+    spelets bankfönster syns inte och banken är sorterad i grupper med linjer mellan avsnitten. Högerklick på
+    en sak i Bank: den hamnar i väskan. Byt till Bags, högerklicka på en sak: den hamnar i banken. Dra en sak
+    från Bank till fliken Bags och släpp den i väskan, och tvärtom. Släpp en sak på tom yta i Bank: den
+    läggs i banken ("Drop anywhere to put it in your bank"). "N free" nere till vänster visar bankens lediga
+    platser. Kugghjulet → "Show the game's bank window": spelets fönster syns igen (köp en bankplats), och av
+    igen. Stäng väskan: banken stängs. Gå därifrån och öppna Bank: raden "You're not at a banker – this is
+    what your bank held today …" och sakerna med tooltips. Logga in med en karaktär som aldrig varit på
+    banken: "Visit a banker once …". Inställningen "Use the Bank tab at bankers" av: spelets fönster som
+    vanligt. Inget "Interface action failed" och inget felmeddelande om blockerade handlingar
+    (`/console taintLog 1`). Med handkontroll: spelets bankfönster som vanligt.
 47. Uppgraderingspil (2026-11-11): `bags-greenarrow` uppe till höger på utrustning (inte skräp) vars nivå
     (`C_Item.GetCurrentItemLevel`) är högre än den sämre av platserna den passar (`SLOTS_FOR`, INVSLOT_*; tom
     plats = 0) och som du kan använda (ingen röd rad i `C_TooltipInfo.GetBagItem`, sparat per länk tills du går
