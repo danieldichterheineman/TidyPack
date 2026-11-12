@@ -8,6 +8,9 @@
   tab to put it in your bank.
 - Away from the bank, the Bank tab shows what your bank held the last time you were there (for
   each character). You can see the items and their tooltips, but not move them.
+- Item tooltips show how many you have in your bags and in your bank, and the total ("Bags 12 ·
+  Bank 40 · Total 52"), also away from the bank. Only for items in your bank. Turn it off with
+  "Show bag and bank counts" in the settings.
 - The gear button's menu at a banker can show the game's bank window again, for example to buy a
   bank slot. Turn the Bank tab off with "Use the Bank tab at bankers" in the settings.
 

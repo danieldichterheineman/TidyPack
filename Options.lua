@@ -269,6 +269,8 @@ ns.OnLoad(function()
     addCheckbox("showQuestItemsInBags", L["Show quest items in Bags"],
         L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
         refresh)
+    addCheckbox("showCounts", L["Show bag and bank counts"],
+        L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank, and only for this character."])
     addCheckbox("bankTab", L["Use the Bank tab at bankers"],
         L["At a banker, your bank is shown sorted in the Bank tab, and the game's bank window is hidden. Turn off to use the game's bank window; the Bank tab still shows what's in your bank."],
         function()

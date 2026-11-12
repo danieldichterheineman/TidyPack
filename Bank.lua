@@ -252,6 +252,46 @@ function ns.SavedBankAge()
 end
 
 ---------------------------------------------------------------------------
+-- Antal i väskan och banken i sakens tooltip
+---------------------------------------------------------------------------
+-- En rad "Bags 12 · Bank 40 · Total 52" (kollegans förslag 2026-11-12, skissen
+-- .design/sketch-settings-in-bag.html, variant 1c). Bara när saken finns i banken. Väskan räknas av
+-- spelet; banken ur den sparade banken, så att antalet syns också långt från bankiren. Bara den här
+-- karaktären. Inställningen showCounts.
+
+local countsFor     -- den sparade bank som bankCounts räknades ur
+local bankCounts = {} -- itemID → antal i banken
+
+local function bankCountOf(itemID)
+    local saved = ns.GetSavedBank()
+    if saved ~= countsFor then
+        countsFor = saved
+        wipe(bankCounts)
+        for _, item in ipairs(saved and saved.items or {}) do
+            local id = item.link and C_Item.GetItemInfoInstant(item.link)
+            if id then
+                bankCounts[id] = (bankCounts[id] or 0) + (item.count or 1)
+            end
+        end
+    end
+    return bankCounts[itemID] or 0
+end
+
+local COUNT_COLOR = CreateColor(0.44, 0.71, 1) -- ljusblått, som Tidy Packs andra rader om platser
+
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
+    if not data or type(data.id) ~= "number" or ns.db == nil or ns.db.showCounts == false then
+        return
+    end
+    local bank = bankCountOf(data.id)
+    if bank == 0 then
+        return
+    end
+    local bags = C_Item.GetItemCount(data.id) or 0
+    tooltip:AddLine(L["Bags %d · Bank %d · Total %d"]:format(bags, bank, bags + bank), COUNT_COLOR:GetRGB())
+end)
+
+---------------------------------------------------------------------------
 -- Spelets bankfönster
 ---------------------------------------------------------------------------
 

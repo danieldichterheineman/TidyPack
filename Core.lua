@@ -33,6 +33,7 @@ ns.defaults = {
     lockAtMerchant = true,    -- lås quest- och set-saker hos en handlare (Layout.lua)
     showQuestItemsInBags = true, -- quest-saker i fliken Bags (annars bara i fliken Quests, Layout.lua)
     bankTab = true,           -- banken i fliken Bank i stället för spelets bankfönster (Bank.lua)
+    showCounts = true,        -- antal i väskan och banken i sakens tooltip (Bank.lua)
     questHints = true,        -- saker som kommande quests behöver (QuestHints.lua)
     itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
 }

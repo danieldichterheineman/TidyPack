@@ -108,6 +108,10 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   via kugghjulet i stället), kontogemensam bank (Warband; Forevers kod har `Enum.BankType.Account`),
   handkontroll (Tidy Pack tar då inte över spelets fönster), specialväskor i banken (sorteras som vanliga
   saker). Inte provat i spelet.
+- ⚠️ Antal i tooltipen (`Bank.lua`, 2026-11-12, kollegans förslag, skissen `.design/sketch-settings-in-bag.html`
+  variant 1c): raden "Bags 12 · Bank 40 · Total 52" i ljusblått, bara när saken finns i den sparade banken.
+  Väskan med `C_Item.GetItemCount(id)`, banken summerad ur `TidyPackCharDB.bank` (räknas om när den sparade
+  banken byts ut). Bara den här karaktären. Inställningen `showCounts`. Inte provat i spelet.
 - ✅ Egna grupper (`Groups.lua`, `GroupsPage.lua`, byggda 2026-11-10 efter skissen
   `.design/sketch-groups.html`): upp till 8 per konto, efter Favorites och "Add to bag". En sak
   läggs dit med kugghjulets meny ("Add to Group ▸", med en bockruta per grupp och "New
@@ -298,7 +302,7 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
   av spelet första gången, eftersom TOC-filen fick en ny rad.
 - `TidyPackCharDB.bank` (ny 2026-11-12, inget standardvärde): `{ time, free, items = { { link, count,
   quality, icon, bag, slot, quest, bound, noValue } } }`, sparas vid varje genomgång hos bankiren.
-  `TidyPackDB.bankTab` (sant från början). Nya nycklar, ingen migrering.
+  `TidyPackDB.bankTab` och `showCounts` (sanna från början). Nya nycklar, ingen migrering.
 - Version 2 (2026-11-10): `sellJunkButton` tas bort ur sparad data (knappen finns inte längre).
 - Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
   nya nycklar med standardvärden, så ingen migrering behövdes.
@@ -470,6 +474,9 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
     namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
     menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
+49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
+    i banken: "Bags N · Bank N · Total N" i blått. En sak som bara finns i väskan: ingen rad. Lägg in eller
+    ta ut något hos bankiren: siffrorna följer med. "Show bag and bank counts" av: ingen rad.
 48. Fliken Bank (2026-11-12, grenen `claude/bank-tab`): prata med en bankir. Väskan öppnas på fliken Bank,
     spelets bankfönster syns inte och banken är sorterad i grupper med linjer mellan avsnitten. Högerklick på
     en sak i Bank: den hamnar i väskan. Byt till Bags, högerklicka på en sak: den hamnar i banken. Dra en sak
