@@ -1,0 +1,47 @@
+# Game code that Tidy Pack relies on without calling it directly.
+#
+# Read by check-game.mjs in the wow-addon-skills plugin. After every game update the script
+# compares this code with the fingerprints in game-baseline.json and shows what changed.
+# One entry per line: a function, a file or a folder (paths are relative to Interface/AddOns
+# in the game's UI source). Text after " -- " says why Tidy Pack depends on it.
+# "ignore <name>" skips a name the script can't find in the game's code.
+
+# The bag window. Tidy Pack rearranges the game's own item buttons after each of the game's
+# layout passes, and relies on how the game opens, sizes and anchors the window.
+Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua -- the window Tidy Pack rearranges: layout passes, item clicks, opening and closing bags
+Blizzard_UIPanels_Game/Mainline/ContainerFrame.xml -- the item button template and the combined bag frame
+
+# The backpack button the logo clicks, and the bag bar Tidy Pack hides.
+Blizzard_MainMenuBarBagButtons/ -- the logo's secure click goes to MainMenuBarBackpackButton; the bag bar and the controller's bag bar are hidden
+
+# The bank. The Bank tab makes the game's bank frame invisible instead of hiding it, and its own
+# item buttons rely on how the game reads the bag and slot of a button.
+Blizzard_UIPanels_Game/Mainline/BankFrameTemplates.lua -- BankFrameBaseMixin:OnShow opens the bags, OnHide closes the bank; GetActiveBankType decides where a right-click sends an item
+Blizzard_UIPanels_Game/Camelot/BankFrame.lua -- the bank frame Tidy Pack makes invisible at bankers
+
+# Loot and merchant windows.
+Blizzard_UIPanels_Game/Mainline/LootFrame.lua -- the delete question hangs under the loot window and joins its controller cursor
+Blizzard_UIPanels_Game/Mainline/LootFrame.xml -- the loot window's template, which the question panel copies
+MerchantFrame_OnSellAllJunkButtonClicked -- Tidy Pack has no Sell Junk button and points players to the game's own
+
+# The controller cursor.
+Blizzard_GamepadSmartNavigation/ -- the controller cursor: which functions addons may call, and when
+GamepadFrameControlsManagerMixin:HandlePopupShown -- the delete question takes the controller cursor as a popup
+GamepadFrameControlsManagerMixin:HandlePopupHide -- gives the cursor back
+
+# Secure clicks.
+SecureActionButton_OnClick -- the logo and the Open Bags button are secure buttons of type "click"
+SECURE_ACTIONS.click -- how a secure "click" action reaches the game's backpack button
+
+# The game's tips. Tidy Pack's guide uses the game's tip boxes.
+HelpTip:Show -- the first-time guide
+HelpTip:Release -- hiding a tip
+HelpTip:AreHelpTipsEnabled -- the guide is skipped when the game's tips are off (always with a controller)
+
+# The settings page (About Tidy Pack) and item tooltips.
+SettingsPanelMixin:DisplayLayout -- shows Tidy Pack's page in the game's options
+TooltipDataHandlerMixin:AddLineDataText -- upgrade arrows read leftColor from a tooltip line to see if you can use an item
+
+# Names the script can't find in the game's code.
+ignore LibQuestieDB -- Questie's database, an optional dependency; every call is inside pcall
+ignore CONTAINER_SLOTS -- a game text ("%d Slot Bag") that the game's own Lua never uses; BagSwap.lua has a fallback pattern

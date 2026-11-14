@@ -309,15 +309,18 @@ Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
   `BANK_TABS_CHANGED` och `BAG_CONTAINER_UPDATE`, och spelets `BankFrame` (osynligt med `SetAlpha` och
   `SetScale`; `BankFrameBaseMixin:OnHide` stänger banken, så det döljs aldrig).
 
-Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
-(`Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua` och `.xml`,
-`Blizzard_MainMenuBarBagButtons/Camelot/`, `Blizzard_FrameXML/SecureTemplates.lua`,
-`Blizzard_GamepadSmartNavigation/SmartNavigation.lua`, `Utility.lua` och `SecureHelper.lua`,
-`Blizzard_UIPanels_Game/Mainline/LootFrame.lua` och `.xml`,
-`Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.xml`, `Blizzard_UIPanels_Game/Camelot/BankFrame.lua` och
-`Mainline/BankFrameTemplates.lua`), att väskfönstrets
-`SmartNavPanelInfoAdded` och `Gamepad_SetCursorToBag` fungerar som förut, att rutans storlek
-(37) och avstånd (5) är oförändrade, och att QuestieDB fortfarande klarar kontrakt 3.
+Efter en uppdatering av spelet: kör patchkontrollen i pluginet wow-addon-skills (skillen
+`wow-check`), från projektmappen:
+`node <pluginet>/skills/wow-check/scripts/check-game.mjs . --fetch`.
+Den hämtar grenen `forever` och jämför med läget i `.wow-check/game-baseline.json` (sparat
+2026-11-14 för bygge 1.60.1.70938). Den visar bara det som saknas eller har ändrats av allt
+Tidy Pack använder, och av allt i `.wow-check/watch.txt`: väskfönstrets filer (där rutans
+storlek 37 och avstånd 5 står, och `SmartNavPanelInfoAdded` och `Gamepad_SetCursorToBag`),
+väskknapparna, banken, lootfönstret, handkontrollens markör, säkra klick, spelets tips,
+inställningssidan och tooltipens rader. Gå igenom ändringarna, prova i spelet, och kör sedan
+igen med `--save` och checka in. Lägg till en rad i `watch.txt` varje gång Tidy Pack börjar
+bygga på något nytt i spelets kod. Kontrollera för hand att QuestieDB fortfarande klarar
+kontrakt 3 (ett annat addon, som skriptet inte läser).
 
 ## Sparad data
 - `TidyPackDB` (per konto): `combinedBagsTurnedOn` (sant när Tidy Pack har slagit på
