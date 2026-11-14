@@ -166,7 +166,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   utfälld grupp med regler, små rutor, "+" och skrivruta, och "+ New group" (klick eller släppt sak). Spelets
   inställningar: sidan "Tidy Pack" (canvas) med logga, version och författare ur TOC-filen, fyra rader hjälp,
   länken till CurseForge (`## X-Website`) i en markerad ruta att kopiera (ett addon kan inte öppna
-  webbläsaren), Open Bags och Show Tips Again. Loggans högerklick öppnar väskan med kugghjulets meny; `/tidypack` och
+  webbläsaren), en rad om hur väskorna öppnas (loggan eller B) och Show Tips Again. Loggans högerklick öppnar väskan med kugghjulets meny; `/tidypack` och
   addonmenyn gör det bara när väskan redan är öppen, annars öppnar de inställningssidan (`ns.OpenGearMenu`). `GroupsPage.lua` och skräplistans sida finns inte längre. Avvikelse
   från skissen: Rename öppnar Tidy Packs ruta för namn (`ns.AskRenameGroup`) i stället för att skriva på
   raden. Med handkontroll är panelernas knappar inte inkopplade i markören. Inte provat i spelet.
@@ -226,9 +226,11 @@ Spelet bygger väskans rutor när den öppnas (`ContainerFrame_GenerateFrame` �
 skapar och fyller i knapparna). Körs det från ett addons kod blir knapparna och deras värden
 (`bagID`, `Items`) addonets, och spelet stoppar sedan `C_Container.UseContainerItem` när du klickar på
 en sak: disenchant och andra besvärjelser på en sak ger rutan "TidyPack has been blocked from an
-action" (hittat 2026-11-12). Därför är loggan och knappen "Open Bags" på inställningssidan säkra
-knappar (`SecureActionButtonTemplate`, type `click`) som klickar på spelets egen
-`MainMenuBarBackpackButton`, som finns kvar fast väskraden är dold. `/tidypack` och addonmenyn
+action" (hittat 2026-11-12). Därför är loggan en säker
+knapp (`SecureActionButtonTemplate`, type `click`) som klickar på spelets egen
+`MainMenuBarBackpackButton`, som finns kvar fast väskraden är dold. Inställningssidan har
+ingen säker knapp (borttagen 2026-11-14, issue #2): en säker knapp där gör hela sidan skyddad
+i strid och får inte ankras till text eller ramar som sitter i text. `/tidypack` och addonmenyn
 öppnar inställningssidan när väskan är stängd, snabbtangenten för Sets skriver en rad, och vid
 bankiren öppnar spelet väskan själv. Att stänga väskan från addonets kod är ofarligt.
 
@@ -518,8 +520,8 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     chatten medan rutan är aktiv, ta bort med krysset, och kryssa i/ur de två frågorna. Många saker: rulla
     med mushjulet. Done eller en flik går tillbaka. Groups…: "+ New group" (klick, eller släpp en sak), ▲▼,
     Rename, ✕ (frågar), klicka en rad för att fälla ut: regler med kryss, små rutor, "+", skrivruta. Esc →
-    Options → AddOns → Tidy Pack: logga, version, "By …", hjälpen och länken; klicka på länken, Cmd+C,
-    klistra in i webbläsaren. Open Bags öppnar väskan med menyn. Högerklick på loggan gör samma sak;
+    Options → AddOns → Tidy Pack: logga, version, "By …", hjälpen, länken och Show Tips Again; klicka på länken, Cmd+C,
+    klistra in i webbläsaren (öppna sidan också i strid: ingen "Interface action failed"). Högerklick på loggan öppnar väskan med menyn;
     `/tidypack` och addonmenyn gör det med öppen väska (stängd väska: inställningssidan, test 49). Show ▸ Tidy Pack lines in tooltips av: inga rader om set och grupp.
     Junk value in the header av: rubriken Junk utan pengar. Starta om spelet (TOC-filen ändrad).
 49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
@@ -555,8 +557,8 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
 49. Disenchant (2026-11-12): öppna väskan med loggan efter `/reload`, disenchanta en sak och använd en sak
     på en annan (t.ex. en sten på ett vapen): ingen ruta "blocked from an action". Klick på loggan öppnar
     och stänger, högerklick öppnar kugghjulets meny (väskan öppnas först om den är stängd), en sak på
-    markören läggs i väskorna. `/tidypack` med stängd väska: Tidy Packs sida i spelets inställningar, och
-    "Open Bags" där öppnar väskan med kugghjulets meny. I strid: loggan öppnar och stänger väskan.
+    markören läggs i väskorna. `/tidypack` med stängd väska: Tidy Packs sida i spelets inställningar
+    öppnas (utan Open Bags-knapp, öppna i stället med B eller loggan). I strid: loggan öppnar och stänger väskan.
 47. Uppgraderingspil (2026-11-11): `bags-greenarrow` uppe till höger på utrustning (inte skräp) vars nivå
     (`C_Item.GetCurrentItemLevel`) är högre än den sämre av platserna den passar (`SLOTS_FOR`, INVSLOT_*; tom
     plats = 0) och som du kan använda (ingen röd rad i `C_TooltipInfo.GetBagItem`, sparat per länk tills du går

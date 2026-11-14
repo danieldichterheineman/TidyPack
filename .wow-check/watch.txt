@@ -30,7 +30,7 @@ GamepadFrameControlsManagerMixin:HandlePopupShown -- the delete question takes t
 GamepadFrameControlsManagerMixin:HandlePopupHide -- gives the cursor back
 
 # Secure clicks.
-SecureActionButton_OnClick -- the logo and the Open Bags button are secure buttons of type "click"
+SecureActionButton_OnClick -- the logo is a secure button of type "click"
 SECURE_ACTIONS.click -- how a secure "click" action reaches the game's backpack button
 
 # The game's tips. Tidy Pack's guide uses the game's tip boxes.

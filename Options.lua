@@ -112,8 +112,9 @@ end
 -- page = "junk" eller "groups" öppnar den panelen i väskan; utan page öppnas kugghjulets meny.
 -- ⚠️ Väskan öppnas aldrig härifrån med OpenAllBags: öppnas den från addonets kod stoppar spelet
 -- sedan bland annat disenchant på sakerna i den (LogoButton.lua). Är väskan stängd (/tidypack,
--- addonmenyn) öppnas i stället Tidy Packs sida i spelets inställningar, där knappen "Open Bags"
--- öppnar väskan på ett säkert sätt.
+-- addonmenyn) öppnas i stället Tidy Packs sida i spelets inställningar. En säker "Open Bags"-knapp
+-- får inte ligga på den här sidan: den gör hela sidan skyddad i strid (issue #2) och får inte
+-- fästas vid textrader. Loggan öppnar väskan på ett säkert sätt i stället.
 function ns.OpenSettings(page)
     if not ns.bagFrame then
         return
@@ -207,32 +208,18 @@ local function createAboutPage()
     copyHint:SetText((IsMacClient and IsMacClient()) and L["Click the link and press Cmd+C to copy it."]
         or L["Click the link and press Ctrl+C to copy it."])
 
-    -- En säker knapp som klickar på spelets ryggsäcksknapp, som loggan (se LogoButton.lua). Är
-    -- väskan redan öppen klickas inte ryggsäcken, så att väskan inte stängs.
-    local openBags = CreateFrame("Button", nil, page, "UIPanelButtonTemplate, SecureActionButtonTemplate")
-    openBags:SetSize(130, 22)
-    openBags:SetPoint("TOPLEFT", copyHint, "BOTTOMLEFT", 0, -20)
-    openBags:SetText(L["Open Bags"])
-    openBags:RegisterForClicks("LeftButtonUp")
-    -- Säkra knappar gör som standard sitt jobb när knappen trycks ned (inställningen
-    -- ActionButtonUseKeyDown, SecureActionButton_OnClick), men knappen lyssnar bara på uppsläpp.
-    -- useOnKeyDown = false: jobbet görs vid uppsläpp, en gång per klick.
-    openBags:SetAttribute("useOnKeyDown", false)
-    openBags:SetAttribute("type", "click")
-    openBags:SetAttribute("clickbutton", MainMenuBarBackpackButton)
-    openBags:SetScript("PreClick", function(self)
-        if not InCombatLockdown() then
-            self:SetAttribute("type", not (ns.bagFrame and ns.bagFrame:IsShown()) and "click" or nil)
-        end
-    end)
-    openBags:SetScript("PostClick", function()
-        C_Timer.After(0, function()
-            ns.OpenSettings()
-        end)
-    end)
+    -- Ingen säker "Open Bags"-knapp här: spelet visar och flyttar den här sidan i
+    -- SettingsPanelMixin:DisplayLayout, och en säker knapp gör hela sidan skyddad i strid
+    -- (issue #2) och kraschar om den fästs vid text eller ramar som är fästa vid text.
+    local bagHint = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    bagHint:SetPoint("TOPLEFT", copyHint, "BOTTOMLEFT", 0, -20)
+    bagHint:SetPoint("RIGHT", page, "RIGHT", -20, 0)
+    bagHint:SetJustifyH("LEFT")
+    bagHint:SetText(L["Click the Tidy Pack logo or press B to open your bags, then use the gear button for options."])
+
     local tips = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
     tips:SetSize(150, 22)
-    tips:SetPoint("LEFT", openBags, "RIGHT", 10, 0)
+    tips:SetPoint("TOPLEFT", bagHint, "BOTTOMLEFT", 0, -14)
     tips:SetText(L["Show Tips Again"])
     tips:SetScript("OnClick", function()
         if ns.ResetTour then
