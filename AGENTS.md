@@ -540,6 +540,15 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     osynlig ram över rubriken: antal saker, platser, värde; en släppt sak läggs i väskan); kortare tooltip på
     kugghjulet och loggan; spelets ljud (IG_CHARACTER_INFO_OPEN/CLOSE) för paneler och ikonval; en mörk hinna
     som tonas bort på 0,12 s när innehållet byts (`ns.PlayViewTransition`). Inte provat i spelet.
+51. Granskning mot Forevers källkod (2026-11-14, bygge 1.60.1.70938): (a) Råvaror med en undertyp som inte
+    stod i `TRADE_SUBCLASSES` hamnade i en grupp som aldrig visades och blev osynliga. Nu läggs spelets egna
+    undertyper till (`C_AuctionHouse.GetAuctionItemSubClasses`), en okänd undertyp får en grupp i samma stund
+    (`addTradeSubclass` i `ns.GetGroup`), och `flow` visar alltid en grupp som har saker även om den saknas i
+    `ns.groupOrder` (rubriken "Other"). Provat i en Lua-tolk med låtsasvärden för spelets funktioner (tre
+    lägen: spelets lista finns, saknas, ger fel), inte i spelet. Prova i spelet: en råvara av ovanlig sort
+    syns i en egen grupp sist bland råvarorna. (b) Loggan: efter ett högerklick med öppen väska, eller en
+    släppt sak, var knappens klick avstängt tills nästa klick utanför strid; `PostClick` slår nu på det igen.
+    Prova: högerklicka på loggan med öppen väska, gå in i strid, klicka på loggan – väskan öppnas.
 49. Disenchant (2026-11-12): öppna väskan med loggan efter `/reload`, disenchanta en sak och använd en sak
     på en annan (t.ex. en sten på ett vapen): ingen ruta "blocked from an action". Klick på loggan öppnar
     och stänger, högerklick öppnar kugghjulets meny (väskan öppnas först om den är stängd), en sak på
@@ -549,7 +558,8 @@ Efter en patch: kontrollera att de här namnen finns kvar i grenen `forever`
     (`C_Item.GetCurrentItemLevel`) är högre än den sämre av platserna den passar (`SLOTS_FOR`, INVSLOT_*; tom
     plats = 0) och som du kan använda (ingen röd rad i `C_TooltipInfo.GetBagItem`, sparat per länk tills du går
     upp i nivå, lär dig något eller byter utrustning). Döljs under låset hos handlaren. Inställningen
-    `upgradeArrows`. ⚠️ Att rådatan har `leftColor` är inte bekräftat; saknas den visas pilen även på saker du
+    `upgradeArrows`. Rådatan har `leftColor` (bekräftat 2026-11-14 i Forevers kod: `TooltipDataHandler.lua` läser
+    `lineData.leftColor`); skulle den ändå saknas visas pilen även på saker du
     inte kan använda. Inte provat i spelet.
 46. Quest-ramen (2026-11-11): spelets gula ram runt quest-saker döljs efter spelets `UpdateQuestItem`
     (hook per ruta); utropstecknet på saker som startar en quest står kvar. Inte provat i spelet.

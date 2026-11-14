@@ -612,7 +612,8 @@ end
 
 -- Rubriken för en grupp. Favorites får en stjärna och Junk visar vad skräpet är värt.
 local function headerText(group, junkValue)
-    local text = ns.groupNames[group]
+    -- En grupp utan rubrik (se skyddsnätet i flow) heter "Other".
+    local text = ns.groupNames[group] or L["Other"]
     if group == "Favorites" then
         return FAVORITE_ICON .. text
     elseif group == "Junk" and junkValue > 0 and ns.db.junkValue ~= false then
@@ -645,6 +646,8 @@ end
 local sectionYs = {}
 local sectionLines = {}
 local bankFlow = false -- sant medan flow lägger ut bankens saker (fliken Bank)
+local listedGroups = {}   -- grupper som flow har gått igenom (återanvänds)
+local unlistedGroups = {} -- grupper med saker som inte står i ns.groupOrder (återanvänds)
 local freeText -- antalet lediga platser nere till vänster (med mus, i stället för "Add to bag")
 
 local function hideSectionLines()
@@ -817,7 +820,9 @@ local function flow(cols, apply, junkValue)
     -- står nere till vänster. Med handkontroll är den kvar som platsen där en sak släpps.
     local showEmpty = InputUtil.IsGamepadUIEnabled()
     local lastSection
-    for _, group in ipairs(ns.groupOrder) do
+    wipe(listedGroups)
+    local function visit(group)
+        listedGroups[group] = true
         local list = groupLists[group]
         if list and #list > 0 and (group ~= "Empty" or showEmpty) then
             -- Ett nytt avsnitt börjar på en ny rad, med en tunn linje ovanför.
@@ -832,6 +837,24 @@ local function flow(cols, apply, junkValue)
             end
             lastSection = section
             place(group, headerText(group, junkValue))
+        end
+    end
+    for _, group in ipairs(ns.groupOrder) do
+        visit(group)
+    end
+    -- Skyddsnät: en grupp som har saker men inte står i ordningen (t.ex. en ny sorts sak efter en
+    -- patch) visas sist i stället för att döljas. Ingen sak får bli osynlig för att den hamnat i en
+    -- grupp som saknas i listan. Specialväskornas grupper ("bag3") läggs ut för sig längre ner.
+    wipe(unlistedGroups)
+    for group, list in pairs(groupLists) do
+        if #list > 0 and not listedGroups[group] and not group:match("^bag%d+$") then
+            unlistedGroups[#unlistedGroups + 1] = group
+        end
+    end
+    if #unlistedGroups > 0 then
+        table.sort(unlistedGroups) -- samma ordning varje gång
+        for _, group in ipairs(unlistedGroups) do
+            visit(group)
         end
     end
 

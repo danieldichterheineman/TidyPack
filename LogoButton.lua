@@ -30,15 +30,7 @@ function ns.ApplyBagBarSetting()
         return
     end
     if InCombatLockdown() then
-        if not waitingForCombat then
-            waitingForCombat = true
-            ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
-                if waitingForCombat then
-                    waitingForCombat = false
-                    ns.ApplyBagBarSetting()
-                end
-            end)
-        end
+        waitingForCombat = true -- görs när striden är över (se lyssnaren längst ner)
         return
     end
     if ns.db.replaceBagBar then
@@ -115,7 +107,12 @@ ns.OnLoad(function()
             self:SetAttribute("type", "click")
         end
     end)
-    button:SetScript("PostClick", function(_, mouseButton)
+    button:SetScript("PostClick", function(self, mouseButton)
+        -- Slå på klicket igen direkt. Annars är det avstängt (se PreClick) tills nästa klick utanför
+        -- strid, och ett klick i strid däremellan öppnar inte väskan (granskning 2026-11-14).
+        if not InCombatLockdown() then
+            self:SetAttribute("type", "click")
+        end
         if putItem then
             putItem = false
             ns.PutCursorItemInBags()
@@ -149,6 +146,13 @@ ns.OnLoad(function()
     hooksecurefunc(BagsBar, "Show", function(self)
         if ns.db.replaceBagBar then
             self:Hide()
+        end
+    end)
+    -- Inställningen ändrades i strid: gör det när striden är över. En lyssnare, registrerad en gång.
+    ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
+        if waitingForCombat then
+            waitingForCombat = false
+            ns.ApplyBagBarSetting()
         end
     end)
     ns.ApplyBagBarSetting()

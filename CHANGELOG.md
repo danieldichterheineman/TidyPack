@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed: a crafting material of a kind Tidy Pack didn't know about could be missing from the bag
+  window. Every kind the game has now gets its own group, and an item can never be hidden because
+  its group is missing.
+- Fixed: after a right-click on the Tidy Pack logo, or after dropping an item on it, the logo
+  could stop opening your bags in combat.
 - Fixed: disenchanting an item, or using an item on another, could show "TidyPack has been blocked
   from an action" after you opened your bags with the Tidy Pack logo. The logo now opens your bags
   the same way as the game's own backpack button.

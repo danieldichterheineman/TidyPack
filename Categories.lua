@@ -108,9 +108,48 @@ local function tradeGroupKey(subClassID)
     return "trade" .. (subClassID or 0)
 end
 
+-- Undertyper som har en grupp. En sak med en undertyp som saknas här skulle hamna i en grupp som
+-- aldrig visas, och då syns saken inte i väskan (granskning 2026-11-14). Därför läggs spelets egen
+-- lista till (C_AuctionHouse.GetAuctionItemSubClasses, samma som auktionshuset använder), och en
+-- undertyp som ändå dyker upp oväntat får en grupp i samma stund (se ns.GetGroup).
+local knownTrade = {}
+for _, subClassID in ipairs(TRADE_SUBCLASSES) do
+    knownTrade[subClassID] = true
+end
+
+-- Lägger till en undertyp sist i ordningen. Sant om den var ny.
+local function addTradeSubclass(subClassID)
+    if knownTrade[subClassID] then
+        return false
+    end
+    knownTrade[subClassID] = true
+    TRADE_SUBCLASSES[#TRADE_SUBCLASSES + 1] = subClassID
+    return true
+end
+
+local gameSubclassesAdded = false
+
+-- Spelets undertyper för handelsvaror som inte står i listan ovan. Läses en gång; anropet ligger i
+-- pcall, så att ett fel där inte stoppar Tidy Pack.
+local function addGameTradeSubclasses()
+    if gameSubclassesAdded or not (C_AuctionHouse and C_AuctionHouse.GetAuctionItemSubClasses) then
+        return
+    end
+    local ok, subClasses = pcall(C_AuctionHouse.GetAuctionItemSubClasses, ItemClass.Tradegoods)
+    if ok and type(subClasses) == "table" then
+        gameSubclassesAdded = true
+        for _, subClassID in ipairs(subClasses) do
+            if type(subClassID) == "number" then
+                addTradeSubclass(subClassID)
+            end
+        end
+    end
+end
+
 -- Gruppernas nycklar för råvaror, dina yrken först. Sätter också rubrikerna i ns.groupNames.
 -- Groups.lua lägger dem på Trade Goods plats i ns.groupOrder.
 function ns.GetTradeGroupKeys()
+    addGameTradeSubclasses()
     local mine = {}
     local professions = { GetProfessions() }
     for _, professionIndex in pairs(professions) do
@@ -187,6 +226,10 @@ function ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
         return "Consumables", consumableOrder[subClassID] or 5
     end
     if classID == ItemClass.Tradegoods then
+        -- En undertyp utan grupp får en nu, sist bland råvarorna, så att saken alltid syns.
+        if addTradeSubclass(subClassID or 0) and ns.RebuildGroupOrder then
+            ns.RebuildGroupOrder()
+        end
         return tradeGroupKey(subClassID), 0
     end
     local group = byClass[classID]
