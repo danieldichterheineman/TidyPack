@@ -35,6 +35,7 @@ local offlineButtons = {}      -- ruta för sparade saker, i ordning
 local allButtons = {}          -- alla bankens rutor, för Layout.lua (dölj det som inte används)
 local freeSlots = 0            -- lediga platser i banken vid senaste genomgången
 local bankTabShown = false     -- fliken Bank har visats sedan banken öppnades
+local bankLaidOut = false      -- skyddsnät: dölj inte spelets bankfönster förrän fliken lagts ut utan fel
 
 -- Sant mellan BANKFRAME_OPENED och BANKFRAME_CLOSED.
 function ns.IsAtBank()
@@ -65,6 +66,7 @@ local function holderFor(containerID)
     if not holder then
         holder = CreateFrame("Frame", nil, ns.bagFrame)
         holder:SetAllPoints()
+        holder:SetFrameLevel(ns.bagFrame:GetFrameLevel() + 5)
         -- Spelets mall läser väskans nummer här (GetParent():GetID()).
         holder:SetID(containerID)
         holders[containerID] = holder
@@ -80,7 +82,9 @@ local function liveButtonFor(containerID, slot)
     end
     local button = list[slot]
     if not button then
-        button = CreateFrame("ItemButton", nil, holderFor(containerID), "ContainerFrameItemButtonTemplate")
+        local holder = holderFor(containerID)
+        button = CreateFrame("ItemButton", nil, holder, "ContainerFrameItemButtonTemplate")
+        button:SetFrameLevel(math.max(10, holder:GetFrameLevel() + 1))
         button:SetID(slot)
         list[slot] = button
         allButtons[#allButtons + 1] = button
@@ -324,13 +328,14 @@ end)
 
 local originalScale
 
--- Osynligt och mycket litet, men fortfarande öppet (se överst i filen).
+-- Osynligt och mycket litet, men fortfarande öppet (se överst i filen). Görs osynligt först när
+-- fliken Bank har lagts ut utan fel, och återställs direkt om ett fel stoppar utläggningen.
 local function updateGameBankFrame()
     if not BankFrame then
         return
     end
     originalScale = originalScale or BankFrame:GetScale()
-    local hide = atBank and takesOverBank() and not showGameFrame
+    local hide = atBank and takesOverBank() and bankLaidOut and not showGameFrame
     if hide then
         BankFrame:SetAlpha(0)
         BankFrame:SetScale(0.01)
@@ -339,6 +344,15 @@ local function updateGameBankFrame()
         BankFrame:SetScale(originalScale)
     end
     gameFrameHidden = hide
+end
+
+-- Skyddsnät från Layout.lua: tala om när fliken Bank ritats färdigt (eller om utläggningen föll).
+function ns.SetBankLayoutOk(ok)
+    bankLaidOut = ok == true
+    if ok and atBank then
+        bankTabShown = true
+    end
+    updateGameBankFrame()
 end
 
 -- Kugghjulets meny: visa spelets bankfönster igen (t.ex. för att köpa en bankplats eller byta en
@@ -372,6 +386,7 @@ ns.RegisterEvent("BANKFRAME_OPENED", function()
     atBank = true
     showGameFrame = false
     bankTabShown = false
+    bankLaidOut = false
     saveBank()
     updateGameBankFrame()
     if takesOverBank() then
@@ -386,6 +401,7 @@ ns.RegisterEvent("BANKFRAME_CLOSED", function()
     atBank = false
     showGameFrame = false
     bankTabShown = false
+    bankLaidOut = false
     updateGameBankFrame()
     if ns.Refresh then
         ns.Refresh() -- fliken Bank visar nu det sparade

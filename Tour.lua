@@ -81,7 +81,17 @@ showStep = function(index)
         targetPoint = info.point,
         alignment = info.alignment,
         onAcknowledgeCallback = function()
-            showStep(index + 1)
+            if index >= #list then
+                finish()
+                return
+            end
+            -- HelpTipTemplateMixin:Close kör callbacken innan den döljer rutan, så samma ram
+            -- måste vänta en bildruta innan den visas igen (annars göms nästa steg direkt).
+            C_Timer.After(0, function()
+                if step == index and ns.bagFrame and ns.bagFrame:IsShown() then
+                    showStep(index + 1)
+                end
+            end)
         end,
     }, target)
     tip:Show()

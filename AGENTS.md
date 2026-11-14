@@ -103,7 +103,8 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   sätts med `SetID` på en osynlig föräldraram och platsen med `SetID` på rutan, så spelets klick är otaintat:
   högerklick flyttar mellan bank och väskor, och "släpp var som helst" lägger saken på första lediga
   bankplats. Spelets `BankFrame` görs osynligt och litet (`SetAlpha(0)`, `SetScale(0.01)`), aldrig dolt:
-  dess `OnHide` stänger banken. Stängs väskan stängs banken (`C_Bank.CloseBankFrame`). Kugghjulets meny har
+  dess `OnHide` stänger banken. Skyddsnät (2026-11-14, issue #4): `BankFrame` görs osynligt först när fliken
+  Bank lagts ut utan fel (`ns.SetBankLayoutOk(true)`), och återställs direkt om ett fel stoppar utläggningen. Stängs väskan stängs banken (`C_Bank.CloseBankFrame`). Kugghjulets meny har
   "Show the game's bank window" hos bankiren (köpa bankplats, byta väska i banken). Inställningen `bankTab`
   ("Use the Bank tab at bankers"). Borta från banken: senast kända innehåll ur `TidyPackCharDB.bank`, vanliga
   `ItemButton` med bild, antal, kvalitet och tooltip (`SetHyperlink`), och en rad överst om när det sparades.
@@ -537,7 +538,7 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     what your bank held today …" och sakerna med tooltips. Logga in med en karaktär som aldrig varit på
     banken: "Visit a banker once …". Inställningen "Use the Bank tab at bankers" av: spelets fönster som
     vanligt. Inget "Interface action failed" och inget felmeddelande om blockerade handlingar
-    (`/console taintLog 1`). Med handkontroll: spelets bankfönster som vanligt.
+    (`/console taintLog 1`, kontrollera `Logs/taint.log` efteråt). Öppna karaktärsfönstret (`C`) hos bankiren och se var det hamnar. Med handkontroll: spelets bankfönster som vanligt.
 48. Finputs (2026-11-12): titeln följer vyn (`updateTitle` i relayout); Esc-hanteraren via `RegisterGameMenuEscHandler` togs bort
     samma dag: den gav rutan "blocked from an action" när Esc öppnade spelets meny (addonet ändrar spelets
     lista över hanterare, som spelets skyddade kod sedan läser); linjen före

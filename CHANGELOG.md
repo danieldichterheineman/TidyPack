@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fixed: dropping an item on empty space in the Bags or Bank tab by left-clicking or dragging now
+  works instead of being swallowed by the window frame, and dropping on a group header works too.
+- Fixed: clicking Next in the first-time guide now advances to the following steps and marks the
+  guide as done at the end instead of hiding the guide on the first click.
+- Fixed: the Bank tab now keeps the game's bank window visible until the Bank tab finishes laying
+  out without errors, and restores it if a layout error occurs.
 - Fixed: set and macro names with non-ASCII letters (like å, ä, ö) are no longer cut in the
   middle of a letter.
 - Fixed: right-clicking the Tidy Pack logo in combat no longer closes an open bag window; when

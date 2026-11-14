@@ -211,6 +211,11 @@ local function acquireHeader(group)
                 ns.PutCursorItemInBags()
             end
         end)
+        hover:SetScript("OnMouseUp", function(_, mouseButton)
+            if mouseButton == "LeftButton" and ns.PutCursorItemInBags then
+                ns.PutCursorItemInBags()
+            end
+        end)
         header.hover = hover
     end
     header.hover.group = group
@@ -1231,6 +1236,9 @@ local function layoutBankView(atMerchant, cols)
     end
     placeSectionLines()
     commit(atMerchant)
+    if ns.SetBankLayoutOk then
+        ns.SetBankLayoutOk(true)
+    end
 end
 
 -- Fönstrets titel följer fliken (granskning 2026-11-12: det stod "Backpack" också i Bank, Sets och
@@ -1347,6 +1355,9 @@ local errorReported = false
 local function safeRelayout()
     local ok, problem = pcall(relayout)
     if not ok then
+        if ns.SetBankLayoutOk then
+            ns.SetBankLayoutOk(false)
+        end
         if not errorReported then
             errorReported = true
             ns.Print(L["Couldn't sort your bags because of an error. Please send this line to the author: %s"]
@@ -1448,12 +1459,20 @@ ns.OnLoad(function()
     -- En hel, mörk bakgrund bakom sakerna (användarens önskan 2026-11-09). Spelets fönster
     -- är halvgenomskinligt, och när Tidy Pack döljer de tomma rutorna lyser världen och
     -- questlistan igenom. Mallen är spelets infällda yta (InsetFrameTemplate, som i handlarens
-    -- fönster), med sin marmor mörkare. Den ritas på fönstrets egen nivå, under rutorna.
+    -- fönster), med sin marmor mörkare.
     inset = CreateFrame("Frame", nil, bagFrame, "InsetFrameTemplate")
     if inset.Bg then
         inset.Bg:SetVertexColor(0.7, 0.7, 0.7)
     end
     inset:Hide()
+
+    -- InsetFrameTemplate har useParentLevel="true", så bakgrunden hamnar på fönstrets egen nivå
+    -- där spelets fönster (enableMouse="true") tar emot klick och dra-och-släpp. En egen osynlig
+    -- släppyta ovanför bakgrunden men under rubrikerna och rutorna fångar musen i stället.
+    local dropArea = CreateFrame("Frame", nil, inset)
+    dropArea:SetAllPoints()
+    dropArea:SetFrameLevel(bagFrame:GetFrameLevel() + 1)
+    overlay:SetFrameLevel(bagFrame:GetFrameLevel() + 2)
 
     -- Släpp var som helst (användarens önskan 2026-11-11): bakgrunden ligger under rutorna, så den
     -- tar bara emot en sak som släpps på tom yta. Saken läggs på första lediga plats i en vanlig
@@ -1484,7 +1503,7 @@ ns.OnLoad(function()
         UIErrorsFrame:AddMessage(ERR_INV_FULL, 1.0, 0.1, 0.1, 1.0)
     end
     ns.PutCursorItemInBags = dropAnywhere -- också loggknappen (LogoButton.lua)
-    inset:EnableMouse(true)
+    dropArea:EnableMouse(true)
     -- En kort övergång när innehållet byts (flik, panel eller ikonval): en mörk hinna över bakgrunden
     -- som tonas bort på en tiondels sekund, i stället för att allt hoppar på plats (granskning
     -- 2026-11-12). Den tar inte emot musen, så inget blir svårare att klicka på.
@@ -1516,14 +1535,14 @@ ns.OnLoad(function()
     end
 
     -- Mushjulet rullar listan i fliken Quests.
-    inset:EnableMouseWheel(true)
-    inset:SetScript("OnMouseWheel", function(_, delta)
+    dropArea:EnableMouseWheel(true)
+    dropArea:SetScript("OnMouseWheel", function(_, delta)
         if ns.GetView and ns.GetView() == "quests" and ns.ScrollQuests then
             ns.ScrollQuests(delta)
         end
     end)
-    inset:SetScript("OnReceiveDrag", dropAnywhere)
-    inset:SetScript("OnMouseUp", function(_, mouseButton)
+    dropArea:SetScript("OnReceiveDrag", dropAnywhere)
+    dropArea:SetScript("OnMouseUp", function(_, mouseButton)
         if mouseButton == "LeftButton" then
             dropAnywhere()
         end
