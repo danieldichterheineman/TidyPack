@@ -45,12 +45,46 @@ local function findSet(name)
     return nil
 end
 
+local function utf8CharBytes(byte)
+    if byte >= 240 then
+        return 4
+    elseif byte >= 224 then
+        return 3
+    elseif byte >= 192 then
+        return 2
+    end
+    return 1
+end
+
+-- Kortar av en UTF-8-text på hel teckengräns (antal tecken, eller antal byte om byBytes är true).
+local function truncateUtf8(text, limit, byBytes)
+    local len = #text
+    local pos = 1
+    local count = 0
+    while pos <= len do
+        local charBytes = utf8CharBytes(text:byte(pos))
+        local nextPos = pos + charBytes
+        if nextPos - 1 > len then
+            break
+        end
+        if byBytes then
+            if nextPos - 1 > limit then
+                break
+            end
+        else
+            count = count + 1
+            if count > limit then
+                break
+            end
+        end
+        pos = nextPos
+    end
+    return text:sub(1, pos - 1)
+end
+
 local function cleanName(name)
     name = strtrim(name or "")
-    if #name > MAX_NAME_LENGTH then
-        name = name:sub(1, MAX_NAME_LENGTH)
-    end
-    return name
+    return truncateUtf8(name, MAX_NAME_LENGTH, false)
 end
 
 -- Ändringar i seten ritar om väskfönstret och fliken Sets.
@@ -102,7 +136,7 @@ local MACRO_PREFIX = "TP "
 local MACRO_NAME_LENGTH = 16 -- så långt kan ett makros namn vara i spelets makrofönster
 
 local function macroName(setName)
-    return (MACRO_PREFIX .. setName):sub(1, MACRO_NAME_LENGTH)
+    return truncateUtf8(MACRO_PREFIX .. setName, MACRO_NAME_LENGTH, true)
 end
 
 local function macroBody(setName)

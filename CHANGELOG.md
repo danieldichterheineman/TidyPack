@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fixed: set and macro names with non-ASCII letters (like å, ä, ö) are no longer cut in the
+  middle of a letter.
+- Fixed: right-clicking the Tidy Pack logo in combat no longer closes an open bag window; when
+  your bags are closed in combat, right-click shows the tip to open bags first.
+- Fixed: the Tidy Pack logo is now anchored to UIParent at the micro menu's position instead of
+  being anchored directly to MicroMenuContainer, avoiding tying protected frames to the micro menu.
 - Fixed: the first-time guide now uses its own tip frame instead of the game's shared HelpTip
   pool, avoiding taint when other game tips are shown or hidden.
 - Fixed: a crafting material of a kind Tidy Pack didn't know about could be missing from the bag

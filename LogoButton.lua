@@ -12,7 +12,8 @@
 --    annan (rutan "blocked from an action", hittat 2026-11-12). En säker knapp kan inte visas eller
 --    döljas i strid, så inställningen väntar tills striden är över.
 -- ⚠️ Spelets väskrad döljs efter varje Show, även i Edit Mode. Den går inte att flytta i Edit Mode
---    så länge loggan ersätter den; loggan följer mikromenyn (flyttas den, följer loggan med).
+--    så länge loggan ersätter den; loggan placeras vid mikromenyn men är ankrad i UIParent (inte
+--    i MicroMenuContainer) så att skyddade ramar inte binder ihop dem, och flyttas efter strid.
 
 local _, ns = ...
 local L = ns.L
@@ -24,6 +25,39 @@ local button
 
 -- Visar loggan och döljer spelets väskrad, eller tvärtom.
 local waitingForCombat = false
+local waitingForPosition = false
+
+-- Placerar loggan direkt till höger om mikromenyn, men ankrad i UIParent så att skyddade
+-- ramar inte kopplas till MicroMenuContainer (issue #8). Uppdateras bara utanför strid.
+local function updatePosition()
+    if not button then
+        return
+    end
+    if InCombatLockdown() then
+        waitingForPosition = true
+        return
+    end
+    waitingForPosition = false
+    local scale = UIParent:GetEffectiveScale()
+    if MicroMenuContainer then
+        local left, bottom, width, height = MicroMenuContainer:GetScaledRect()
+        if left and width and height then
+            button:ClearAllPoints()
+            button:SetPoint("LEFT", UIParent, "BOTTOMLEFT", (left + width) / scale + 10, (bottom + height / 2) / scale)
+            return
+        end
+    end
+    if BagsBar then
+        local left, bottom, width, height = BagsBar:GetScaledRect()
+        if left and width and height then
+            button:ClearAllPoints()
+            button:SetPoint("RIGHT", UIParent, "BOTTOMLEFT", (left + width) / scale, (bottom + height / 2) / scale)
+            return
+        end
+    end
+    button:ClearAllPoints()
+    button:SetPoint("BOTTOMRIGHT", UIParent, "BOTTOMRIGHT", -16, 16)
+end
 
 function ns.ApplyBagBarSetting()
     if not button or not BagsBar then
@@ -55,11 +89,7 @@ ns.OnLoad(function()
     -- kvar fast väskraden är dold. Se ⚠️ högst upp.
     button = CreateFrame("Button", "TidyPackBagButton", UIParent, "SecureActionButtonTemplate")
     button:SetSize(SIZE, SIZE)
-    if MicroMenuContainer then
-        button:SetPoint("LEFT", MicroMenuContainer, "RIGHT", 10, 0)
-    else
-        button:SetPoint("RIGHT", BagsBar, "RIGHT", 0, 0)
-    end
+    updatePosition()
     button:SetFrameStrata(BagsBar:GetFrameStrata())
     button:SetFrameLevel(BagsBar:GetFrameLevel() + 1)
     button.border = button:CreateTexture(nil, "BACKGROUND", nil, -3)
@@ -86,13 +116,16 @@ ns.OnLoad(function()
     -- Säkra knappar gör som standard sitt jobb när knappen trycks ned (inställningen
     -- ActionButtonUseKeyDown, SecureActionButton_OnClick), men knappen lyssnar bara på uppsläpp.
     -- useOnKeyDown = false: jobbet görs vid uppsläpp, en gång per klick.
+    -- Vänsterklick (type1) klickar alltid på spelets ryggsäcksknapp, även i strid. Högerklick
+    -- (type2) har inget säkert klick som standard, så i strid stänger det aldrig en öppen väska
+    -- utan öppnar bara kugghjulets meny; utanför strid öppnas väskan först om den är stängd.
     button:SetAttribute("useOnKeyDown", false)
-    button:SetAttribute("type", "click")
+    button:SetAttribute("type1", "click")
+    button:SetAttribute("type2", nil)
     button:SetAttribute("clickbutton", MainMenuBarBackpackButton)
     -- Före klicket: med en sak på markören lägger Tidy Pack den i väskorna, och högerklick när
-    -- väskan redan är öppen ska bara öppna menyn. Då klickas inte ryggsäcken. Attribut kan inte
-    -- ändras i strid; då gör knappen som spelets ryggsäck (öppnar eller stänger väskan, en sak
-    -- läggs i ryggsäcken).
+    -- väskan är stängd utanför strid slår tillfälligt på type2 så att ryggsäcken öppnas före
+    -- menyn. Attribut kan inte ändras i strid.
     local putItem = false
     button:SetScript("PreClick", function(self, mouseButton)
         putItem = false
@@ -101,17 +134,22 @@ ns.OnLoad(function()
         end
         putItem = GetCursorInfo() == "item" and ns.PutCursorItemInBags ~= nil
         local bagOpen = ns.bagFrame and ns.bagFrame:IsShown()
-        if putItem or (mouseButton == "RightButton" and bagOpen) then
-            self:SetAttribute("type", nil)
+        if putItem then
+            self:SetAttribute("type1", nil)
+            self:SetAttribute("type2", nil)
+        elseif mouseButton == "RightButton" and not bagOpen then
+            self:SetAttribute("type1", "click")
+            self:SetAttribute("type2", "click")
         else
-            self:SetAttribute("type", "click")
+            self:SetAttribute("type1", "click")
+            self:SetAttribute("type2", nil)
         end
     end)
     button:SetScript("PostClick", function(self, mouseButton)
-        -- Slå på klicket igen direkt. Annars är det avstängt (se PreClick) tills nästa klick utanför
-        -- strid, och ett klick i strid däremellan öppnar inte väskan (granskning 2026-11-14).
+        -- Återställ standardvärdena direkt så att ett senare klick i strid alltid beter sig likadant.
         if not InCombatLockdown() then
-            self:SetAttribute("type", "click")
+            self:SetAttribute("type1", "click")
+            self:SetAttribute("type2", nil)
         end
         if putItem then
             putItem = false
@@ -148,11 +186,21 @@ ns.OnLoad(function()
             self:Hide()
         end
     end)
-    -- Inställningen ändrades i strid: gör det när striden är över. En lyssnare, registrerad en gång.
+    if MicroMenuContainer then
+        hooksecurefunc(MicroMenuContainer, "SetPoint", updatePosition)
+        hooksecurefunc(MicroMenuContainer, "Layout", updatePosition)
+    end
+    ns.RegisterEvent("PLAYER_ENTERING_WORLD", updatePosition)
+    ns.RegisterEvent("UI_SCALE_CHANGED", updatePosition)
+    -- Inställningen eller mikromenyn ändrades i strid: gör det när striden är över.
     ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if waitingForCombat then
             waitingForCombat = false
             ns.ApplyBagBarSetting()
+        end
+        if waitingForPosition then
+            waitingForPosition = false
+            updatePosition()
         end
     end)
     ns.ApplyBagBarSetting()

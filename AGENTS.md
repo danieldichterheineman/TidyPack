@@ -577,10 +577,10 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     när spelets fil laddas; att ändra den skulle smitta spelets kod och kan blockera att saker används).
     Fönstret fästs till vänster om Tidy Pack med nederkanterna i linje (`dockReagentBag`, efter
     `UpdateContainerFrameAnchors` och efter varje storleksändring). Sakerna sorteras inte. Inte provat i spelet.
-43. Väskor (2026-11-11, skissen `.design/sketch-bag-bar.html`): loggan (`Media/Logo.tga`, 64×64, okomprimerad
+43. Väskor (2026-11-11, skissen `.design/sketch-bag-bar.html`, ändrad 2026-11-14 för issue #8 och högerklick i strid): loggan (`Media/Logo.tga`, 64×64, okomprimerad
     TGA gjord ur `.design/logo.png`) ersätter spelets väskrad (`BagsBar` döljs efter varje Show,
-    `LogoButton.lua`, inställningen `replaceBagBar`): klick öppnar väskan (en säker knapp som klickar på `MainMenuBarBackpackButton`, se "Så fungerar det"), högerklick
-    inställningarna, en släppt sak läggs i väskorna, ingen siffra på loggan (användarens önskan). I väskfönstret, på en högre rad med pengar (spelets myntruta
+    `LogoButton.lua`, inställningen `replaceBagBar`): klick (`type1 = "click"`) öppnar väskan (en säker knapp som klickar på `MainMenuBarBackpackButton`, se "Så fungerar det"); högerklick (`type2 = nil` som standard, bara `"click"` före klick utanför strid när väskan är stängd) öppnar
+    inställningarna utan att stänga en öppen väska i strid (stängd väska i strid ger chattraden att öppna väskan först). Knappen ankras i `UIParent` på `MicroMenuContainer`s plats (`updatePosition`, uppdateras utanför strid via `SetPoint`/`Layout`/`PLAYER_ENTERING_WORLD`/`UI_SCALE_CHANGED`), inte direkt i `MicroMenuContainer`. En släppt sak läggs i väskorna, ingen siffra på loggan (användarens önskan). I väskfönstret, på en högre rad med pengar (spelets myntruta
     `MoneyFrame.Border` döljs och ritas om 46 hög med samma bilder, `BAR_HEIGHT`; pengarna flyttas upp 10 till mitten
     av raden, `MONEY_RAISE`, men inte när spelet visar valutor under dem; 22 stora ikoner till vänster,
     pengarna till höger): "N free"
@@ -612,9 +612,9 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     Håll en sak över väskan: gul kant och "Drop anywhere to put it in your bags"; släpp på tom yta →
     första lediga plats i en vanlig väska (`C_Container.PickupContainerItem`); full väska → spelets
     röda "Inventory is full". Inte provat i spelet.
-39. Set i väskan (2026-11-10, skissen `.design/sketch-sets-in-bag.html`): dra setets ikon till en
+39. Set i väskan (2026-11-10, skissen `.design/sketch-sets-in-bag.html`, ändrad 2026-11-14 för issue #8): dra setets ikon till en
     actionbar → makrot "TP <namn>" (kontots, `/tidypack equip <namn>`, setets ikon) skapas eller uppdateras
-    och läggs på markören (`ns.PickupSetMacro`); släpp på en knapp och klicka – setet tas på. Byt namn eller
+    och läggs på markören (`ns.PickupSetMacro`); `truncateUtf8` kortar av setnamn vid 32 tecken och makronamn vid 16 byte på hel UTF-8-teckengräns så att tecken som å/ä/ö aldrig delas mitt i; släpp på en knapp och klicka – setet tas på. Byt namn eller
     ikon: makrot följer med. I strid: en rad i chatten, inget makro. Klick på ikonen: ett rutnät med ikoner i
     fliken (setets saker först), ett klick byter ikonen, Done tillbaka, rullningen står kvar efter ett klick.
     "..." → Rename: namnet skrivs på raden (Enter/Esc). Med handkontroll: spelets ruta som förut, nu med
