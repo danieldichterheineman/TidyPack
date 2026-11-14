@@ -1,17 +1,24 @@
 -- TidyPack – Tour.lua
--- En kort guide första gången väskan öppnas, med spelets egna tipsrutor (HelpTip, samma gula ruta
--- med pil som i spelets egen guide för HUD Edit Mode, Blizzard_SharedXML/HelpTip.lua). Fyra steg
--- med knappen Next: en sak (Alt-klick), kugghjulet, fliken Sets och fliken Quests. Guiden visas
--- en gång; Tidy Pack sparar själv att den är klar (TidyPackDB.tourDone), inte i spelets
--- inställningar. Inställningssidan kan visa den igen (ns.ResetTour).
+-- En kort guide första gången väskan öppnas, med en egen ram av spelets mall HelpTipTemplate
+-- (utanför spelets delade pool HelpTip.framePool, så att addonets tips aldrig kan smitta
+-- spelets egna tipsrutor, Blizzard_SharedXML/HelpTip.lua). Fyra steg med knappen Next/Got it:
+-- en sak (Alt-klick), kugghjulet, fliken Sets och fliken Quests. Guiden visas en gång; Tidy
+-- Pack sparar själv att den är klar (TidyPackDB.tourDone), inte i spelets inställningar.
+-- Inställningssidan och kugghjulet kan visa den igen (ns.ResetTour).
 -- ⚠️ Spelet visar inga tipsrutor med handkontroll eller när spelaren stängt av spelets tips
 --    (HelpTip:AreHelpTipsEnabled), och då visas inte guiden heller.
 
 local _, ns = ...
 local L = ns.L
 
-local SYSTEM = "TidyPackTour"
 local step
+local tip
+
+local function hideTip()
+    if tip then
+        tip:Hide()
+    end
+end
 
 -- Stegen: vad rutan pekar på, texten, och var rutan står i förhållande till det den pekar på.
 local function steps()
@@ -60,17 +67,24 @@ showStep = function(index)
         return
     end
     step = index
-    HelpTip:Show(ns.bagFrame, {
+    if not tip then
+        tip = CreateFrame("Frame", nil, UIParent, "HelpTipTemplate")
+    end
+    tip:Hide()
+    tip:Reset() -- spelets pool gör det här åt spelets egna tips
+    tip.width = HelpTip.width
+    tip:SetWidth(tip.width)
+    -- Ingen system/cvar/autoHideWhenTargetHides: de går via spelets delade system.
+    tip:Init(ns.bagFrame, {
         text = info.text,
         buttonStyle = index < #list and HelpTip.ButtonStyle.Next or HelpTip.ButtonStyle.GotIt,
         targetPoint = info.point,
         alignment = info.alignment,
-        system = SYSTEM,
-        autoHideWhenTargetHides = true,
         onAcknowledgeCallback = function()
             showStep(index + 1)
         end,
     }, target)
+    tip:Show()
 end
 
 local function start()
@@ -87,7 +101,7 @@ end
 function ns.ResetTour()
     ns.db.tourDone = false
     step = nil
-    HelpTip:HideAllSystem(SYSTEM)
+    hideTip()
 end
 
 ns.OnLoad(function()
@@ -103,7 +117,7 @@ ns.OnLoad(function()
     bagFrame:HookScript("OnHide", function()
         if step then
             step = nil
-            HelpTip:HideAllSystem(SYSTEM)
+            hideTip()
         end
     end)
 end)

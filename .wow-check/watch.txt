@@ -33,9 +33,11 @@ GamepadFrameControlsManagerMixin:HandlePopupHide -- gives the cursor back
 SecureActionButton_OnClick -- the logo is a secure button of type "click"
 SECURE_ACTIONS.click -- how a secure "click" action reaches the game's backpack button
 
-# The game's tips. Tidy Pack's guide uses the game's tip boxes.
-HelpTip:Show -- the first-time guide
-HelpTip:Release -- hiding a tip
+# The game's tips. Tidy Pack's guide uses its own frame from HelpTipTemplate outside HelpTip's shared pool.
+HelpTipTemplate -- the template used for Tidy Pack's own tip frame
+HelpTipTemplateMixin:Reset -- resetting the tip frame before showing a step
+HelpTipTemplateMixin:Init -- initializing the tip frame with text, button and target
+HelpTip:Release -- closing a tip outside the pool relies on canFailToFindObject = true
 HelpTip:AreHelpTipsEnabled -- the guide is skipped when the game's tips are off (always with a controller)
 
 # The settings page (About Tidy Pack) and item tooltips.

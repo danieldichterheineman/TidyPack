@@ -595,13 +595,14 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     `placeSectionLines`). Med mus visas inte "Add to bag"; "N free" står nere till vänster (rött vid 5 eller
     färre) och byts mot "Drop anywhere ..." medan du håller en sak. Med handkontroll: "Add to bag" kvar,
     ingen text. Gruppen med recept, ädelstenar och förbättringar heter "Recipes & Gems". Inte provat i spelet.
-41. Guiden (2026-11-11, `Tour.lua`): spelets tipsrutor (`HelpTip:Show`, samma som HUD Edit Modes guide).
+41. Guiden (2026-11-11, `Tour.lua`, ändrad 2026-11-14 för issue #3): egen ram av mallen `HelpTipTemplate`
+    utanför spelets delade pool (`HelpTip:Show` byttes ut för att inte smitta spelets egna tipsrutor).
     Första gången väskan öppnas i Bags: fyra rutor med Next/Got it – en sak (Alt-klick), kugghjulet,
     fliken Sets, fliken Quests. Saknas något att peka på hoppas steget över. Stängs väskan mitt i börjar
-    guiden om nästa gång. Klar → `tourDone = true`. Esc → Options → AddOns → Tidy Pack → Tips → Show again
+    guiden om nästa gång. Klar → `tourDone = true`. Kugghjulet eller Options → Show Tips Again
     (`ns.ResetTour`). Visas inte med handkontroll eller med spelets inställning "hideHelptips"
     (`HelpTip:AreHelpTipsEnabled`). Ersätter den blå tipsraden (`itemTip` används inte längre).
-    Inte provat i spelet.
+    Provat i spelet 2026-11-14 (laddar utan fel; återstår att prova disenchant/använd sak på sak).
 40. Råvaror och släpp (2026-11-11, skissen `.design/sketch-drop-and-crafting.html`): Trade Goods delas i
     grupper per undertyp (`trade<subClassID>`, namn från `C_Item.GetItemSubClassInfo`); grupper för dina
     yrken står först med yrkets ikon och namn i grått (`ns.GetTradeGroupKeys`, `GetProfessions`,

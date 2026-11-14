@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed: the first-time guide now uses its own tip frame instead of the game's shared HelpTip
+  pool, avoiding taint when other game tips are shown or hidden.
 - Fixed: a crafting material of a kind Tidy Pack didn't know about could be missing from the bag
   window. Every kind the game has now gets its own group, and an item can never be hidden because
   its group is missing.
