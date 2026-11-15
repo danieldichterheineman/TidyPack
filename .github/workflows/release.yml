@@ -1,9 +1,9 @@
-# Bygger Tidy Pack och laddar upp det till CurseForge när en versionstagg pushas,
-# t.ex. v1.0.1. Använder BigWigs packager: https://github.com/BigWigsMods/packager
+# Builds Tidy Pack and uploads it to CurseForge when a version tag is pushed,
+# e.g. v1.0.1. Uses BigWigs packager: https://github.com/BigWigsMods/packager
 #
-# Bara "rena" versionstaggar (vN.N.N) startar arbetsflödet. Testversioner som
-# v1.0.1-alpha1 läggs för hand som förhandsversioner under Releases på GitHub och
-# laddas inte upp till CurseForge (se AGENTS.md, avsnittet Publicering).
+# Only "clean" version tags (vN.N.N) start the workflow. Test versions like
+# v1.0.1-alpha1 are added by hand as pre-releases under Releases on GitHub and
+# aren't uploaded to CurseForge (see AGENTS.md, section Publishing).
 name: Package and release
 
 on:
@@ -11,7 +11,7 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
-# Låter arbetsflödet skapa en release med zip-filen på GitHub.
+# Lets the workflow create a release with the zip file on GitHub.
 permissions:
   contents: write
 
@@ -20,19 +20,19 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # CurseForge-nyckeln, som användaren själv har lagt in som hemlighet i repot.
+      # The CurseForge key, which the owner added as a secret in the repository.
       CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
-      # Skapas automatiskt av GitHub – behöver inte läggas in.
+      # Created automatically by GitHub – doesn't need to be added.
       GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Clone project
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # hela historiken, så att packagern hittar föregående tagg
+          fetch-depth: 0 # the whole history, so the packager finds the previous tag
 
-      # Versionen i TidyPack.toc är ett fast nummer. Stämmer den inte med taggen stoppas
-      # körningen innan något laddas upp, så att spelare aldrig får fel versionsnummer.
+      # The version in TidyPack.toc is a fixed number. If it doesn't match the tag, the run
+      # stops before anything is uploaded, so players never get a wrong version number.
       - name: Check that the tag matches the version in the TOC file
         id: version
         run: |
@@ -43,10 +43,10 @@ jobs:
           fi
           echo "version=${toc_version}" >> "$GITHUB_OUTPUT"
 
-      # -u: Unix-radslut (LF), samma som filerna du provar i spelet. Packagern skriver annars
-      # Windows-radslut (CRLF), vilket spelet också läser men som gör filerna annorlunda.
-      # -n "filnamn:visningsnamn": zip-filen heter TidyPack-1.0.1.zip och filen visas som
-      # "TidyPack-1.0.1" på CurseForge (packagern byter mellanslag mot understreck). Utan -n blir namnet taggen och speltypen ("v1.0.1-forever").
+      # -u: Unix line endings (LF), the same as the files you try in the game. Otherwise the packager
+      # writes Windows line endings (CRLF), which the game reads too but which makes the files differ.
+      # -n "file name:display name": the zip file is TidyPack-1.0.1.zip and the file shows as
+      # "TidyPack-1.0.1" on CurseForge (the packager swaps spaces for underscores). Without -n the name is the tag and the game type ("v1.0.1-forever").
       - name: Package and release
         uses: BigWigsMods/packager@v2
         with:
