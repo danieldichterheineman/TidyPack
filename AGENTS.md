@@ -458,8 +458,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
   never publish it.
 - **1.2.0** was released 2026-11-15 with the tag `v1.2.0` (run 43742598575: "Success!" for
   CurseForge and the GitHub release). Left for the owner on CurseForge: paste the new Summary
-  (`.design/curseforge-page.md`) and Description (`README.md`), add new images, and see the file
-  approved.
+  (`.design/curseforge-page.md`) and Description (`README.md`), and add new images. CurseForge
+  approved the file the same day.
 - Steps for every release: set `## Version:`, rename `## Unreleased` to `## <version> (date)`, run
   `check-addon.mjs --release`, commit, ask, push, ask, then push the tag `v<version>`, and read the
   run's log for `Success!`.
