@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Tidy Pack – logga. Egen teckning: en läderryggsäck vars framsida är ett prydligt
-       sorterat rutnät (rader i samma färg = grupper). Inga bilder från spelet. -->
+  <!-- Tidy Pack – logo. An own drawing: a leather backpack whose front is a neatly
+       sorted grid (rows of the same color = groups). No images from the game. -->
   <defs>
     <radialGradient id="bg" cx="50%" cy="42%" r="70%">
       <stop offset="0" stop-color="#2b4a5c"/>
@@ -30,39 +30,39 @@
     </filter>
   </defs>
 
-  <!-- Bakgrund och ram -->
+  <!-- Background and frame -->
   <rect x="0" y="0" width="1024" height="1024" rx="150" fill="url(#frame)"/>
   <rect x="34" y="34" width="956" height="956" rx="122" fill="url(#bg)"/>
   <rect x="34" y="34" width="956" height="956" rx="122" fill="none" stroke="#000" stroke-opacity="0.45" stroke-width="6"/>
 
   <g filter="url(#shadow)">
-    <!-- Handtag -->
+    <!-- Handle -->
     <path d="M412 250 C412 160 612 160 612 250" fill="none" stroke="#5a3218" stroke-width="44" stroke-linecap="round"/>
     <path d="M412 250 C412 172 612 172 612 250" fill="none" stroke="#9a5e33" stroke-width="22" stroke-linecap="round"/>
 
-    <!-- Remmar på sidorna -->
+    <!-- Straps on the sides -->
     <rect x="218" y="360" width="44" height="430" rx="18" fill="#5a3218"/>
     <rect x="762" y="360" width="44" height="430" rx="18" fill="#5a3218"/>
 
-    <!-- Väskans kropp -->
+    <!-- The bag's body -->
     <path d="M250 300 Q250 250 300 250 L724 250 Q774 250 774 300 L790 790 Q790 850 730 850 L294 850 Q234 850 234 790 Z"
           fill="url(#leather)" stroke="#3e2210" stroke-width="10"/>
-    <!-- Sömmar -->
+    <!-- Seams -->
     <path d="M270 310 L256 790 Q256 826 294 828 L730 828 Q768 826 768 790 L754 310"
           fill="none" stroke="#e7b77d" stroke-opacity="0.55" stroke-width="5" stroke-dasharray="16 12"/>
 
-    <!-- Rutnätet: sorterade rader (grupper) -->
+    <!-- The grid: sorted rows (groups) -->
     <rect x="322" y="420" width="380" height="380" rx="26" fill="#1a1410" stroke="#3e2210" stroke-width="8"/>
     <g>
-      <!-- rad 1: guld (favoriter) -->
+      <!-- row 1: gold (favorites) -->
       <rect x="342" y="440" width="104" height="104" rx="16" fill="#e8b33a"/>
       <rect x="460" y="440" width="104" height="104" rx="16" fill="#e8b33a"/>
       <rect x="578" y="440" width="104" height="104" rx="16" fill="#e8b33a"/>
-      <!-- rad 2: blå -->
+      <!-- row 2: blue -->
       <rect x="342" y="558" width="104" height="104" rx="16" fill="#3d86e0"/>
       <rect x="460" y="558" width="104" height="104" rx="16" fill="#3d86e0"/>
       <rect x="578" y="558" width="104" height="104" rx="16" fill="#3d86e0"/>
-      <!-- rad 3: grön och en ledig plats -->
+      <!-- row 3: green and a free slot -->
       <rect x="342" y="676" width="104" height="104" rx="16" fill="#3fb24f"/>
       <rect x="460" y="676" width="104" height="104" rx="16" fill="#3fb24f"/>
       <rect x="578" y="676" width="104" height="104" rx="16" fill="none" stroke="#6b5a48" stroke-width="6" stroke-dasharray="14 10"/>
@@ -78,11 +78,11 @@
       <rect x="460" y="676" width="104" height="104" rx="16"/>
     </g>
 
-    <!-- Locket -->
+    <!-- The lid -->
     <path d="M244 300 Q244 240 304 240 L720 240 Q780 240 780 300 L780 360 Q512 420 244 360 Z"
           fill="url(#flap)" stroke="#3e2210" stroke-width="10"/>
     <path d="M266 330 Q512 386 758 330" fill="none" stroke="#e7b77d" stroke-opacity="0.55" stroke-width="5" stroke-dasharray="16 12"/>
-    <!-- Spänne -->
+    <!-- Buckle -->
     <rect x="472" y="350" width="80" height="70" rx="12" fill="url(#frame)" stroke="#5a3a10" stroke-width="6"/>
     <rect x="494" y="368" width="36" height="34" rx="6" fill="#3e2210"/>
   </g>
