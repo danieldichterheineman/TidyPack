@@ -1,8 +1,8 @@
 -- TidyPack – Tour.lua
 -- En kort guide första gången väskan öppnas, med en egen ram av spelets mall HelpTipTemplate
 -- (utanför spelets delade pool HelpTip.framePool, så att addonets tips aldrig kan smitta
--- spelets egna tipsrutor, Blizzard_SharedXML/HelpTip.lua). Tre steg med knappen Next/Got it:
--- en sak (Alt-klick), kugghjulet och fliken Quests. Guiden visas en gång; Tidy
+-- spelets egna tipsrutor, Blizzard_SharedXML/HelpTip.lua). Fyra steg med knappen Next/Got it:
+-- en sak (Alt-klick), kugghjulet, fliken Bank (granskningen 2026-11-15) och fliken Quests. Guiden visas en gång; Tidy
 -- Pack sparar själv att den är klar (TidyPackDB.tourDone), inte i spelets inställningar.
 -- Inställningssidan och kugghjulet kan visa den igen (ns.ResetTour).
 -- ⚠️ Spelet visar inga tipsrutor med handkontroll eller när spelaren stängt av spelets tips
@@ -32,6 +32,11 @@ local function steps()
             target = function() return ns.gearButton end,
             text = L["The gear button has your junk list, your own groups and the settings."],
             point = HelpTip.Point.BottomEdgeCenter, alignment = HelpTip.Alignment.Right,
+        },
+        {
+            target = function() return ns.GetTabButton(2) end,
+            text = L["Bank: your bank, sorted the same way – also when you're away from a banker."],
+            point = HelpTip.Point.TopEdgeCenter, alignment = HelpTip.Alignment.Center,
         },
         {
             target = function() return ns.GetTabButton(3) end,

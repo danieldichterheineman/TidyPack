@@ -12,14 +12,16 @@
   Bank 40 · Total 52"), also away from the bank.
 - The reagent bag is part of the bag window: its items get their own part at the bottom, and the
   reagent bag sits next to your other bags at the bottom of the window.
-- "Show by bag" (gear button → Bag and bank): each bag and bank tab on its own rows, in slot order
+- "Show by bag" (gear button → Show): each bag and bank tab on its own rows, in slot order
   with its empty slots. Favorites and your own groups stay at the top.
 - "Search box" (gear button → Show, off by default): a search box in the title bar of the Bags and
   Bank tabs. Matching items glow blue and the rest dims.
 - All options are in the gear button's menu, in three submenus: Show, Merchants and loot, and Bag
-  and bank. Each option explains itself when you point at it. The junk list and your own groups
-  open right in the bag window.
-- New options under Show: "Group line in tooltips" and "Junk value in the header".
+  and bank. Show has small headings – On items, In tooltips and In the window – and each option
+  explains itself when you point at it. The junk list and your own groups open right in the bag
+  window.
+- New options under Show: "Group line" (in tooltips) and "Junk value in the header".
+- The first-time guide also shows you the Bank tab.
 - Point at a group's heading to see how many items it holds, in how many slots, and what they're
   worth at a merchant.
 - The game's own sounds when the junk list and your groups open and close, and a short fade when

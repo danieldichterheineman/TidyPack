@@ -20,20 +20,19 @@ end
 ---------------------------------------------------------------------------
 -- Inställningarna i kugghjulets meny
 ---------------------------------------------------------------------------
--- key är nyckeln i ns.db (Core.lua har standardvärdena, alla sanna). onChange körs efter en ändring.
--- enabled (en funktion) gör raden grå när den inte går att ändra.
+-- key är nyckeln i ns.db (Core.lua har standardvärdena). onChange körs efter en ändring.
+-- enabled (en funktion) gör raden grå när den inte går att ändra. En rad med bara section är en
+-- liten rubrik i undermenyn (Show ▸ har åtta val, uppdelade i tre grupper; granskningen 2026-11-15).
 
 ns.optionMenus = {
     {
         title = L["Show"],
         options = {
+            { section = L["On items"] },
             { key = "itemLevelAndBoE", name = L["Item level and BoE"],
                 tooltip = L["On uncommon or better weapons and armor."], onChange = refresh },
             { key = "upgradeArrows", name = L["Upgrade arrows"],
                 tooltip = L["A green arrow on weapons and armor you can use that have a higher item level than what you wear in that slot."],
-                onChange = refresh },
-            { key = "showQuestItemsInBags", name = L["Quest items in Bags"],
-                tooltip = L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
                 onChange = refresh },
             { key = "questHints", name = L["Marks for later quests"],
                 tooltip = L["Requires the addon Questie. Items needed for quests you can take now or within 5 levels get a yellow exclamation mark and a line in their tooltip."],
@@ -45,14 +44,22 @@ ns.optionMenus = {
                 enabled = function()
                     return ns.HasQuestie ~= nil and ns.HasQuestie()
                 end },
+            { section = L["In tooltips"] },
             { key = "showCounts", name = L["Bag and bank counts"],
                 tooltip = L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank, and only for this character."] },
-            { key = "tooltipLines", name = L["Group line in tooltips"],
+            { key = "tooltipLines", name = L["Group line"],
                 tooltip = L["The line \"Tidy Pack group: ...\" in the tooltip of items in your own groups. Lines about quests and locks always show."] },
+            { section = L["In the window"] },
+            { key = "showQuestItemsInBags", name = L["Quest items in Bags"],
+                tooltip = L["Turn off to keep quest items in the Quests tab only. The Bags tab then shows a line saying how many slots they use."],
+                onChange = refresh },
             { key = "junkValue", name = L["Junk value in the header"],
                 tooltip = L["What your junk sells for, next to the Junk header."], onChange = refresh },
             { key = "showSearchBox", name = L["Search box"],
                 tooltip = L["Show the search box in the title bar on the Bags and Bank tabs. Matches glow in blue and everything else dims."],
+                onChange = refresh },
+            { key = "groupByBag", name = L["Show by bag"],
+                tooltip = L["Show each bag (and bank tab) in slot order with its empty slots, instead of grouping everything by type. Favorites and your own groups stay at the top."],
                 onChange = refresh },
         },
     },
@@ -86,9 +93,6 @@ ns.optionMenus = {
                     end
                     refresh()
                 end },
-            { key = "groupByBag", name = L["Show by bag"],
-                tooltip = L["Show each bag (and bank tab) in slot order with its empty slots, instead of grouping everything by type. Favorites and your own groups stay at the top."],
-                onChange = refresh },
         },
         -- Hos bankiren: spelets eget bankfönster, t.ex. för att köpa en bankplats (Bank.lua).
         extra = function(submenu)

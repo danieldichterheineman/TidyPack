@@ -172,21 +172,29 @@ local function buildMenu(_, rootDescription, itemOverride)
         rootDescription:CreateDivider()
         for _, menu in ipairs(ns.optionMenus or {}) do
             local submenu = rootDescription:CreateButton(menu.title)
-            for _, option in ipairs(menu.options) do
-                local checkbox = submenu:CreateCheckbox(option.name, function()
-                    return ns.db[option.key] ~= false
-                end, function()
-                    ns.db[option.key] = ns.db[option.key] == false
-                    if option.onChange then
-                        option.onChange()
+            for index, option in ipairs(menu.options) do
+                if option.section then
+                    -- En liten rubrik, med en linje ovanför utom överst.
+                    if index > 1 then
+                        submenu:CreateDivider()
                     end
-                end)
-                checkbox:SetTooltip(function(tooltip, elementDescription)
-                    GameTooltip_SetTitle(tooltip, MenuUtil.GetElementText(elementDescription))
-                    GameTooltip_AddNormalLine(tooltip, option.tooltip)
-                end)
-                if option.enabled then
-                    checkbox:SetEnabled(option.enabled)
+                    submenu:CreateTitle(option.section)
+                else
+                    local checkbox = submenu:CreateCheckbox(option.name, function()
+                        return ns.db[option.key] ~= false
+                    end, function()
+                        ns.db[option.key] = ns.db[option.key] == false
+                        if option.onChange then
+                            option.onChange()
+                        end
+                    end)
+                    checkbox:SetTooltip(function(tooltip, elementDescription)
+                        GameTooltip_SetTitle(tooltip, MenuUtil.GetElementText(elementDescription))
+                        GameTooltip_AddNormalLine(tooltip, option.tooltip)
+                    end)
+                    if option.enabled then
+                        checkbox:SetEnabled(option.enabled)
+                    end
                 end
             end
             if menu.extra then

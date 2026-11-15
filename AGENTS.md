@@ -151,11 +151,13 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   (`GamepadMode.FrameControlsManager:HandlePopupShown`), bara utanför strid. Måste provas i
   spelet, särskilt med handkontroll.
 - ⚠️ Inställningar i väskan (`Options.lua`, `Marks.lua`, `Panels.lua`, 2026-11-12; skissen `.design/sketch-settings-in-bag.html`):
-  allt finns under kugghjulet. Menyn: Junk List…, Groups…, undermenyerna Show (Item level and BoE, Upgrade
-  arrows, Quest items in Bags, Marks for later quests – grå utan Questie, Bag and bank counts, Group line in
-  tooltips `tooltipLines`, Junk value in the header `junkValue`, Search box `showSearchBox`), Merchants and loot (Lock items at merchants, Ask
-  to delete junk list loot, Suggest a deletion when full) och Bag and bank (Replace the game's bag buttons, Use the
-  Bank tab at bankers, Show by bag `groupByBag`, hos bankiren Show the game's bank window), och Show Tips Again. Valen definieras i
+  allt finns under kugghjulet. Menyn: Junk List…, Groups…, undermenyerna Show med tre små rubriker
+  (granskningen 2026-11-15, rader med `section` i `ns.optionMenus`): On items (Item level and BoE, Upgrade
+  arrows, Marks for later quests – grå utan Questie), In tooltips (Bag and bank counts, Group line
+  `tooltipLines`) och In the window (Quest items in Bags, Junk value in the header `junkValue`, Search box
+  `showSearchBox`, Show by bag `groupByBag`); Merchants and loot (Lock items at merchants, Ask to delete junk
+  list loot, Suggest a deletion when full) och Bag and bank (Replace the game's bag buttons, Use the Bank tab at
+  bankers, hos bankiren Show the game's bank window), och Show Tips Again. Valen definieras i
   `ns.optionMenus` (Options.lua); varje rad har en tooltip (`SetTooltip`), och kryssrutorna lämnar menyn öppen
   (`MenuResponse.Refresh`). Junk List och Groups öppnas i väskan som vyerna "junk" och "groups"
   (`ns.OpenPanel`, `layoutPanelView` i Layout.lua, ingen flik vald – `SetTabVisuallySelected(0)`): rubrikrad med
@@ -523,7 +525,7 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     Rename, ✕ (frågar), klicka en rad för att fälla ut: regler med kryss, små rutor, "+", skrivruta. Esc →
     Options → AddOns → Tidy Pack: logga, version, "By …", hjälpen, länken och Show Tips Again; klicka på länken, Cmd+C,
     klistra in i webbläsaren (öppna sidan också i strid: ingen "Interface action failed"). Högerklick på loggan öppnar väskan med menyn;
-    `/tidypack` och addonmenyn gör det med öppen väska (stängd väska: inställningssidan, test 49). Show ▸ Group line in tooltips av: ingen rad "Tidy Pack group".
+    `/tidypack` och addonmenyn gör det med öppen väska (stängd väska: inställningssidan, test 49). Show ▸ In tooltips ▸ Group line av: ingen rad "Tidy Pack group". Show ▸ har rubrikerna On items, In tooltips och In the window, med Show by bag sist.
     Junk value in the header av: rubriken Junk utan pengar. Starta om spelet (TOC-filen ändrad).
 49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
     i banken: "Bags N · Bank N · Total N" i blått. En sak som bara finns i väskan: ingen rad. Lägg in eller
@@ -603,8 +605,8 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     ingen text. Gruppen med recept, ädelstenar och förbättringar heter "Recipes & Gems". Inte provat i spelet.
 41. Guiden (2026-11-11, `Tour.lua`, ändrad 2026-11-14 för issue #3): egen ram av mallen `HelpTipTemplate`
     utanför spelets delade pool (`HelpTip:Show` byttes ut för att inte smitta spelets egna tipsrutor).
-    Första gången väskan öppnas i Bags: tre rutor med Next/Got it – en sak (Alt-klick), kugghjulet och
-    fliken Quests. Saknas något att peka på hoppas steget över. Stängs väskan mitt i börjar
+    Första gången väskan öppnas i Bags: fyra rutor med Next/Got it – en sak (Alt-klick), kugghjulet,
+    fliken Bank (ny 2026-11-15) och fliken Quests. Saknas något att peka på hoppas steget över. Stängs väskan mitt i börjar
     guiden om nästa gång. Klar → `tourDone = true`. Kugghjulet eller Options → Show Tips Again
     (`ns.ResetTour`). Visas inte med handkontroll eller med spelets inställning "hideHelptips"
     (`HelpTip:AreHelpTipsEnabled`). Ersätter den blå tipsraden (`itemTip` används inte längre).
