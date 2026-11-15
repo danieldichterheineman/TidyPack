@@ -18,6 +18,8 @@ ns.defaults = {
     -- Spelarens egna grupper (se Groups.lua) och numret nästa grupp får.
     upgradeArrows = true,     -- grön pil på bättre utrustning (Layout.lua)
     replaceBagBar = true,     -- loggan i stället för spelets väskrad (LogoButton.lua)
+    showSearchBox = false,    -- sökrutan i titelraden i flikarna Bags och Bank (Layout.lua)
+    groupByBag = false,       -- visa en grupp per väska (och bankflik) i stället för efter typ (Layout.lua, Bank.lua)
     tourDone = false,         -- guiden med spelets tipsrutor är visad (Tour.lua)
     questOpen = {},           -- vilka avsnitt i fliken Quests som är öppna (QuestsView.lua)
     groups = {},
@@ -30,11 +32,11 @@ ns.defaults = {
     -- från början.
     suggestOnLoot = true,     -- fråga när en sak från skräplistan lootas (MakeRoom.lua)
     suggestWhenFull = true,   -- föreslå en sak att radera när väskorna är fulla (MakeRoom.lua)
-    lockAtMerchant = true,    -- lås quest- och set-saker hos en handlare (Layout.lua)
+    lockAtMerchant = true,    -- lås quest- och utrustningsset-saker hos en handlare (Layout.lua)
     showQuestItemsInBags = true, -- quest-saker i fliken Bags (annars bara i fliken Quests, Layout.lua)
     bankTab = true,           -- banken i fliken Bank i stället för spelets bankfönster (Bank.lua)
     showCounts = true,        -- antal i väskan och banken i sakens tooltip (Bank.lua)
-    tooltipLines = true,      -- raderna "Tidy Pack set/group: …" i sakens tooltip (Sets.lua, Groups.lua)
+    tooltipLines = true,      -- raden "Tidy Pack group: …" i sakens tooltip (Groups.lua)
     junkValue = true,         -- skräpets värde vid rubriken Junk (Layout.lua)
     questHints = true,        -- saker som kommande quests behöver (QuestHints.lua)
     itemLevelAndBoE = true,   -- nivå och BoE på utrustning (Layout.lua)
@@ -42,8 +44,6 @@ ns.defaults = {
 
 -- Standardvärden för data som sparas per karaktär (TidyPackCharDB).
 ns.charDefaults = {
-    -- Egna set: { { name = "Fishing", items = { itemID, ... } }, ... } (se Sets.lua).
-    sets = {},
     -- bank (ny 2026-11-12, inget standardvärde): det banken höll senast, för fliken Bank borta från
     -- banken. { time, free, items = { { link, count, quality, icon, bag, slot, quest, bound, noValue } } }
     -- (se Bank.lua).
@@ -79,6 +79,7 @@ end
 -- migrations när en sparad nyckel byter namn, typ eller betydelse, så att spelarnas
 -- gamla data följer med (se skillen wow-maintain).
 local DATA_VERSION = 2
+local CHAR_DATA_VERSION = 2
 
 -- migrations[2] uppgraderar sparad data från version 1 till 2, och så vidare.
 local migrations = {
@@ -88,16 +89,23 @@ local migrations = {
     end,
 }
 
--- Uppgraderar sparad data ett steg i taget till DATA_VERSION.
-local function migrate(database)
+local charMigrations = {
+    -- 2: fliken Sets togs bort (2026-11-14) eftersom spelets eget Equipment Manager finns.
+    [2] = function(database)
+        database.sets = nil
+    end,
+}
+
+-- Uppgraderar sparad data ett steg i taget till targetVersion.
+local function migrate(database, targetVersion, stepTable)
     if next(database) == nil then
-        database.dataVersion = DATA_VERSION -- ny installation: inget att uppgradera
+        database.dataVersion = targetVersion -- ny installation: inget att uppgradera
         return
     end
     local version = database.dataVersion or 1
-    for target = version + 1, DATA_VERSION do
-        if migrations[target] then
-            migrations[target](database)
+    for target = version + 1, targetVersion do
+        if stepTable[target] then
+            stepTable[target](database)
         end
         version = target
     end
@@ -151,11 +159,12 @@ ns.RegisterEvent("ADDON_LOADED", function(loadedName)
     end
     -- Först nu är SavedVariables inlästa från disk.
     TidyPackDB = TidyPackDB or {}
-    migrate(TidyPackDB) -- före standardvärdena, så att gamla värden följer med
+    migrate(TidyPackDB, DATA_VERSION, migrations) -- före standardvärdena, så att gamla värden följer med
     applyDefaults(TidyPackDB, ns.defaults)
     ns.db = TidyPackDB
-    -- Per karaktär. Fanns inte i 0.1.0, så det finns inget att migrera.
+    -- Per karaktär.
     TidyPackCharDB = TidyPackCharDB or {}
+    migrate(TidyPackCharDB, CHAR_DATA_VERSION, charMigrations)
     applyDefaults(TidyPackCharDB, ns.charDefaults)
     ns.charDb = TidyPackCharDB
 

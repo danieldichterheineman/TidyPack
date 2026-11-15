@@ -49,12 +49,33 @@ local function takesOverBank()
 end
 ns.TakesOverBank = takesOverBank -- kugghjulets meny (Marks.lua)
 
--- Bankflikarna (behållarnas nummer, CharacterBankTab_1 …) som karaktären har köpt.
-local function bankContainers()
-    if not (BANK_TYPE and C_Bank and C_Bank.FetchPurchasedBankTabIDs) then
-        return {}
+-- Bankflikarna (behållarnas nummer, namn, ikon och storlek) som karaktären har köpt.
+local function bankTabInfos()
+    local result = {}
+    if not (BANK_TYPE and C_Bank) then
+        return result
     end
-    return C_Bank.FetchPurchasedBankTabIDs(BANK_TYPE) or {}
+    if C_Bank.FetchPurchasedBankTabData then
+        for _, tab in ipairs(C_Bank.FetchPurchasedBankTabData(BANK_TYPE) or {}) do
+            result[#result + 1] = {
+                id = tab.ID,
+                name = tab.name,
+                icon = tab.icon,
+                slots = C_Container.GetContainerNumSlots(tab.ID) or 0,
+            }
+        end
+        return result
+    end
+    if C_Bank.FetchPurchasedBankTabIDs then
+        for index, id in ipairs(C_Bank.FetchPurchasedBankTabIDs(BANK_TYPE) or {}) do
+            result[#result + 1] = {
+                id = id,
+                name = L["Tab %d"]:format(index),
+                slots = C_Container.GetContainerNumSlots(id) or 0,
+            }
+        end
+    end
+    return result
 end
 
 ---------------------------------------------------------------------------
@@ -64,11 +85,7 @@ end
 local function holderFor(containerID)
     local holder = holders[containerID]
     if not holder then
-        holder = CreateFrame("Frame", nil, ns.bagFrame)
-        holder:SetAllPoints()
-        holder:SetFrameLevel(ns.bagFrame:GetFrameLevel() + 5)
-        -- Spelets mall läser väskans nummer här (GetParent():GetID()).
-        holder:SetID(containerID)
+        holder = ns.CreateLiveSlotHolder(containerID)
         holders[containerID] = holder
     end
     return holder
@@ -82,33 +99,16 @@ local function liveButtonFor(containerID, slot)
     end
     local button = list[slot]
     if not button then
-        local holder = holderFor(containerID)
-        button = CreateFrame("ItemButton", nil, holder, "ContainerFrameItemButtonTemplate")
-        button:SetFrameLevel(math.max(10, holder:GetFrameLevel() + 1))
-        button:SetID(slot)
+        button = ns.CreateLiveSlotButton(holderFor(containerID), slot)
         list[slot] = button
         allButtons[#allButtons + 1] = button
     end
     return button
 end
 
--- Samma steg som spelets väskfönster gör för varje ruta (ContainerFrameMixin:UpdateItems).
+-- Samma steg som spelets väskfönster gör för varje ruta (Layout.lua).
 local function updateLiveButton(button, containerID, slot, info)
-    local texture = info and info.iconFileID
-    ClearItemButtonOverlay(button)
-    button:SetHasItem(texture)
-    button:SetItemButtonTexture(texture)
-    button:SyncAppearanceWithHasItem()
-    SetItemButtonQuality(button, info and info.quality, info and info.hyperlink, false, info and info.isBound)
-    SetItemButtonCount(button, info and info.stackCount)
-    SetItemButtonDesaturated(button, info and info.isLocked)
-    local questInfo = C_Container.GetContainerItemQuestInfo(containerID, slot)
-    button:UpdateQuestItem(questInfo and questInfo.isQuestItem, questInfo and questInfo.questID,
-        questInfo and questInfo.isActive)
-    button:UpdateJunkItem(info and info.quality, info and info.hasNoValue)
-    button:UpdateCooldown(texture)
-    button:SetReadable(info and info.isReadable)
-    button:SetMatchesSearch(not (info and info.isFiltered))
+    ns.UpdateLiveSlotButton(button, containerID, slot, info, false)
 end
 
 ---------------------------------------------------------------------------
@@ -148,10 +148,11 @@ local function offlineButtonFor(index)
 end
 
 local function updateOfflineButton(button, item)
-    button.link = item.link
-    SetItemButtonTexture(button, item.icon)
-    SetItemButtonCount(button, item.count)
-    SetItemButtonQuality(button, item.quality, item.link)
+    button.link = item and item.link or nil
+    SetItemButtonTexture(button, item and item.icon or nil)
+    SetItemButtonCount(button, item and item.count or 0)
+    SetItemButtonQuality(button, item and item.quality or nil, item and item.link or nil)
+    button:SetAlpha(item and 1 or 0.65)
 end
 
 ---------------------------------------------------------------------------
@@ -177,31 +178,65 @@ function ns.GetBankFreeSlots()
     return saved and saved.free or 0
 end
 
--- Sparar bankens innehåll för senare (borta från banken, och antalen i tooltipen). Körs hos bankiren
--- varje gång banken ändras, också när fliken Bank inte syns – annars visade tooltipen det gamla
--- antalet tills fliken öppnades (granskning 2026-11-12).
-local function saveBank()
+-- Bankflikarna i ordning (hos bankiren direkt från spelet, borta ur det som sparades senast).
+function ns.GetBankTabs()
+    if atBank then
+        return bankTabInfos()
+    end
+    local saved = ns.GetSavedBank()
+    if not saved then
+        return {}
+    end
+    if saved.tabs then
+        return saved.tabs
+    end
+    -- Gammal sparad bank före flikinfo: gissa ordning utifrån behållarnas nummer.
+    local seen, tabs = {}, {}
+    for _, item in ipairs(saved.items or {}) do
+        if item.bag and not seen[item.bag] then
+            seen[item.bag] = true
+            tabs[#tabs + 1] = { id = item.bag }
+        end
+    end
+    table.sort(tabs, function(a, b) return a.id < b.id end)
+    for index, tab in ipairs(tabs) do
+        tab.name = L["Tab %d"]:format(index)
+    end
+    return tabs
+end
+
+-- Går igenom och sparar bankens innehåll hos bankiren. onSlot(containerID, slot, info, isQuestItem)
+-- är frivillig (används av ForEachBankSlot för att också uppdatera rutorna).
+local function scanLiveBank(onSlot)
     if not atBank or not ns.charDb then
         return
     end
+    local tabs = bankTabInfos()
     local items, free = {}, 0
-    for _, containerID in ipairs(bankContainers()) do
-        for slot = 1, C_Container.GetContainerNumSlots(containerID) do
-            local info = C_Container.GetContainerItemInfo(containerID, slot)
+    for _, tab in ipairs(tabs) do
+        for slot = 1, tab.slots do
+            local info = C_Container.GetContainerItemInfo(tab.id, slot)
+            local isQuestItem = info and ns.IsQuestItem(tab.id, slot, info) or false
             if info then
                 items[#items + 1] = {
                     link = info.hyperlink, count = info.stackCount or 1, quality = info.quality,
-                    icon = info.iconFileID, bag = containerID, slot = slot,
-                    quest = ns.IsQuestItem(containerID, slot, info) or nil,
+                    icon = info.iconFileID, bag = tab.id, slot = slot, quest = isQuestItem or nil,
                     bound = info.isBound or nil, noValue = info.hasNoValue or nil,
                 }
             else
                 free = free + 1
             end
+            if onSlot then
+                onSlot(tab.id, slot, info, isQuestItem)
+            end
         end
     end
     freeSlots = free
-    ns.charDb.bank = { time = time(), free = free, items = items }
+    ns.charDb.bank = { time = time(), free = free, items = items, tabs = tabs }
+end
+
+local function saveBank()
+    scanLiveBank(nil)
 end
 
 -- Går igenom bankens platser. Hos bankiren: varje plats, med spelets data (info nil för en tom
@@ -209,45 +244,49 @@ end
 -- callback(button, bagID, slot, info, offline, isQuestItem)
 function ns.ForEachBankSlot(callback)
     if atBank then
-        local items = {}
-        freeSlots = 0
-        for _, containerID in ipairs(bankContainers()) do
-            for slot = 1, C_Container.GetContainerNumSlots(containerID) do
-                local info = C_Container.GetContainerItemInfo(containerID, slot)
-                local button = liveButtonFor(containerID, slot)
-                updateLiveButton(button, containerID, slot, info)
-                local isQuestItem = info and ns.IsQuestItem(containerID, slot, info) or false
-                if info then
-                    items[#items + 1] = {
-                        link = info.hyperlink, count = info.stackCount or 1, quality = info.quality,
-                        icon = info.iconFileID, bag = containerID, slot = slot, quest = isQuestItem or nil,
-                        bound = info.isBound or nil, noValue = info.hasNoValue or nil,
-                    }
-                else
-                    freeSlots = freeSlots + 1
-                end
-                callback(button, containerID, slot, info, false, isQuestItem)
-            end
-        end
-        ns.charDb.bank = { time = time(), free = freeSlots, items = items }
+        scanLiveBank(function(containerID, slot, info, isQuestItem)
+            local button = liveButtonFor(containerID, slot)
+            updateLiveButton(button, containerID, slot, info)
+            callback(button, containerID, slot, info, false, isQuestItem)
+        end)
         return
     end
     local saved = ns.GetSavedBank()
     if not saved then
         return
     end
-    for index, item in ipairs(saved.items) do
-        local itemID = item.link and C_Item.GetItemInfoInstant(item.link)
-        if itemID then
-            local button = offlineButtonFor(index)
-            updateOfflineButton(button, item)
-            -- Samma fält som spelets ContainerItemInfo, så att Layout.lua kan sortera som vanligt.
-            local info = {
-                itemID = itemID, hyperlink = item.link, stackCount = item.count, quality = item.quality,
-                iconFileID = item.icon, isBound = item.bound, hasNoValue = item.noValue,
-            }
-            callback(button, item.bag, item.slot, info, true, item.quest == true)
+    local function emitSaved(index, item, bagID, slot)
+        local itemID = item and item.link and C_Item.GetItemInfoInstant(item.link)
+        if item and not itemID then
+            return nil
         end
+        local button = offlineButtonFor(index)
+        updateOfflineButton(button, item)
+        local info = item and {
+            itemID = itemID, hyperlink = item.link, stackCount = item.count, quality = item.quality,
+            iconFileID = item.icon, isBound = item.bound, hasNoValue = item.noValue,
+        } or nil
+        callback(button, bagID, slot, info, true, item ~= nil and item.quest == true)
+        return true
+    end
+    if ns.db and ns.db.groupByBag and saved.tabs then
+        local byPos = {}
+        for _, item in ipairs(saved.items or {}) do
+            byPos[item.bag] = byPos[item.bag] or {}
+            byPos[item.bag][item.slot] = item
+        end
+        local btnIndex = 0
+        for _, tab in ipairs(saved.tabs) do
+            for slot = 1, tab.slots or 0 do
+                btnIndex = btnIndex + 1
+                local item = byPos[tab.id] and byPos[tab.id][slot]
+                emitSaved(btnIndex, item, tab.id, slot)
+            end
+        end
+        return
+    end
+    for index, item in ipairs(saved.items or {}) do
+        emitSaved(index, item, item.bag, item.slot)
     end
 end
 
@@ -256,10 +295,10 @@ function ns.PutCursorItemInBank()
     if not atBank or GetCursorInfo() ~= "item" then
         return
     end
-    for _, containerID in ipairs(bankContainers()) do
-        for slot = 1, C_Container.GetContainerNumSlots(containerID) do
-            if not C_Container.GetContainerItemInfo(containerID, slot) then
-                C_Container.PickupContainerItem(containerID, slot)
+    for _, tab in ipairs(bankTabInfos()) do
+        for slot = 1, tab.slots do
+            if not C_Container.GetContainerItemInfo(tab.id, slot) then
+                C_Container.PickupContainerItem(tab.id, slot)
                 return
             end
         end

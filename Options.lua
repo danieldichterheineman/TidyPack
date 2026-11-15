@@ -48,16 +48,19 @@ ns.optionMenus = {
             { key = "showCounts", name = L["Bag and bank counts"],
                 tooltip = L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank, and only for this character."] },
             { key = "tooltipLines", name = L["Tidy Pack lines in tooltips"],
-                tooltip = L["The lines \"Tidy Pack set: ...\" and \"Tidy Pack group: ...\" in item tooltips. Lines about quests and locks always show."] },
+                tooltip = L["The line \"Tidy Pack group: ...\" in item tooltips. Lines about quests and locks always show."] },
             { key = "junkValue", name = L["Junk value in the header"],
                 tooltip = L["What your junk sells for, next to the Junk header."], onChange = refresh },
+            { key = "showSearchBox", name = L["Search box"],
+                tooltip = L["Show the search box in the title bar on the Bags and Bank tabs. Matches glow in blue and everything else dims."],
+                onChange = refresh },
         },
     },
     {
         title = L["Merchants and loot"],
         options = {
             { key = "lockAtMerchant", name = L["Lock items at merchants"],
-                tooltip = L["At merchants, items your quests need and items in your sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
+                tooltip = L["At merchants, items your quests need and items in your equipment sets get a lock and can't be clicked, so you can't sell them by mistake. The merchant's own Sell All Junk button doesn't know about these locks."],
                 onChange = refresh },
             { key = "suggestOnLoot", name = L["Ask to delete junk list loot"],
                 tooltip = L["When you loot an item on your junk list, Tidy Pack asks right away whether to delete it. Nothing is deleted until you press Delete."] },
@@ -83,6 +86,9 @@ ns.optionMenus = {
                     end
                     refresh()
                 end },
+            { key = "groupByBag", name = L["Show by bag"],
+                tooltip = L["Show each bag (and bank tab) in slot order with its empty slots, instead of grouping everything by type. Favorites and your custom groups stay at the top."],
+                onChange = refresh },
         },
         -- Hos bankiren: spelets eget bankfönster, t.ex. för att köpa en bankplats (Bank.lua).
         extra = function(submenu)
@@ -173,9 +179,9 @@ local function createAboutPage()
     how:SetSpacing(4)
     how:SetText(ns.KeyText(table.concat({
         L["• Open your bags (B): your items are sorted into groups."],
-        L["• Alt-click an item: favorite, junk list, set or group."],
+        L["• Alt-click an item: favorite, junk list or group."],
         L["• The gear button at the top of the bag window has every option, the junk list and your groups."],
-        L["• The tabs above the bags: Bank (sorted at a banker), Sets and Quests."],
+        L["• The tabs above the bags: Bank (sorted at a banker) and Quests."],
     }, "\n")))
 
     local linkTitle = page:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
@@ -244,13 +250,7 @@ end)
 ---------------------------------------------------------------------------
 
 SLASH_TIDYPACK1 = "/tidypack"
--- "/tidypack equip <namn>" tar på ett set (så fungerar setets makro på actionbaren).
-SlashCmdList.TIDYPACK = function(message)
-    local command, rest = (message or ""):match("^%s*(%S+)%s*(.-)%s*$")
-    if command and command:lower() == "equip" and ns.EquipSetByName then
-        ns.EquipSetByName(rest)
-        return
-    end
+SlashCmdList.TIDYPACK = function()
     ns.OpenSettings()
 end
 

@@ -11,7 +11,7 @@
 -- ns.groupOrder, som RebuildGroupOrder bygger om).
 -- Grupperna sköts i väskan (Panels.lua), som kugghjulets meny öppnar.
 -- Spelets frågerutor (StaticPopup) används inte; namnet frågas i Tidy Packs egen ruta
--- (ns.ShowDialog i Sets.lua).
+-- (ns.ShowDialog nedan).
 
 local _, ns = ...
 local L = ns.L
@@ -253,6 +253,85 @@ end
 ---------------------------------------------------------------------------
 -- Frågor
 ---------------------------------------------------------------------------
+-- Spelets egna frågerutor (StaticPopup) används inte, eftersom ett addon som visar sin
+-- fråga i dem kan smitta spelets egna frågor (taint). Rutan är en egen ram byggd av
+-- spelets mallar, samma som Tidy Packs panel för fulla väskor.
+
+local MAX_NAME_LENGTH = 20
+local dialog
+
+local function createDialog()
+    dialog = CreateFrame("Frame", "TidyPackDialog", UIParent, "DefaultPanelFlatTemplate")
+    dialog:SetSize(320, 130)
+    dialog:SetPoint("TOP", UIParent, "TOP", 0, -135)
+    dialog:SetFrameStrata("DIALOG")
+    dialog:SetToplevel(true)
+    dialog:EnableMouse(true)
+    dialog:Hide()
+    dialog:SetTitle(L["Tidy Pack"])
+
+    dialog.text = dialog:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    dialog.text:SetPoint("TOPLEFT", 16, -34)
+    dialog.text:SetPoint("TOPRIGHT", -16, -34)
+    dialog.text:SetJustifyH("CENTER")
+
+    dialog.input = CreateFrame("EditBox", nil, dialog, "InputBoxTemplate")
+    dialog.input:SetSize(220, 22)
+    dialog.input:SetPoint("TOP", dialog.text, "BOTTOM", 0, -8)
+    dialog.input:SetAutoFocus(false)
+    dialog.input:SetMaxLetters(MAX_NAME_LENGTH)
+
+    dialog.accept = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    dialog.accept:SetSize(100, 22)
+    dialog.accept:SetPoint("BOTTOMRIGHT", dialog, "BOTTOM", -4, 12)
+    dialog.cancel = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    dialog.cancel:SetSize(100, 22)
+    dialog.cancel:SetPoint("BOTTOMLEFT", dialog, "BOTTOM", 4, 12)
+    dialog.cancel:SetText(L["Cancel"])
+
+    local function accept()
+        local onAccept = dialog.onAccept
+        local ok, problem = onAccept(dialog.input:GetText())
+        if ok == false then
+            dialog.text:SetText(problem or "")
+            dialog.text:SetTextColor(RED_FONT_COLOR:GetRGB())
+            return
+        end
+        dialog:Hide()
+    end
+    dialog.accept:SetScript("OnClick", accept)
+    dialog.input:SetScript("OnEnterPressed", accept)
+    dialog.cancel:SetScript("OnClick", function()
+        dialog:Hide()
+    end)
+    dialog.input:SetScript("OnEscapePressed", function()
+        dialog:Hide()
+    end)
+    dialog:SetScript("OnHide", function()
+        dialog.input:ClearFocus()
+    end)
+end
+
+-- Visar frågan. withInput = true ger en textruta med defaultText. onAccept(text) körs vid
+-- klick på knappen och kan returnera false och en förklaring för att hålla rutan öppen.
+local function showDialog(text, acceptLabel, withInput, defaultText, onAccept)
+    if not dialog then
+        createDialog()
+    end
+    dialog.text:SetText(text)
+    dialog.text:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB())
+    dialog.accept:SetText(acceptLabel)
+    dialog.onAccept = onAccept
+    dialog.input:SetShown(withInput)
+    dialog.input:SetText(defaultText or "")
+    dialog:SetHeight(withInput and 130 or 104)
+    dialog:Show()
+    if withInput then
+        dialog.input:SetFocus()
+        dialog.input:HighlightText()
+    end
+end
+ns.ShowDialog = showDialog
 
 -- Skapar en grupp efter att ha frågat efter namnet. onCreated(index) körs efteråt.
 function ns.AskNewGroup(onCreated)

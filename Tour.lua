@@ -1,8 +1,8 @@
 -- TidyPack – Tour.lua
 -- En kort guide första gången väskan öppnas, med en egen ram av spelets mall HelpTipTemplate
 -- (utanför spelets delade pool HelpTip.framePool, så att addonets tips aldrig kan smitta
--- spelets egna tipsrutor, Blizzard_SharedXML/HelpTip.lua). Fyra steg med knappen Next/Got it:
--- en sak (Alt-klick), kugghjulet, fliken Sets och fliken Quests. Guiden visas en gång; Tidy
+-- spelets egna tipsrutor, Blizzard_SharedXML/HelpTip.lua). Tre steg med knappen Next/Got it:
+-- en sak (Alt-klick), kugghjulet och fliken Quests. Guiden visas en gång; Tidy
 -- Pack sparar själv att den är klar (TidyPackDB.tourDone), inte i spelets inställningar.
 -- Inställningssidan och kugghjulet kan visa den igen (ns.ResetTour).
 -- ⚠️ Spelet visar inga tipsrutor med handkontroll eller när spelaren stängt av spelets tips
@@ -25,7 +25,7 @@ local function steps()
     return {
         {
             target = ns.GetFirstItemButton,
-            text = ns.KeyText(L["Alt-click an item for its options: favorite, junk list, sets and groups."]),
+            text = ns.KeyText(L["Alt-click an item for its options: favorite, junk list and groups."]),
             point = HelpTip.Point.BottomEdgeCenter, alignment = HelpTip.Alignment.Left,
         },
         {
@@ -35,11 +35,6 @@ local function steps()
         },
         {
             target = function() return ns.GetTabButton(3) end,
-            text = L["Sets: save what you wear and put it on with one click."],
-            point = HelpTip.Point.TopEdgeCenter, alignment = HelpTip.Alignment.Left,
-        },
-        {
-            target = function() return ns.GetTabButton(4) end,
             text = L["Quests: see what your quests need and what is ready to turn in."],
             point = HelpTip.Point.TopEdgeCenter, alignment = HelpTip.Alignment.Center,
         },

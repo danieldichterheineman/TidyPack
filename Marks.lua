@@ -10,9 +10,8 @@
 --     ingenting med Alt nedtryckt (i Forever är Alt bara kopplat till besvärjelser och
 --     utrustningsmenyer, se Bindings_Camelot.xml i spelets kod).
 --   - Mus och handkontroll: släpp saken på kugghjulet uppe till höger. Spelets egen meny
---     frågar då om saken ska bli favorit, hamna på skräplistan eller läggas i ett set eller
---     en egen grupp.
---   - Skräplistan har också en egen sida i inställningarna (Options.lua).
+--     frågar då om saken ska bli favorit, hamna på skräplistan eller läggas i en egen grupp.
+--   - Skräplistan har också en egen vy i väskan (Panels.lua).
 -- Samma sak en gång till tar bort märket. En sak kan inte vara både favorit och på
 -- skräplistan.
 -- Kugghjulet är den enda knapp Tidy Pack lägger i väskfönstret. Den sitter där spelets
@@ -83,7 +82,7 @@ end
 local showItemMenu -- definieras längre ner, efter menyn
 
 -- Körs efter spelets eget klick på en ruta i väskorna (HookScript). Alt-klick öppnar menyn för saken
--- (favorit, skräplista, set, grupp). Spelet kan ha plockat upp saken på markören; den läggs då tillbaka.
+-- (favorit, skräplista, grupp). Spelet kan ha plockat upp saken på markören; den läggs då tillbaka.
 local function onItemButtonClick(button, mouseButton)
     if not IsAltKeyDown() or mouseButton ~= "LeftButton" then
         return
@@ -142,8 +141,7 @@ local function updateGearButton()
 end
 
 -- Menyn under kugghjulet, byggd av spelets eget menysystem. Med en sak på markören: favorit,
--- skräplistan, set eller egen grupp. Annars: skräplistan, grupperna och inställningarna (med
--- handkontroll också byta flik).
+-- skräplistan eller egen grupp. Annars: skräplistan, grupperna och inställningarna.
 local function buildMenu(_, rootDescription, itemOverride)
     local itemID = itemOverride or cursorItemID()
     if itemID then
@@ -156,42 +154,12 @@ local function buildMenu(_, rootDescription, itemOverride)
             ClearCursor()
             ns.ToggleJunk(itemID)
         end)
-        -- Egna set (Sets.lua): en bock för varje set som saken ingår i.
-        local setMenu = rootDescription:CreateButton(L["Add to Set"])
-        for index, set in ipairs(ns.GetSets()) do
-            setMenu:CreateCheckbox(set.name, function()
-                return ns.IsInSet(index, itemID)
-            end, function()
-                ClearCursor()
-                ns.SetInSet(index, itemID, not ns.IsInSet(index, itemID))
-                return MenuResponse.CloseAll
-            end)
-        end
-        if #ns.GetSets() < ns.MAX_SETS then
-            setMenu:CreateButton(L["New Set..."], function()
-                ClearCursor()
-                ns.AskNewSet(itemID)
-            end)
-        end
         -- Egna grupper (Groups.lua): den här saken, eller hela typen.
         if ns.AddGroupMenus then
             ns.AddGroupMenus(rootDescription, itemID)
         end
     else
         rootDescription:CreateTitle(L["Tidy Pack"])
-        -- Med handkontroll är flikarna kanske inte nåbara, så där finns samma val här.
-        -- Med mus räcker flikarna, och menyn hålls kort.
-        if InputUtil.IsGamepadUIEnabled() then
-            if ns.IsSetsView and ns.IsSetsView() then
-                rootDescription:CreateButton(L["Show Bags"], function()
-                    ns.SetView("bags")
-                end)
-            else
-                rootDescription:CreateButton(L["Show Sets"], function()
-                    ns.SetView("sets")
-                end)
-            end
-        end
         -- Skräplistan och grupperna öppnas i väskan (Panels.lua).
         rootDescription:CreateButton(L["Junk List..."], function()
             ns.OpenPanel("junk")

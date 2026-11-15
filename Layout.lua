@@ -72,7 +72,9 @@ local LINE_COLOR = { 1, 0.82, 0, 0.18 }
 local DIVIDER_GAP = 8      -- luft ovanför och under linjen före specialväskorna (som SECTION_GAP)
 -- Väskplatser som kan ha en specialväska: de fyra vanliga och reagensväskan. Med mus visar
 -- spelet reagensväskan i ett eget fönster, och då finns den inte i det här.
-local LAST_BAG = Constants.InventoryConstants.NumBagSlots + Constants.InventoryConstants.NumReagentBagSlots
+local NUM_BAGS = Constants.InventoryConstants.NumBagSlots
+local REAGENT_BAG = Enum.BagIndex.ReagentBag or (NUM_BAGS + 1)
+local LAST_BAG = NUM_BAGS + Constants.InventoryConstants.NumReagentBagSlots
 
 -- Utrustning där nivån inte säger något visas utan nivå (skjortor och tabarder).
 local NO_LEVEL = { INVTYPE_BODY = true, INVTYPE_TABARD = true, INVTYPE_NON_EQUIP_IGNORE = true }
@@ -98,6 +100,62 @@ local bankNote                    -- texten i fliken Bank borta från banken (Ba
 local BANK_NOTE_HEIGHT = 34       -- plats för texten, ovanför bankens saker
 local chromeWidth, chromeHeight   -- fönstrets kanter, titelrad, sökruta och pengar
 local location = ItemLocation:CreateEmpty() -- återanvänds för att läsa en saks nivå
+
+-- Delade rutor för behållare som spelets kombinerade väskfönster inte ritar själv (reagensväskan
+-- med mus och bankens rutor i Bank.lua). Spelets mall läser väskans nummer från föräldraramens ID
+-- och platsens nummer från rutans ID, så vanliga klick fungerar utan taint.
+function ns.CreateLiveSlotHolder(containerID)
+    local holder = CreateFrame("Frame", nil, bagFrame)
+    holder:SetAllPoints()
+    holder:SetFrameLevel(bagFrame:GetFrameLevel() + 5)
+    -- Spelets mall läser väskans nummer här (GetParent():GetID()).
+    holder:SetID(containerID)
+    return holder
+end
+
+function ns.CreateLiveSlotButton(holder, slot)
+    local button = CreateFrame("ItemButton", nil, holder, "ContainerFrameItemButtonTemplate")
+    button:SetFrameLevel(math.max(10, holder:GetFrameLevel() + 1))
+    button:SetID(slot)
+    return button
+end
+
+-- Samma steg som spelets väskfönster gör för varje ruta (ContainerFrameMixin:UpdateItems).
+function ns.UpdateLiveSlotButton(button, containerID, slot, info, showNew)
+    local texture = info and info.iconFileID
+    ClearItemButtonOverlay(button)
+    button:SetHasItem(texture)
+    button:SetItemButtonTexture(texture)
+    button:SyncAppearanceWithHasItem()
+    SetItemButtonQuality(button, info and info.quality, info and info.hyperlink, false, info and info.isBound)
+    SetItemButtonCount(button, info and info.stackCount)
+    SetItemButtonDesaturated(button, info and info.isLocked)
+    local questInfo = C_Container.GetContainerItemQuestInfo(containerID, slot)
+    button:UpdateQuestItem(questInfo and questInfo.isQuestItem, questInfo and questInfo.questID,
+        questInfo and questInfo.isActive)
+    button:UpdateJunkItem(info and info.quality, info and info.hasNoValue)
+    button:UpdateCooldown(texture)
+    button:SetReadable(info and info.isReadable)
+    button:SetMatchesSearch(not (info and info.isFiltered))
+    if showNew and button.UpdateNewItem then
+        button:UpdateNewItem(info and info.quality)
+    end
+end
+
+local reagentHolder
+local reagentButtons = {}
+
+local function reagentButtonFor(slot)
+    local button = reagentButtons[slot]
+    if not button then
+        if not reagentHolder then
+            reagentHolder = ns.CreateLiveSlotHolder(REAGENT_BAG)
+        end
+        button = ns.CreateLiveSlotButton(reagentHolder, slot)
+        reagentButtons[slot] = button
+    end
+    return button
+end
 
 ---------------------------------------------------------------------------
 -- Gruppen New
@@ -437,10 +495,11 @@ local function updateExtras(entry, atMerchant)
     local button = entry.button
     local extra = getExtras(button)
 
-    -- Antalet tomma platser på den enda tomma ruta som syns. Rött när det är få kvar.
-    extra.plus:SetShown(entry.isEmpty == true)
-    emptyFree[button] = entry.isEmpty and entry.free or nil
-    if entry.isEmpty then
+    -- Antalet tomma platser på den hopslagna tomma rutan (kategoriläge). Rött när det är få kvar.
+    local showFree = entry.isEmpty == true and entry.free ~= nil
+    extra.plus:SetShown(showFree)
+    emptyFree[button] = showFree and entry.free or nil
+    if showFree then
         extra.free:SetText(entry.free)
         local color = entry.free <= LOW_SPACE and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR
         extra.free:SetTextColor(color:GetRGB())
@@ -527,7 +586,7 @@ local function updateExtras(entry, atMerchant)
     -- Grön pil på väskor som är större än någon av dina väskor (se BagSwap.lua). Pilen
     -- finns redan i spelets ruta men används inte av spelet i väskorna.
     if button.UpgradeIcon then
-        local isUpgrade = entry.group == "Bags" and ns.IsBagUpgrade ~= nil
+        local isUpgrade = entry.isContainer == true and ns.IsBagUpgrade ~= nil
             and ns.IsBagUpgrade(entry.bagID, entry.slot, entry.itemID)
         button.UpgradeIcon:SetShown(isUpgrade == true)
     end
@@ -560,6 +619,99 @@ local function anchor(region, x, y, scale)
 end
 
 local updateFreeText -- längre ner; applySize uppdaterar antalet lediga platser
+local hideReagentBagFrame -- längre ner; gömmer spelets separata reagensfönster med mus
+local hoveredBagID -- väskan som musen pekar på i väskraden, annars nil
+
+local function wantSearchBox()
+    if not (ns.db and ns.db.showSearchBox) then
+        return false
+    end
+    local view = ns.GetView and ns.GetView() or "bags"
+    return view == "bags" or view == "bank"
+end
+
+local function positionSearchBox(searchBox)
+    searchBox = searchBox or BagItemSearchBox
+    if not (searchBox and bagFrame and wantSearchBox()) then
+        return
+    end
+    -- Tre flikar (3 * 90 + 2 * 2 = 274 breda, från x = 14 till 288). SearchBoxTemplate har
+    -- sin vänstra kanttextur 5 enheter till vänster om ramen (-5), så x = 19 och bredd 269
+    -- gör att sökrutan börjar vid Bags vänsterkant (14) och slutar vid Quests högerkant (288).
+    searchBox:SetSize(269, 18)
+    searchBox:SetFrameStrata(ns.gearButton and ns.gearButton:GetFrameStrata() or "HIGH")
+    searchBox:SetFrameLevel(ns.gearButton and ns.gearButton:GetFrameLevel() or (bagFrame:GetFrameLevel() + 30))
+    searchBox:ClearAllPoints()
+    searchBox:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", 19, -3)
+end
+
+local function syncSearchBox()
+    if not BagItemSearchBox then
+        return
+    end
+    if bagFrame and bagFrame:IsShown() and wantSearchBox() then
+        if BagItemSearchBox:GetParent() ~= bagFrame then
+            BagItemSearchBox:SetParent(bagFrame)
+        end
+        positionSearchBox(BagItemSearchBox)
+        BagItemSearchBox:Show()
+    else
+        if BagItemSearchBox:GetText() ~= "" then
+            BagItemSearchBox:SetText("")
+        end
+        if BagItemSearchBox:GetParent() == bagFrame then
+            BagItemSearchBox:Hide()
+        end
+    end
+end
+
+-- Markerar träffar från sökrutan med samma blå sken som väskraden och tonar ner resten.
+-- Fungerar också i fliken Bank borta från bankiren genom att matcha mot sakens namn.
+local function applySearchHighlights()
+    if hoveredBagID ~= nil then
+        return
+    end
+    local query = ""
+    if wantSearchBox() and BagItemSearchBox and BagItemSearchBox:IsShown() then
+        query = (BagItemSearchBox:GetText() or ""):match("^%s*(.-)%s*$"):lower()
+    end
+    local searching = query ~= ""
+    for i = 1, entryCount do
+        local entry = entries[i]
+        if entry.placed then
+            local extra = extras[entry.button]
+            if not searching then
+                entry.button:SetAlpha(entry.offline and entry.isEmpty and 0.65 or 1)
+                if extra then
+                    extra.bagGlow:Hide()
+                end
+                if not entry.offline and entry.button.SetMatchesSearch then
+                    entry.button:SetMatchesSearch(true)
+                end
+            elseif entry.isEmpty then
+                entry.button:SetAlpha(0.35)
+                if extra then
+                    extra.bagGlow:Hide()
+                end
+            else
+                local matches
+                if entry.offline then
+                    matches = entry.name ~= nil and entry.name:lower():find(query, 1, true) ~= nil
+                else
+                    local info = C_Container.GetContainerItemInfo(entry.bagID, entry.slot)
+                    matches = not (info and info.isFiltered)
+                    if entry.button.SetMatchesSearch then
+                        entry.button:SetMatchesSearch(matches)
+                    end
+                end
+                entry.button:SetAlpha(matches and 1 or 0.35)
+                if extra then
+                    extra.bagGlow:SetShown(matches)
+                end
+            end
+        end
+    end
+end
 
 -- Ger spelets fönster Tidy Packs storlek: kanterna, titelraden och raden med pengar som
 -- spelet räknade ut, plus det Tidy Pack lägger ut.
@@ -581,8 +733,9 @@ local function applySize()
     end
     NineSliceUtil.UpdateCornerCropping(bagFrame, height)
     updateFreeText()
-    if ns.DockReagentBag then
-        ns.DockReagentBag()
+    positionSearchBox()
+    if hideReagentBagFrame then
+        hideReagentBagFrame()
     end
 end
 
@@ -627,8 +780,14 @@ local function headerText(group, junkValue)
     return text
 end
 
--- Rubriken för en specialväska: väskans egen ikon och namn.
+-- Rubriken för en väska: väskans egen ikon och namn.
 local function bagHeaderText(bagID)
+    if bagID == 0 then
+        local name = C_Container.GetBagName(0) or BACKPACK_TOOLTIP
+        return ("|TInterface\\Icons\\INV_Misc_Bag_08:13:13|t %s"):format(name)
+    elseif bagID == KEYRING_CONTAINER then
+        return L["Keys"]
+    end
     local icon = GetInventoryItemTexture("player", C_Container.ContainerIDToInventoryID(bagID))
     local name = C_Container.GetBagName(bagID) or ""
     return icon and ("|T%s:13:13|t %s"):format(icon, name) or name
@@ -699,8 +858,8 @@ updateFreeText = function()
     freeText:Show()
 end
 
--- Döljer bankens rutor (Bank.lua) som inte syns efter den här genomgången. Alla, utom i fliken Bank.
-local function hideBankButtons()
+-- Döljer Tidy Packs egna rutor (Bank.lua och reagensväskan) som inte syns efter den här genomgången.
+local function hideExtraButtons()
     if ns.EnumerateBankButtons then
         for _, button in ns.EnumerateBankButtons() do
             if not shownButtons[button] then
@@ -708,51 +867,13 @@ local function hideBankButtons()
             end
         end
     end
-end
-
--- Listan med set i fliken Sets (SetsView.lua) i stället för sakerna.
-local function layoutSetsView(atMerchant)
-    releaseHeaders()
-    hideSectionLines()
-    if divider then
-        divider:Hide()
-    end
-    questNoteState = nil
-    questNote:Hide()
-    for _, button in bagFrame:EnumerateValidItems() do
-        if lockedButtons[button] or disabledButtons[button] then
-            setLocked(button, false)
+    for _, button in pairs(reagentButtons) do
+        if not shownButtons[button] then
+            if lockedButtons[button] or disabledButtons[button] then
+                setLocked(button, false)
+            end
+            button:Hide()
         end
-        button:Hide()
-    end
-    wipe(shownButtons)
-    hideBankButtons()
-    bankNote:Hide()
-    wipe(groupFirst)
-    wipe(groupOfButton)
-    newGroupIndex, startGroupIndex = nil, nil
-    -- Allt hänger i raden med pengar och räknas uppifrån, så höjden måste vara känd innan
-    -- något placeras. Därför samlas platserna först och sätts sedan.
-    local placements = {}
-    local setsHeight, rows = ns.LayoutSetsView(function(region, x, y)
-        placements[#placements + 1] = { region, x, y }
-    end, gridWidth)
-    -- Fönstret är lika högt i alla flikar (se relayout).
-    contentHeight = math.max(setsHeight, sharedHeight or 0)
-    for _, placement in ipairs(placements) do
-        anchor(placement[1], placement[2], placement[3])
-    end
-    for index, row in ipairs(rows) do
-        shownButtons[row] = true
-        groupFirst[index] = row
-        groupOfButton[row] = index
-    end
-    if ns.UpdateSetsNotice then
-        ns.UpdateSetsNotice()
-    end
-    applySize()
-    if ns.OnLayoutChanged then
-        ns.OnLayoutChanged()
     end
 end
 
@@ -807,7 +928,7 @@ local function flow(cols, apply, junkValue)
                 if group == "New" then
                     newGroupIndex = groupIndex
                 end
-                if not startGroupIndex and not list[1].isEmpty then
+                if not startGroupIndex and (not list[1].isEmpty or group ~= "Empty") then
                     startGroupIndex = groupIndex
                 end
                 for index, entry in ipairs(list) do
@@ -823,8 +944,10 @@ local function flow(cols, apply, junkValue)
     end
     -- Med mus behövs inte rutan "Add to bag": hela väskan tar emot saker, och antalet lediga platser
     -- står nere till vänster. Med handkontroll är den kvar som platsen där en sak släpps.
+    local byBag = ns.db and ns.db.groupByBag == true
     local showEmpty = InputUtil.IsGamepadUIEnabled()
     local lastSection
+    local placedAny = false
     wipe(listedGroups)
     local function visit(group)
         listedGroups[group] = true
@@ -841,6 +964,7 @@ local function flow(cols, apply, junkValue)
                 x, shelfHeight = 0, 0
             end
             lastSection = section
+            placedAny = true
             place(group, headerText(group, junkValue))
         end
     end
@@ -849,10 +973,11 @@ local function flow(cols, apply, junkValue)
     end
     -- Skyddsnät: en grupp som har saker men inte står i ordningen (t.ex. en ny sorts sak efter en
     -- patch) visas sist i stället för att döljas. Ingen sak får bli osynlig för att den hamnat i en
-    -- grupp som saknas i listan. Specialväskornas grupper ("bag3") läggs ut för sig längre ner.
+    -- grupp som saknas i listan. Specialväskornas och väsklägets grupper ("bagN") läggs ut för sig
+    -- längre ner.
     wipe(unlistedGroups)
     for group, list in pairs(groupLists) do
-        if #list > 0 and not listedGroups[group] and not group:match("^bag%d+$") then
+        if #list > 0 and not listedGroups[group] and not group:match("^bag%-?%d+$") then
             unlistedGroups[#unlistedGroups + 1] = group
         end
     end
@@ -861,6 +986,38 @@ local function flow(cols, apply, junkValue)
         for _, group in ipairs(unlistedGroups) do
             visit(group)
         end
+    end
+
+    local function placeBagSection(bagKey, title)
+        local list = groupLists[bagKey]
+        if list and #list > 0 then
+            if placedAny then
+                y = y + shelfHeight + SECTION_GAP
+                if apply then
+                    sectionYs[#sectionYs + 1] = y
+                end
+                y = y + 1 + SECTION_GAP
+                x, shelfHeight = 0, 0
+            end
+            placedAny = true
+            place(bagKey, title)
+        end
+    end
+
+    if byBag then
+        -- Läge "per väska": en sektion på egen rad med tunn linje för varje väska (eller bankflik).
+        if bankFlow then
+            for _, tab in ipairs(ns.GetBankTabs and ns.GetBankTabs() or {}) do
+                local title = tab.icon and ("|T%s:13:13|t %s"):format(tab.icon, tab.name or "") or (tab.name or "")
+                placeBagSection("bag" .. tab.id, title)
+            end
+        else
+            for bagID = 0, LAST_BAG do
+                placeBagSection("bag" .. bagID, bagHeaderText(bagID))
+            end
+            placeBagSection("bag" .. KEYRING_CONTAINER, bagHeaderText(KEYRING_CONTAINER))
+        end
+        return y + shelfHeight, dividerY
     end
 
     -- Specialväskorna längst ned, under spelets linje, i väskplatsernas ordning.
@@ -918,6 +1075,17 @@ local function resetGroups()
     wipe(emptyByFamily)
 end
 
+local function groupInBagMode(bagID, info, classID, subClassID)
+    if ns.IsFavorite(info.itemID) then
+        return "Favorites", 0
+    end
+    local custom = ns.GetCustomGroupFor and ns.GetCustomGroupFor(info.itemID, classID, subClassID)
+    if custom then
+        return custom, 0
+    end
+    return "bag" .. bagID, 0
+end
+
 -- Sorterar in en sak i sin grupp. Returnerar vad den är värd som skräp (0 om den inte är skräp).
 -- isQuestItem kan ges (sparade saker i banken, Bank.lua); annars frågas spelet. offline = sant för
 -- en sak i den sparade banken: rutan visar bara bild och tooltip, och platsen finns inte just nu.
@@ -929,7 +1097,11 @@ local function addItem(button, bagID, slot, info, isQuestItem, offline)
     if isQuestItem == nil then
         isQuestItem = ns.IsQuestItem(bagID, slot, info)
     end
-    if specialBags[bagID] then
+    entry.isQuestItem = isQuestItem == true
+    entry.isContainer = classID == Enum.ItemClass.Container
+    if ns.db and ns.db.groupByBag then
+        entry.group, entry.subOrder = groupInBagMode(bagID, info, classID, subClassID)
+    elseif specialBags[bagID] then
         -- Allt i en specialväska stannar i väskans egen grupp.
         entry.group, entry.subOrder = "bag" .. bagID, 0
     else
@@ -941,7 +1113,7 @@ local function addItem(button, bagID, slot, info, isQuestItem, offline)
     entry.itemID, entry.link, entry.isBound = info.itemID, info.hyperlink, info.isBound
     entry.isGear = classID == Enum.ItemClass.Weapon or classID == Enum.ItemClass.Armor
     entry.equipLocation = equipLocation
-    entry.locked = isQuestItem or ns.IsInEquipmentSet(info.itemID) or ns.IsInAnySet(info.itemID)
+    entry.locked = isQuestItem or ns.IsInEquipmentSet(info.itemID)
     entry.junkMarked = ns.IsJunkMarked(info.itemID)
     entry.noValue = info.hasNoValue
     entry.neededLater = ns.IsNeededLater ~= nil and ns.IsNeededLater(info.itemID)
@@ -949,11 +1121,21 @@ local function addItem(button, bagID, slot, info, isQuestItem, offline)
     entry.questRecord = isQuestItem and ns.GetQuestRecord(entry.name) or nil
     entry.hideProgress = false
     addToGroup(entry.group, entry)
-    if entry.group == "Junk" and not info.hasNoValue then
+    if ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem) == "Junk" and not info.hasNoValue then
         local sellPrice = select(11, C_Item.GetItemInfo(info.hyperlink))
         return (sellPrice or 0) * entry.count
     end
     return 0
+end
+
+local function initEmptyEntry(entry, button, bagID, slot, group, family, offline)
+    entry.button, entry.bagID, entry.slot = button, bagID, slot
+    entry.isEmpty, entry.offline, entry.group, entry.family, entry.free = true, offline == true, group, family, nil
+    -- Tabellen kan ha använts för en sak förut, så allt som märkena läser nollställs.
+    entry.locked, entry.isGear, entry.junkMarked, entry.neededLater = false, false, false, false
+    entry.isQuestItem, entry.isContainer = false, false
+    entry.quality, entry.noValue = 0, true
+    entry.questRecord, entry.hideProgress = nil, false
 end
 
 -- Räknar en tom plats. Bara en ruta per väsktyp visas: den första lediga platsen.
@@ -961,12 +1143,8 @@ local function addEmpty(button, bagID, slot, key, group, family)
     local empty = emptyByFamily[key]
     if not empty then
         empty = newEntry()
-        empty.button, empty.bagID, empty.slot = button, bagID, slot
-        empty.isEmpty, empty.offline, empty.group, empty.family, empty.free = true, false, group, family, 0
-        -- Tabellen kan ha använts för en sak förut, så allt som märkena läser nollställs.
-        empty.locked, empty.isGear, empty.junkMarked, empty.neededLater = false, false, false, false
-        empty.quality, empty.noValue = 0, true
-        empty.questRecord, empty.hideProgress = nil, false
+        initEmptyEntry(empty, button, bagID, slot, group, family, false)
+        empty.free = 0
         emptyByFamily[key] = empty
         addToGroup(group, empty)
     elseif bagID < empty.bagID or (bagID == empty.bagID and slot < empty.slot) then
@@ -976,41 +1154,82 @@ local function addEmpty(button, bagID, slot, key, group, family)
     empty.free = empty.free + 1
 end
 
+-- Visar en enskild tom plats direkt i väskans rutnät (läget "per väska").
+local function addEmptySlot(button, bagID, slot, group, offline)
+    local empty = newEntry()
+    initEmptyEntry(empty, button, bagID, slot, group, 0, offline)
+    addToGroup(group, empty)
+end
+
+local function sortBySlot(a, b)
+    return a.slot < b.slot
+end
+
 local function sortGroups()
-    for _, list in pairs(groupLists) do
-        table.sort(list, ns.CompareEntries)
+    local byBag = ns.db and ns.db.groupByBag == true
+    for group, list in pairs(groupLists) do
+        if byBag and group:match("^bag%-?%d+$") then
+            table.sort(list, sortBySlot)
+        else
+            table.sort(list, ns.CompareEntries)
+        end
     end
 end
 
 -- Sorterar in varje sak i sin grupp och räknar ut vad skräpet är värt (första steget i en
 -- genomgång av fliken Bags eller Quests).
 local function classify()
+    local byBag = ns.db and ns.db.groupByBag == true
     -- Vilka väskplatser har en specialväska? Deras saker och tomma platser får egna grupper
     -- längst ned, med väskans namn.
     wipe(specialBags)
-    for bagID = 1, LAST_BAG do
-        specialBags[bagID] = isSpecialBag(bagID) or nil
+    if not byBag then
+        for bagID = 1, LAST_BAG do
+            specialBags[bagID] = isSpecialBag(bagID) or nil
+        end
     end
 
     -- Vilka högar av en quest-sak som behövs och vilka som är över (QuestLock.lua).
     ns.UpdateQuestStacks()
 
-    -- Sortera in varje sak i sin grupp. Tomma platser räknas per väsktyp.
+    -- Sortera in varje sak i sin grupp. Tomma platser räknas per väsktyp (eller en ruta per plats).
     resetGroups()
     local junkValue = 0
-    for _, button in bagFrame:EnumerateValidItems() do
-        local bagID, slot = button:GetBagID(), button:GetID()
-        local info = C_Container.GetContainerItemInfo(bagID, slot)
+    local function classifySlot(button, bagID, slot, info)
         if info then
             rememberNew(bagID, slot, info.itemID)
             junkValue = junkValue + addItem(button, bagID, slot, info)
         elseif bagID ~= KEYRING_CONTAINER then -- tomma platser på nyckelringen visas inte
+            if byBag then
+                addEmptySlot(button, bagID, slot, "bag" .. bagID, false)
+                return
+            end
+            -- Med mus visas inga tomma rutor ("+ N"), inte heller för specialväskor: gruppen visas
+            -- bara när väskan innehåller något (användarens önskan 2026-11-14). Med handkontroll behövs
+            -- rutan för att kunna släppa saker i väskan.
+            if specialBags[bagID] and not InputUtil.IsGamepadUIEnabled() then
+                return
+            end
             local _, family = C_Container.GetContainerNumFreeSlots(bagID)
             family = family or 0
             -- En specialväskas tomma platser räknas för sig, i väskans egen grupp.
             local key = specialBags[bagID] and ("bag" .. bagID) or family
             local group = specialBags[bagID] and ("bag" .. bagID) or "Empty"
             addEmpty(button, bagID, slot, key, group, family)
+        end
+    end
+    for _, button in bagFrame:EnumerateValidItems() do
+        local bagID, slot = button:GetBagID(), button:GetID()
+        classifySlot(button, bagID, slot, C_Container.GetContainerItemInfo(bagID, slot))
+    end
+    -- Med mus tar spelet inte med reagensväskan i ContainerFrameCombinedBags (ENDING_BAG_INDEX = 4).
+    -- För att inte ändra spelets värden och skapa taint gör Tidy Pack egna rutor av spelets mall.
+    if Constants.InventoryConstants.NumReagentBagSlots > 0 and not InputUtil.IsGamepadUIEnabled() then
+        for slot = 1, C_Container.GetContainerNumSlots(REAGENT_BAG) or 0 do
+            local button = reagentButtonFor(slot)
+            local info = C_Container.GetContainerItemInfo(REAGENT_BAG, slot)
+            ns.UpdateLiveSlotButton(button, REAGENT_BAG, slot, info, true)
+            classifySlot(button, REAGENT_BAG, slot, info)
         end
     end
     sortGroups()
@@ -1021,6 +1240,7 @@ end
 -- Banken har inga specialväskor i Tidy Pack: allt sorteras i de vanliga grupperna, och de lediga
 -- platserna räknas tillsammans.
 local function classifyBank()
+    local byBag = ns.db and ns.db.groupByBag == true
     wipe(specialBags)
     ns.UpdateQuestStacks()
     resetGroups()
@@ -1029,6 +1249,8 @@ local function classifyBank()
         ns.ForEachBankSlot(function(button, bagID, slot, info, offline, isQuestItem)
             if info then
                 junkValue = junkValue + addItem(button, bagID, slot, info, isQuestItem, offline)
+            elseif byBag then
+                addEmptySlot(button, bagID, slot, "bag" .. bagID, offline)
             else
                 addEmpty(button, bagID, slot, "bank", "Empty", 0)
             end
@@ -1060,7 +1282,7 @@ local function commit(atMerchant)
             button:Hide()
         end
     end
-    hideBankButtons()
+    hideExtraButtons()
 
     -- Raden som ersätter quest-sakerna när de är dolda i väskan. Ett klick öppnar fliken Quests.
     if questNoteState then
@@ -1079,9 +1301,7 @@ local function commit(atMerchant)
     end
 
     applySize()
-    if ns.UpdateSetsNotice then
-        ns.UpdateSetsNotice()
-    end
+    applySearchHighlights()
     if ns.UpdateQuestsNotice then
         ns.UpdateQuestsNotice()
     end
@@ -1117,7 +1337,7 @@ local function layoutQuestsView(atMerchant)
                     byName[entry.name] = stacks
                 end
                 stacks[#stacks + 1] = entry
-            elseif entry.group == "QuestItems" then
+            elseif entry.isQuestItem then
                 others[#others + 1] = entry
             end
         end
@@ -1162,7 +1382,7 @@ local function layoutPanelView(view)
         button:Hide()
     end
     wipe(shownButtons)
-    hideBankButtons()
+    hideExtraButtons()
     bankNote:Hide()
     wipe(groupFirst)
     wipe(groupOfButton)
@@ -1241,18 +1461,17 @@ local function layoutBankView(atMerchant, cols)
     end
 end
 
--- Fönstrets titel följer fliken (granskning 2026-11-12: det stod "Backpack" också i Bank, Sets och
--- Quests). Ordet för ryggsäcken är spelets eget (BACKPACK_TOOLTIP), så det följer spelets språk.
+-- Fönstrets titel: tom på de fyra flikarna (fliken visar var du är), namn bara för panelerna
+-- som saknar egen flik.
 local function updateTitle()
     if not bagFrame then
         return
     end
     local titles = {
-        bags = BACKPACK_TOOLTIP, bank = L["Bank"], sets = L["Sets"], quests = L["Quests"],
         junk = L["Junk List"], groups = L["Groups"],
     }
     local view = ns.GetView and ns.GetView() or "bags"
-    bagFrame:SetTitle(titles[view] or BACKPACK_TOOLTIP)
+    bagFrame:SetTitle(titles[view] or "")
 end
 
 -- Hela genomgången: sortera in sakerna i grupper, lägg ut grupperna och ge fönstret rätt
@@ -1264,6 +1483,7 @@ local function relayout()
     local atMerchant = ns.IsAtMerchant()
     local view = ns.GetView and ns.GetView() or "bags"
     updateTitle()
+    syncSearchBox()
 
     -- 1. Sortera in varje sak i sin grupp, och räkna ut fliken Bags storlek. Alla tre flikarna
     -- får samma bredd och höjd: den högsta av fliken Bags, de fem platserna i Sets och Quests
@@ -1277,13 +1497,15 @@ local function relayout()
     local bankJunk, bankHeight
     if view == "bank" or atBank then
         bankJunk = classifyBank()
+        bankFlow = true
         gridCols = math.max(gridCols, chooseColumns(bankJunk))
         bankHeight = flow(gridCols, false, bankJunk)
+        bankFlow = false
         junkValue = classify()
     end
     gridWidth = widthOf(gridCols)
     local bagsHeight = flow(gridCols, false, junkValue)
-    sharedHeight = math.max(bagsHeight, ns.SETS_VIEW_HEIGHT or 0, MIN_QUESTS_HEIGHT,
+    sharedHeight = math.max(bagsHeight, MIN_QUESTS_HEIGHT,
         atBank and bankHeight or 0)
     if view ~= "bank" then
         bankNote:Hide()
@@ -1304,13 +1526,6 @@ local function relayout()
             ns.HideQuestsView()
         end
         layoutBankView(atMerchant, gridCols)
-        return
-    end
-    if view == "sets" then
-        if ns.HideQuestsView then
-            ns.HideQuestsView()
-        end
-        layoutSetsView(atMerchant)
         return
     end
     if view == "quests" then
@@ -1439,6 +1654,35 @@ ns.RegisterEvent("BAG_UPDATE_DELAYED", function()
         UIErrorsFrame:AddMessage(L["Your bags are full."], 1.0, 0.1, 0.1, 1.0)
     end
     lastFree = free
+    -- Spelets kombinerade väskfönster lyssnar inte på reagensväskan med mus, så vi uppdaterar
+    -- utläggningen när den eller något i den kan ha ändrats.
+    if bagFrame and bagFrame:IsShown() and Constants.InventoryConstants.NumReagentBagSlots > 0
+        and not InputUtil.IsGamepadUIEnabled() and (C_Container.GetContainerNumSlots(REAGENT_BAG) or 0) > 0 then
+        safeRelayout()
+    end
+end)
+
+ns.RegisterEvent("INVENTORY_SEARCH_UPDATE", function()
+    if bagFrame and bagFrame:IsShown() and wantSearchBox() then
+        applySearchHighlights()
+    end
+end)
+
+ns.RegisterEvent("ITEM_LOCK_CHANGED", function(bagID)
+    if bagID == REAGENT_BAG and bagFrame and bagFrame:IsShown()
+        and Constants.InventoryConstants.NumReagentBagSlots > 0 and not InputUtil.IsGamepadUIEnabled() then
+        safeRelayout()
+    end
+end)
+
+ns.RegisterEvent("BAG_CONTAINER_UPDATE", function()
+    if bagFrame and bagFrame:IsShown() and Constants.InventoryConstants.NumReagentBagSlots > 0
+        and not InputUtil.IsGamepadUIEnabled() then
+        if ns.UpdateBagBar then
+            ns.UpdateBagBar()
+        end
+        safeRelayout()
+    end
 end)
 
 ---------------------------------------------------------------------------
@@ -1455,6 +1699,13 @@ ns.OnLoad(function()
 
     overlay = CreateFrame("Frame", nil, bagFrame)
     overlay:SetAllPoints()
+
+    -- Ytterfönstrets bakgrund (ContainerFrameCombinedBags.Bg) använder spelets halvgenomskinliga
+    -- PANEL_BACKGROUND_COLOR. Gör den helt täckande (alfa 1) med samma färgton.
+    if bagFrame.SetBackgroundColor and PANEL_BACKGROUND_COLOR and CreateColor then
+        local r, g, b = PANEL_BACKGROUND_COLOR:GetRGB()
+        bagFrame:SetBackgroundColor(CreateColor(r, g, b, 1))
+    end
 
     -- En hel, mörk bakgrund bakom sakerna (användarens önskan 2026-11-09). Spelets fönster
     -- är halvgenomskinligt, och när Tidy Pack döljer de tomma rutorna lyser världen och
@@ -1655,14 +1906,19 @@ ns.OnLoad(function()
         if bagID ~= nil and ns.GetView and ns.GetView() == "bank" then
             return
         end
+        hoveredBagID = bagID
+        if bagID == nil then
+            applySearchHighlights()
+            return
+        end
         for i = 1, entryCount do
             local entry = entries[i]
-            if entry.placed and not entry.isEmpty then
+            if entry.placed and (not entry.isEmpty or entry.free == nil) then
                 local inBag = entry.bagID == bagID
-                entry.button:SetAlpha((bagID == nil or inBag) and 1 or 0.35)
+                entry.button:SetAlpha(inBag and 1 or 0.35)
                 local extra = extras[entry.button]
                 if extra then
-                    extra.bagGlow:SetShown(bagID ~= nil and inBag)
+                    extra.bagGlow:SetShown(inBag and not entry.isEmpty)
                 end
             end
         end
@@ -1684,6 +1940,8 @@ ns.OnLoad(function()
             GameTooltip_SetTitle(GameTooltip, BACKPACK_TOOLTIP)
         elseif size > 0 then
             GameTooltip:SetInventoryItem("player", C_Container.ContainerIDToInventoryID(self.bagID))
+        elseif self.bagID == REAGENT_BAG then
+            GameTooltip_SetTitle(GameTooltip, L["Empty reagent bag slot"])
         else
             GameTooltip_SetTitle(GameTooltip, L["Empty bag slot"])
         end
@@ -1699,7 +1957,7 @@ ns.OnLoad(function()
         -- Väskan själv får samma blå sken som sakerna i den (användarens önskan 2026-11-12).
         self.glow:Show()
     end
-    for bagID = 0, Constants.InventoryConstants.NumBagSlots do
+    for bagID = 0, LAST_BAG do
         local button = CreateFrame("Button", nil, freeHolder)
         button.bagID = bagID
         button:SetSize(BAG_ICON, BAG_ICON)
@@ -1758,10 +2016,12 @@ ns.OnLoad(function()
         end
     end
 
-    -- Medan du håller en väska lyser de fyra väskplatserna.
-    function ns.SetBagBarSwapHint(on)
+    -- Medan du håller en väska lyser de väskplatser där den passar (vanlig väska → 1–4,
+    -- reagensväska → 5).
+    function ns.SetBagBarSwapHint(on, reagent)
         for bagID, button in pairs(bagButtons) do
-            if on and bagID > 0 then
+            local match = reagent and (bagID == REAGENT_BAG) or (not reagent and bagID > 0 and bagID <= NUM_BAGS)
+            if on and match then
                 button:LockHighlight()
             else
                 button:UnlockHighlight()
@@ -1801,15 +2061,19 @@ ns.OnLoad(function()
         end
         -- Håller du en väska: väskraden lyser där den kan bytas in, och raden säger det.
         local _, itemID = GetCursorInfo()
-        local classID = holding and itemID and select(6, C_Item.GetItemInfoInstant(itemID))
+        local classID, subClassID
+        if holding and itemID then
+            classID, subClassID = select(6, C_Item.GetItemInfoInstant(itemID))
+        end
         local holdingBag = classID == Enum.ItemClass.Container
+        local holdingReagentBag = holdingBag and subClassID == Enum.ItemContainerSubclass.Reagent
         -- Texten för Bags; i fliken Bank byter watcher ovan den mot bankens.
         label.bagText = holdingBag and L["Drop on one of your bags to swap it"]
             or L["Drop anywhere to put it in your bags"]
         label.text:SetText(label.bagText)
         label:SetWidth(label.text:GetStringWidth() + 16)
         if ns.SetBagBarSwapHint then
-            ns.SetBagBarSwapHint(holdingBag)
+            ns.SetBagBarSwapHint(holdingBag, holdingReagentBag)
         end
     end)
 
@@ -1856,17 +2120,23 @@ ns.OnLoad(function()
     bankNote:SetTextColor(1, 0.85, 0.63)
     bankNote:Hide()
 
-    -- Ingen sökruta och ingen väskikon (användarens önskan 2026-11-10): mer plats för sakerna.
-    -- Spelet visar sökrutan igen varje gång fönstret uppdateras, så den döljs direkt efteråt.
+    -- Sökrutan är avstängd som standard men kan slås på under kugghjulet → Show → Search box,
+    -- och syns då bara i flikarna Bags och Bank (centrerad i titelraden).
     -- Väskikonen byts mot spelets ram utan ikon (samma ramar som spelets andra fönster).
     if BagItemSearchBox then
-        BagItemSearchBox:SetText("")
+        hooksecurefunc(bagFrame, "SetSearchBoxPoint", function(_, searchBox)
+            positionSearchBox(searchBox)
+        end)
         hooksecurefunc(BagItemSearchBox, "Show", function(self)
             if self:GetParent() == bagFrame then
-                self:Hide()
+                if wantSearchBox() then
+                    positionSearchBox(self)
+                else
+                    self:Hide()
+                end
             end
         end)
-        BagItemSearchBox:Hide()
+        syncSearchBox()
     end
     if bagFrame.PortraitContainer then
         bagFrame.PortraitContainer:Hide()
@@ -1922,30 +2192,44 @@ ns.OnLoad(function()
     hooksecurefunc(bagFrame, "UpdateItemLayout", safeRelayout)
     hooksecurefunc(bagFrame, "UpdateItems", safeRelayout)
 
-    -- Reagensväskan (väskplats 5) visar spelet i ett eget fönster med mus; Tidy Pack kan inte sortera
-    -- in den utan att ändra spelets egna värden, vilket kan blockera att saker används. I stället fästs
-    -- dess fönster direkt till vänster om Tidy Pack, med nederkanterna i linje (användarens önskan
-    -- 2026-11-11). Spelet placerar sina väskfönster i UpdateContainerFrameAnchors; Tidy Pack flyttar
-    -- reagensväskans fönster direkt efteråt, och när Tidy Packs fönster byter storlek.
-    local REAGENT_BAG = Constants.InventoryConstants.NumBagSlots + 1
-    local function dockReagentBag()
-        if not ContainerFrameUtil_GetShownFrameForID or not bagFrame:IsShown() then
+    -- Reagensväskan (väskplats 5) har ett eget fönster i spelet med mus (ContainerFrame6). Tidy Pack
+    -- ritar dess saker som en egen grupp längst ned i väskan i stället, så spelets extra fönster
+    -- göms utan att döljas eller stängas (Hide eller CloseBag bryter B / taintar klicken): det
+    -- flyttas utanför skärmen, görs osynligt och krymps till 0,01. Med handkontroll tar spelet självt
+    -- med reagensväskan i det kombinerade fönstret, så där rör Tidy Pack inget.
+    local reagentFrameSuppressed = false
+    hideReagentBagFrame = function()
+        if Constants.InventoryConstants.NumReagentBagSlots == 0 or not ContainerFrameUtil_GetShownFrameForID then
             return
         end
         local reagentFrame = ContainerFrameUtil_GetShownFrameForID(REAGENT_BAG)
-        if reagentFrame and reagentFrame ~= bagFrame then
-            reagentFrame:ClearAllPoints()
-            reagentFrame:SetPoint("BOTTOMRIGHT", bagFrame, "BOTTOMLEFT", -2, 0)
+        if not reagentFrame or reagentFrame == bagFrame then
+            return
         end
+        if InputUtil.IsGamepadUIEnabled() then
+            if reagentFrameSuppressed then
+                reagentFrame:SetAlpha(1)
+                reagentFrame:SetScale(1)
+                reagentFrameSuppressed = false
+            end
+            return
+        end
+        reagentFrameSuppressed = true
+        reagentFrame:SetAlpha(0)
+        reagentFrame:SetScale(0.01)
+        reagentFrame:ClearAllPoints()
+        reagentFrame:SetPoint("TOPLEFT", UIParent, "TOPRIGHT", 1000, 1000)
     end
-    ns.DockReagentBag = dockReagentBag
     if UpdateContainerFrameAnchors then
-        hooksecurefunc("UpdateContainerFrameAnchors", dockReagentBag)
+        hooksecurefunc("UpdateContainerFrameAnchors", hideReagentBagFrame)
     end
 
-    -- När fönstret stängs glöms gruppen New.
+    -- När fönstret stängs glöms gruppen New och eventuell söktext rensas.
     bagFrame:HookScript("OnHide", function()
         wipe(newItems)
+        if BagItemSearchBox and BagItemSearchBox:GetText() ~= "" then
+            BagItemSearchBox:SetText("")
+        end
     end)
 
     -- Rubriken "Backpack" i stället för spelets "Combined Backpack" (användarens önskan).
@@ -1968,4 +2252,99 @@ ns.OnLoad(function()
         menuButton:Hide()
         hooksecurefunc(menuButton, "Show", menuButton.Hide)
     end
+end)
+
+---------------------------------------------------------------------------
+-- Flikarna (Bags, Bank, Quests)
+---------------------------------------------------------------------------
+
+local TAB_WIDTH = 90
+local TAB_LEFT = 14
+local TAB_OVERLAP = 2
+local TAB_GAP = 2
+
+local view = "bags"
+local tabSystem
+
+local TAB_OF = { bags = 1, bank = 2, quests = 3 }
+local VIEW_OF = { "bags", "bank", "quests" }
+local PANEL_VIEWS = { junk = true, groups = true }
+
+-- Flikens knapp (1 Bags, 2 Bank, 3 Quests), för guiden i Tour.lua.
+function ns.GetTabButton(tabID)
+    return tabSystem and tabSystem:GetTabButton(tabID)
+end
+
+-- Vilken vy som visas: "bags", "bank", "quests", "junk" eller "groups".
+function ns.GetView()
+    return view
+end
+
+-- Pricken på fliken Quests lyser när minst en quest med saker är klar att lämna in.
+function ns.UpdateQuestsNotice()
+    if tabSystem then
+        tabSystem:SetTabNotification(TAB_OF.quests, ns.HasReadyQuest ~= nil and ns.HasReadyQuest())
+    end
+end
+
+-- Byter mellan "bags", "bank" och "quests", eller panelvyerna "junk" och "groups".
+function ns.SetView(newView)
+    local oldView = view
+    view = (TAB_OF[newView] or PANEL_VIEWS[newView]) and newView or "bags"
+    if view ~= oldView then
+        if PANEL_VIEWS[view] and not PANEL_VIEWS[oldView] then
+            PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN)
+        elseif PANEL_VIEWS[oldView] and not PANEL_VIEWS[view] then
+            PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
+        end
+        if ns.PlayViewTransition then
+            ns.PlayViewTransition()
+        end
+    end
+    if tabSystem then
+        tabSystem:SetTabVisuallySelected(TAB_OF[view] or 0)
+    end
+    if ns.Refresh then
+        ns.Refresh()
+    end
+end
+
+ns.OnLoad(function()
+    if not bagFrame then
+        return
+    end
+    tabSystem = CreateFrame("Frame", nil, bagFrame, "TabSystemTemplate")
+    tabSystem.tabTemplate = "TabSystemTopButtonTemplate"
+    tabSystem.tabPool = CreateFramePool("BUTTON", tabSystem, tabSystem.tabTemplate)
+    tabSystem.minTabWidth, tabSystem.maxTabWidth = TAB_WIDTH, TAB_WIDTH
+    tabSystem.spacing = TAB_GAP
+    tabSystem.tabSelectSound = SOUNDKIT.IG_CHARACTER_INFO_TAB
+    tabSystem:SetPoint("BOTTOMLEFT", bagFrame, "TOPLEFT", TAB_LEFT, -TAB_OVERLAP)
+    tabSystem:SetTabSelectedCallback(function(tabID)
+        ns.SetView(VIEW_OF[tabID] or "bags")
+        return true
+    end)
+    for _, label in ipairs({ L["Bags"], L["Bank"], L["Quests"] }) do
+        local tabID = tabSystem:AddTab(label)
+        local tab = tabSystem:GetTabButton(tabID)
+        tab.selectedFontObject, tab.unselectedFontObject = GameFontHighlight, GameFontNormal
+        tab:SetDisabledFontObject(GameFontHighlight)
+        tab:UpdateTabWidth()
+    end
+    tabSystem:SetTabVisuallySelected(1)
+
+    for tabID, tabView in ipairs(VIEW_OF) do
+        tabSystem:GetTabButton(tabID):HookScript("OnEnter", function()
+            local kind = GetCursorInfo()
+            if view ~= tabView and kind == "item" then
+                ns.SetView(tabView)
+            end
+        end)
+    end
+
+    bagFrame:HookScript("OnHide", function()
+        if view ~= "bags" then
+            ns.SetView("bags")
+        end
+    end)
 end)

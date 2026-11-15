@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+- Removed the Sets tab (`Sets.lua`, `SetsView.lua`, `Bindings.xml`): the game's built-in
+  Equipment Manager already handles gear sets, and items in your equipment sets remain locked at
+  merchants. The top tabs are now Bags, Bank and Quests.
+- Fixed: the junk deletion prompt (`MakeRoom.lua`) now hides immediately when combat starts and
+  runs `DeleteCursorItem()` before hiding the panel, avoiding `ADDON_ACTION_BLOCKED` when combat
+  starts during looting.
+- Opaque outer window background: the outer bag window background now keeps the game's panel
+  color without transparency.
+- Cleaner title bar and optional search box: the window title bar no longer repeats the active
+  tab name ("Backpack", "Bank", "Quests"), and an optional "Search box" setting (off by
+  default under gear menu → Show) places the search box on the left side of the title bar on the
+  Bags and Bank tabs. Matching items get a blue highlight glow while non-matching items and empty
+  slots dim, including offline Bank views.
+- New "Show by bag" setting (gear menu → Bag and bank): displays each equipped bag (including
+  your reagent bag) and each bank tab on its own rows in exact slot order including empty slots,
+  while keeping Favorites and your custom groups at the top.
+
+- Reagent bag in mouse mode: items in your reagent bag now appear in their own section at the
+  bottom of the bag window (under the divider, without mixing into regular groups) whenever the bag
+  holds items, the reagent bag slot appears next to your other bags in the bottom bar, special bags
+  no longer show an empty "+ N" slot in mouse mode, and the game's separate reagent bag window is
+  hidden cleanly without taint.
 - Fixed: dropping an item on empty space in the Bags or Bank tab by left-clicking or dragging now
   works instead of being swallowed by the window frame, and dropping on a group header works too.
 - Fixed: clicking Next in the first-time guide now advances to the following steps and marks the

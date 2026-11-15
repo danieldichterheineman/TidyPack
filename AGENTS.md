@@ -34,32 +34,31 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   Trade Goods, Quest Items, Keys, Bags, Miscellaneous, Junk. Tomma grupper visas inte.
   Indelningen står i `Categories.lua`. Mer luft mot ramen än spelets rutnät (se Layout.lua; ursprungligen 6 enheter på
   var sida, 4 under sökrutan, 9 ovanför pengarna).
-- ✅ Specialväskor (`Layout.lua`): koger, ammunitionspåsar, själsväskor, yrkesväskor
+- ⚠️ Specialväskor (`Layout.lua`): koger, ammunitionspåsar, själsväskor, yrkesväskor
   (`bagFamily` ≠ 0) och reagensväskan får varsin grupp längst ned, under spelets linje
   `bank-divider` (från Forevers bankfönster), med väskans ikon och namn som rubrik. Allt i
-  väskan stannar i dess grupp, och dess tomma platser räknas där, inte i Empty. Visas bara
-  när en sådan väska sitter på plats. Med mus visar spelet reagensväskan i ett eget fönster.
-- ✅ Egna set (`Sets.lua`, `SetsView.lua`), per karaktär, sköts i fliken Sets ovanför
-  fönstret (spelets `PanelTopTabButtonTemplate`, flikarna Bags och Sets). En rad per set:
-  ikon, namn, sakerna som små rutor (grå = saknas) och till höger "Equipped", "⚠ N
-  missing", antal eller "Drop items here". Klick tar på allt som går att ha på sig
-  (`C_Item.EquipItemByName`, ringar, smycken och enhandsvapen på båda platserna). Släpp en
-  sak på en rad = lägg till. Ett kugghjul på varje rad (och högerklick) öppnar setets
-  meny: "Save What I'm Wearing" (`ns.SaveWornToSet`: setets utrustning blir det du har på dig, utom skjorta och tabard; utrustning du tagit av tas bort, annat i setet ligger kvar – ändrat 2026-11-12, tidigare lade den bara till), "Edit Name and
-  Icon…", "Remove Item ▸" och "Delete Set…". "New Set" står på sökrutans plats, och mitt i
-  fönstret med en förklaring när det inte finns några set (en sak på markören hamnar i det
-  nya setet). Håller man en sak över fliken Sets byter fönstret dit. Kugghjulets "Add to Set"
-  finns kvar. Saker i set är låsta hos handlaren och tooltipen visar "Tidy Pack set: …".
-  Fönstret öppnas alltid på Bags.
-- ⚠️ Set tas bara på utanför strid (spelet låter ingen byta rustning i strid). Flikarna
-  och raderna med handkontroll är inte provade; kugghjulets meny har "Show Sets"/"Show
-  Bags" som reserv, bara med handkontroll.
+  väskan stannar i dess grupp. Med mus visas bara de saker som ligger i väskan (ingen "+ N"-ruta
+  med lediga platser, och tomma specialväskor göms helt – användarens önskan 2026-11-14); med
+  handkontroll visas en "+ N"-ruta så att spelaren kan släppa saker där. Med mus (2026-11-14,
+  issue #5) ritas reagensväskan i Tidy Packs fönster med egna rutor av spelets mall
+  (`ContainerFrameItemButtonTemplate`, delad med `Bank.lua`), dess ikon visas bredvid de andra
+  väskorna i nederkanten (och tänds bara för reagensväskor vid byte), och spelets separata
+  reagensfönster flyttas osynligt utanför skärmen (`SetAlpha(0)`, `SetScale(0.01)`) utan
+  `Hide`/`CloseBag`. Med handkontroll gör spelet redan detta självt. Provat i spelet med mus
+  2026-11-14 (tom och med sak i); handkontrollsläget kvar att prova.
+- ✅ Flikarna ovanför fönstret (`Layout.lua`, `TabSystemTemplate` med `TabSystemTopButtonTemplate`):
+  Bags (1), Bank (2) och Quests (3). Fliken Sets (`Sets.lua`, `SetsView.lua`, `Bindings.xml`) togs bort
+  2026-11-14 eftersom Blizzards eget Equipment Manager redan finns i spelets gränssnitt; sparade
+  `TidyPackCharDB.sets` rensas i `CHAR_DATA_VERSION = 2` (`Core.lua`), och saker i spelets egna
+  utrustningsset (`C_EquipmentSet`, `ns.IsInEquipmentSet` i `QuestLock.lua`) är fortsatt låsta hos
+  handlaren. Fönstret öppnas alltid på Bags.
 - ✅ Hel bakgrund bakom sakerna (`inset` i `Layout.lua`, spelets `InsetFrameTemplate` med
   marmorn tonad till 0,7), så att världen och questlistan inte lyser igenom när de tomma
   rutorna döljs. Provat i spelet 2026-11-10 (1.0.1-testet): fungerar, men var nästan svart
   (0,4) och sakerna låg bara 4 enheter från bakgrundens kant. Nu: 12 enheters luft innanför
   bakgrunden (`INSET_PAD`, `PADDING_SIDE` 14, `PADDING_TOP` 16, `MONEY_GAP` 16) och färgen
-  0,7. Inte provat i spelet.
+  0,7. Ytterfönstrets egen bakgrund (`ContainerFrameCombinedBags.Bg`, `PANEL_BACKGROUND_COLOR`)
+  görs också helt täckande (`alfa = 1`, 2026-11-14) via `bagFrame:SetBackgroundColor`. Inte provat i spelet.
 - ✅ Antal kolumner (`chooseColumns`, `flow` i `Layout.lua`): 14 som standard och upp till 20
   när sakerna annars skulle göra fönstret högre än skärmen. Skälet: spelet krymper
   väskfönstret till högst 75 % (`GetContainerScale`, `CONTAINER_SCALE` i
@@ -69,19 +68,16 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   väska, skärmhöjd 768): med 12 kolumner blev 160 fyllda platser ca 1050 enheter höga och
   fick inte plats ens vid 75 %; med 20 kolumner ca 770. Bredden begränsas till 75 % av
   skärmen. 14 kolumner gör också att grupper med 13 saker får plats på en rad.
-- ✅ Fönstret är lika högt i fliken Sets som i Bags (`bagsContentHeight`), och växer bara om
-  setlistan är längre. Med 1–3 set förklarar en hjälptext hur man lägger till saker
-  (`hintText` i `SetsView.lua`).
 - ✅ Lediga platser i väskikonen uppe till vänster, som spelet visar med handkontroll
   (`CountContainer.Count`; spelet visar den bara då): `updatePortraitCount` visar den också
   med mus. Rutan för lediga platser (gruppen Empty) är kvar som släppplats för saker, med
   handkontroll den enda, eftersom spelets väskknappar döljs. Den heter "Add to bag" (före
   2026-11-10 "Free", längst ned), står näst först och delar översta raden med Favorites,
-  har ett + mitt i rutan (som den tomma rutan i fliken Sets), antalet lediga platser nere
+  har ett + mitt i rutan, antalet lediga platser nere
   till höger och en tooltip ("Free slots: N / Drop an item here to put it in your bags").
   Handkontrollens markör börjar på första riktiga sak (`startGroupIndex`), inte på rutan.
   Inte provat i spelet.
-- ✅ Quest-saker (`QuestLock.lua`, `Layout.lua`, `QuestsView.lua`, `SetsView.lua`, byggt 2026-11-10 efter
+- ✅ Quest-saker (`QuestLock.lua`, `Layout.lua`, `QuestsView.lua`, byggt 2026-11-10 efter
   skissen `.design/sketch-quests-tab.html`): (1) varje quest-sak på en vanlig ruta visar antal man har /
   antal som behövs ("3/7", grönt när det räcker) uppe till vänster (questloggens `numFulfilled` och
   `numRequired`; `entry.questRecord`, `extra.quest` i `Layout.lua`), och tooltipen säger "Needed for: <quest>
@@ -96,8 +92,8 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   ersätts gruppen Quest Items i Bags av en rad "N slots hold quest items – see Quests" (`questNote`) som
   öppnar fliken. Inte provat i spelet.
 - ⚠️ Fliken Bank (`Bank.lua`, `Layout.lua`, byggd 2026-11-12, i `main` sedan 2026-11-12, issue #1,
-  skissen `.design/sketch-bank-tab.html`): flik 2 mellan Bags och Sets (flikarna är nu Bags 1, Bank 2,
-  Sets 3, Quests 4). Hos bankiren (`BANKFRAME_OPENED`/`CLOSED`) visar fliken bankens saker i samma grupper och
+  skissen `.design/sketch-bank-tab.html`): flik 2 mellan Bags och Quests (flikarna är nu Bags 1, Bank 2,
+  Quests 3). Hos bankiren (`BANKFRAME_OPENED`/`CLOSED`) visar fliken bankens saker i samma grupper och
   avsnitt som Bags, med egna rutor av spelets mall `ContainerFrameItemButtonTemplate`, en per plats i varje
   köpt bankflik (`C_Bank.FetchPurchasedBankTabIDs(Enum.BankType.Character)`, behållare 6–14). Väskans nummer
   sätts med `SetID` på en osynlig föräldraram och platsen med `SetID` på rutan, så spelets klick är otaintat:
@@ -148,7 +144,9 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   misslyckas med `ERR_INV_FULL` föreslås skräplistan först, annars den billigaste grå saken
   om det nya är värt mer. Panelen hänger under lootfönstret (220 bred) eller syns uppe i
   mitten (260 bred, `TOP -135`). Raderas bara när spelaren trycker Delete
-  (`DeleteCursorItem` kräver en hårdvaruhändelse och tar en sak per tryck). I strid väntar
+  (`DeleteCursorItem` kräver en hårdvaruhändelse och tar en sak per tryck; `hidePanel()` körs
+  efter `DeleteCursorItem()`, och i strid göms panelen direkt vid `PLAYER_REGEN_DISABLED` så att
+  inget blockeras). I strid väntar
   frågorna om skräplistan. Med handkontroll: under lootfönstret kopplas knapparna in i
   lootfönstrets markör, uppe i mitten blir panelen en fråga
   (`GamepadMode.FrameControlsManager:HandlePopupShown`), bara utanför strid. Måste provas i
@@ -156,9 +154,9 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ⚠️ Inställningar i väskan (`Options.lua`, `Marks.lua`, `Panels.lua`, 2026-11-12; skissen `.design/sketch-settings-in-bag.html`):
   allt finns under kugghjulet. Menyn: Junk List…, Groups…, undermenyerna Show (Item level and BoE, Upgrade
   arrows, Quest items in Bags, Marks for later quests – grå utan Questie, Bag and bank counts, Tidy Pack lines in
-  tooltips `tooltipLines`, Junk value in the header `junkValue`), Merchants and loot (Lock items at merchants, Ask
+  tooltips `tooltipLines`, Junk value in the header `junkValue`, Search box `showSearchBox`), Merchants and loot (Lock items at merchants, Ask
   to delete junk list loot, Suggest a deletion when full) och Bag and bank (Replace the game's bag buttons, Use the
-  Bank tab at bankers, hos bankiren Show the game's bank window), och Show Tips Again. Valen definieras i
+  Bank tab at bankers, Show by bag `groupByBag`, hos bankiren Show the game's bank window), och Show Tips Again. Valen definieras i
   `ns.optionMenus` (Options.lua); varje rad har en tooltip (`SetTooltip`), och kryssrutorna lämnar menyn öppen
   (`MenuResponse.Refresh`). Junk List och Groups öppnas i väskan som vyerna "junk" och "groups"
   (`ns.OpenPanel`, `layoutPanelView` i Layout.lua, ingen flik vald – `SetTabVisuallySelected(0)`): rubrikrad med
@@ -171,6 +169,12 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   addonmenyn gör det bara när väskan redan är öppen, annars öppnar de inställningssidan (`ns.OpenGearMenu`). `GroupsPage.lua` och skräplistans sida finns inte längre. Avvikelse
   från skissen: Rename öppnar Tidy Packs ruta för namn (`ns.AskRenameGroup`) i stället för att skriva på
   raden. Med handkontroll är panelernas knappar inte inkopplade i markören. Inte provat i spelet.
+- ⚠️ Läget "Show by bag" (`groupByBag`, `Layout.lua`, `Bank.lua`, `Options.lua`, 2026-11-14): växlar mellan
+  kategorier och att visa varje utrustad väska (Backpack, 1–4 och reagensväskan) samt varje bankflik på en
+  egen rad med tunn linje ovanför och väskans ikon och namn som rubrik. Alla väskans platser visas i exakt
+  slot-ordning inklusive tomma rutor (utan "+ N"), medan Favorites och egna grupper stannar kvar överst.
+  Borta från banken sparas även bankflikarnas namn, ikon och antal platser i `TidyPackCharDB.bank.tabs`.
+  Inte provat i spelet än.
 - ⚠️ Quests i förväg (`QuestHints.lua`): kräver Questie (QuestieDB, `## OptionalDeps`).
   Saker som behövs för quests man inte har gjort, för ens ras och klass, som man kan ta nu
   eller inom 5 nivåer (och som inte är mer än 5 nivåer under en), får kartans gula
@@ -207,7 +211,16 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   (görs när striden är över), och LB/RB bygger på spelets väskräkning – med nyckelringen
   påslagen gör LB inget på saker i ryggsäcken och RB inget på nycklar, som i spelets fönster.
 - ✅ kugghjulets tooltip visar handkontrollens knapp A med handkontroll, och Alt-klick med mus.
-- ✅ Sökruta, pengar och markering av nya saker är spelets egna.
+- ⚠️ Sökruta och titelrad (`Layout.lua`, `Options.lua`, `Core.lua`, 2026-11-14): titelradens
+  text på de tre flikarna (Backpack, Bank, Quests) är borttagen eftersom flikarna redan
+  visar vilken vy som är öppen; bara panelvyerna (`junk`, `groups`) har rubrik i titelraden.
+  Spelets sökruta (`BagItemSearchBox`) är avstängd som standard (`showSearchBox = false`) och
+  kan slås på under kugghjulet → Show → Search box. När den är på visas den till vänster i
+  titelraden (`TOPLEFT 18, -3`) bara i flikarna Bags och Bank, och töms när man byter flik eller
+  stänger fönstret. Sökträffar får samma blå sken som väskraden (`extra.bagGlow`) medan övriga
+  saker och tomma rutor tonas ner (`alpha = 0.35`); fungerar även i Bank borta från bankiren
+  genom namnmatchning. Inte provat i spelet än.
+- ✅ Pengar och markering av nya saker är spelets egna.
 - ✅ Väskorna man har på sig syns inte bland sakerna (`GamepadBagBar` döljs med
   handkontroll).
 - ✅ Spelets städknapp (`BagItemAutoSortButton`) och spelets väskmeny (`PortraitButton`,
@@ -365,7 +378,6 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
 
 ## Filer
 - `TidyPack.toc`: namn och laddordning
-- `Bindings.xml`: snabbtangenterna (spelet läser den själv)
 - `Locales.lua`: all text som visas i spelet (engelska)
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
@@ -373,16 +385,14 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
 - `Media/Logo.tga`: loggan som spelbild
 - `Tour.lua`: guiden med spelets tipsrutor första gången väskan öppnas
 - `QuestsView.lua`: fliken Quests – rubriker, texter, staplar och rader per quest
-- `Groups.lua`: egna grupper – data, regler, ordning, frågor, kugghjulets menyer och tooltipen
+- `Groups.lua`: egna grupper – data, regler, ordning, frågor (`ns.ShowDialog`), kugghjulets menyer och tooltipen
 - `Panels.lua`: skräplistan och de egna grupperna i väskans fönster (öppnas från kugghjulet)
-- `QuestLock.lua`: vilka saker som är låsta (quest, utrustningsset och egna set),
+- `QuestLock.lua`: vilka saker som är låsta (quest och spelets utrustningsset),
   handlarläget och raden i tooltipen
-- `Sets.lua`: egna set – data, ta på ett set, rutan för namn och frågor, raden i tooltipen
 - `BagSwap.lua`: byter ut den minsta väskan, och avgör vilka väskor som får en grön pil
 - `Bank.lua`: fliken Bank – bankens rutor, sparad bank per karaktär och spelets bankfönster
 - `Layout.lua`: ordnar om spelets väskfönster: grupper, specialväskor, rubriker, New,
-  märken, lås, tomma platser, listläget för fliken Sets, varningen för fulla väskor och att städknappen och väskmenyn döljs
-- `SetsView.lua`: flikarna Bags och Sets och listan med set i väskfönstret
+  märken, lås, tomma platser, flikarna (Bags, Bank, Quests), sökrutan, varningen för fulla väskor och att städknappen och väskmenyn döljs
 - `QuestHints.lua`: saker som quests man inte har tagit än behöver, via Questies databas
 - `Marks.lua`: favoriter och skräplistan, med Alt-klick och kugghjulet med spelets meny (hette
   `Favorites.lua` före 2026-11-09)

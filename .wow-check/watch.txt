@@ -8,8 +8,9 @@
 
 # The bag window. Tidy Pack rearranges the game's own item buttons after each of the game's
 # layout passes, and relies on how the game opens, sizes and anchors the window.
-Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua -- the window Tidy Pack rearranges: layout passes, item clicks, opening and closing bags
-Blizzard_UIPanels_Game/Mainline/ContainerFrame.xml -- the item button template and the combined bag frame
+Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua -- the window Tidy Pack rearranges: layout passes, item clicks, opening and closing bags, and suppressing ContainerFrame6 (reagent bag) cleanly in mouse mode
+Blizzard_UIPanels_Game/Mainline/ContainerFrame.xml -- the item button template (also used by Bank.lua and reagent bag slots) and the combined/reagent bag frames
+PortraitFrameFlatBaseMixin:SetBackgroundColor -- makes the outer bag window background opaque with the game's panel color
 
 # The backpack button the logo clicks, and the bag bar Tidy Pack hides.
 Blizzard_MainMenuBarBagButtons/ -- the logo's secure click goes to MainMenuBarBackpackButton; the bag bar and the controller's bag bar are hidden

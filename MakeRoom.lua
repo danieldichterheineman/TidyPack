@@ -201,22 +201,29 @@ end
 
 -- Raderar saken som föreslogs, om den ligger kvar där den låg och fortfarande räknas som
 -- skräp. Körs bara när spelaren trycker på Delete – det är trycket som gör att spelet
--- tillåter raderingen.
+-- tillåter raderingen. Ingenting annat får köras mellan klicket och DeleteCursorItem, och
+-- i strid avbryts raderingen.
 local function deleteSuggestion()
-    local bagID, slot, itemID = suggestion.bagID, suggestion.slot, suggestion.itemID
-    hidePanel()
-    local info = bagID and C_Container.GetContainerItemInfo(bagID, slot)
-    if not info or info.itemID ~= itemID or not ns.GetJunkKind(bagID, slot, info) then
+    local kind, bagID, slot, itemID = suggestion.kind, suggestion.bagID, suggestion.slot, suggestion.itemID
+    if InCombatLockdown() then
+        if kind == "looted" and itemID then
+            table.insert(queue, 1, itemID)
+        end
+        hidePanel()
         return
     end
-    ClearCursor()
-    C_Container.PickupContainerItem(bagID, slot)
-    local kind, cursorItemID = GetCursorInfo()
-    if kind == "item" and cursorItemID == itemID then
-        DeleteCursorItem()
-    else
+    local info = bagID and C_Container.GetContainerItemInfo(bagID, slot)
+    if info and info.itemID == itemID and ns.GetJunkKind(bagID, slot, info) then
         ClearCursor()
+        C_Container.PickupContainerItem(bagID, slot)
+        local cursorKind, cursorItemID = GetCursorInfo()
+        if cursorKind == "item" and cursorItemID == itemID then
+            DeleteCursorItem()
+        else
+            ClearCursor()
+        end
     end
+    hidePanel()
 end
 
 ---------------------------------------------------------------------------
@@ -224,7 +231,7 @@ end
 ---------------------------------------------------------------------------
 
 local function offerRoom()
-    if not ns.db.suggestWhenFull or not LootFrame:IsShown() or freeNormalSlots() > 0 then
+    if InCombatLockdown() or not ns.db.suggestWhenFull or not LootFrame:IsShown() or freeNormalSlots() > 0 then
         if suggestion.kind == "full" and panel:IsShown() then
             hidePanel()
         end
@@ -395,12 +402,30 @@ ns.OnLoad(function()
 
     ns.RegisterEvent("PLAYER_ENTERING_WORLD", countListed)
 
+    -- Börjar en strid medan panelen är öppen göms den direkt, så att ett klick i strid inte
+    -- stoppas av spelet. Frågan om en lootad sak från skräplistan läggs tillbaka i kön och
+    -- visas när striden är över.
+    ns.RegisterEvent("PLAYER_REGEN_DISABLED", function()
+        if not panel:IsShown() then
+            return
+        end
+        if suggestion.kind == "looted" and suggestion.itemID then
+            table.insert(queue, 1, suggestion.itemID)
+        end
+        panel:Hide()
+        suggestion.kind = nil
+    end)
+
     -- Striden är över: koppla ifrån handkontrollen om det fick vänta, och visa det som har
     -- lootats.
     ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if not panel:IsShown() then
             releasePopup()
         end
-        showNext()
+        if LootFrame:IsShown() and freeNormalSlots() == 0 then
+            offerRoom()
+        else
+            showNext()
+        end
     end)
 end)
