@@ -1,995 +1,461 @@
 # Tidy Pack
 
-Ordnar sakerna i spelets väskfönster i fasta grupper, som Baganator men med bara några få
-inställningar.
-Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
+Sorts the items in the game's own bag window into fixed groups – like Baganator, but with only a
+few options. Works with mouse and controller. Made for WoW Forever.
 
-## Fakta
-- Addonnamn och mapp: `TidyPack` (måste matcha `TidyPack.toc`)
-- Målklient: WoW Forever 1.60.1, Interface 16001. Källor: installationens `.build.info`
-  (version `1.60.1.70862`, produkt `wowf`, 2026-11-09), sidan "TOC format" på
-  warcraft.wiki.gg och commit-meddelandet `1.60.1 (70862)` i GitHub-repot
-  `Gethe/wow-ui-source`, gren `forever`. I spelet: `/dump select(4, GetBuildInfo())`.
-- Spelet: `/Applications/World of Warcraft/_forever_/` (engelsk klient, EU). Projektmappen är
-  länkad in som `_forever_/Interface/AddOns/TidyPack` (symbolisk länk, 2026-11-09), så
-  ändringar syns efter `/reload`. En ny eller omdöpt TOC-fil kräver omstart av spelet.
-- WoW Forever bygger på samma klient som retail (TOC-familjen `_Mainline`, Blizzards kodnamn
-  "Camelot"). Blizzards kod för Forever finns i grenen `forever` i `Gethe/wow-ui-source`.
-  Mappar som heter `Camelot` där är Forevers egna ändringar. Verifiera API:er mot den grenen,
-  inte mot `live`.
-- SavedVariables: `TidyPackDB` (per konto)
-- Inställningarna finns under kugghjulet i väskfönstret (se Funktioner). Spelets Options → AddOns →
-  Tidy Pack visar bara information och länken till CurseForge (`Options.lua`). `/tidypack` och
-  addonmenyn vid minikartan (`## AddonCompartmentFunc: TidyPack_OnAddonCompartmentClick`) öppnar
-  kugghjulets meny när väskan är öppen, annars Tidy Packs sida i spelets inställningar (se "Så fungerar det").
-- Projektmapp: `TidyPack` i hemmappen på utvecklarens dator, med git (gren `main`).
-- GitHub: https://github.com/danieldichterheineman/TidyPack (skapat 2026-11-09, **publikt**).
-  Pusha bara efter ett ja från användaren. Allt i repot syns för alla: inga nycklar, lösenord,
-  e-postadresser, sökvägar till hemmappen eller andra privata uppgifter i filer eller commits.
-  Hemligheter (som `CF_API_TOKEN`) ligger bara i GitHubs Secrets. Kontrollerat 2026-11-12: inga
-  nycklar i filerna eller i historiken.
+This file is the project's memory for anyone (person or agent) who works on Tidy Pack. It says
+what is true **now**. The full log of earlier decisions, old test items and what was tried when
+(in Swedish, until 2026-11-15) is in `.design/agents-history-sv.md`.
 
-## Funktioner
-- ✅ Elva grupper i fast ordning: Favorites, Empty ("Add to bag"), New, Consumables, Equipment,
-  Trade Goods, Quest Items, Keys, Bags, Miscellaneous, Junk. Tomma grupper visas inte.
-  Indelningen står i `Categories.lua`. Mer luft mot ramen än spelets rutnät (se Layout.lua; ursprungligen 6 enheter på
-  var sida, 4 under sökrutan, 9 ovanför pengarna).
-- ⚠️ Specialväskor (`Layout.lua`): koger, ammunitionspåsar, själsväskor, yrkesväskor
-  (`bagFamily` ≠ 0) och reagensväskan får varsin grupp längst ned, under spelets linje
-  `bank-divider` (från Forevers bankfönster), med väskans ikon och namn som rubrik. Allt i
-  väskan stannar i dess grupp. Med mus visas bara de saker som ligger i väskan (ingen "+ N"-ruta
-  med lediga platser, och tomma specialväskor göms helt – användarens önskan 2026-11-14); med
-  handkontroll visas en "+ N"-ruta så att spelaren kan släppa saker där. Med mus (2026-11-14,
-  issue #5) ritas reagensväskan i Tidy Packs fönster med egna rutor av spelets mall
-  (`ContainerFrameItemButtonTemplate`, delad med `Bank.lua`), dess ikon visas bredvid de andra
-  väskorna i nederkanten (och tänds bara för reagensväskor vid byte), och spelets separata
-  reagensfönster flyttas osynligt utanför skärmen (`SetAlpha(0)`, `SetScale(0.01)`) utan
-  `Hide`/`CloseBag`. Med handkontroll gör spelet redan detta självt. Provat i spelet med mus
-  2026-11-14 (tom och med sak i); handkontrollsläget kvar att prova.
-- ✅ Flikarna ovanför fönstret (`Layout.lua`, `TabSystemTemplate` med `TabSystemTopButtonTemplate`):
-  Bags (1), Bank (2) och Quests (3). Fliken Sets (`Sets.lua`, `SetsView.lua`, `Bindings.xml`) togs bort
-  2026-11-14 eftersom Blizzards eget Equipment Manager redan finns i spelets gränssnitt; sparade
-  `TidyPackCharDB.sets` rensas i `CHAR_DATA_VERSION = 2` (`Core.lua`), och saker i spelets egna
-  utrustningsset (`C_EquipmentSet`, `ns.IsInEquipmentSet` i `QuestLock.lua`) är fortsatt låsta hos
-  handlaren. Fönstret öppnas alltid på Bags.
-- ✅ Hel bakgrund bakom sakerna (`inset` i `Layout.lua`, spelets `InsetFrameTemplate` med
-  marmorn tonad till 0,7), så att världen och questlistan inte lyser igenom när de tomma
-  rutorna döljs. Provat i spelet 2026-11-10 (1.0.1-testet): fungerar, men var nästan svart
-  (0,4) och sakerna låg bara 4 enheter från bakgrundens kant. Nu: 12 enheters luft innanför
-  bakgrunden (`INSET_PAD`, `PADDING_SIDE` 14, `PADDING_TOP` 16, `MONEY_GAP` 16) och färgen
-  0,7. Ytterfönstrets egen bakgrund (`ContainerFrameCombinedBags.Bg`, `PANEL_BACKGROUND_COLOR`)
-  görs också helt täckande (`alfa = 1`, 2026-11-14) via `bagFrame:SetBackgroundColor`. Inte provat i spelet.
-- ✅ Antal kolumner (`chooseColumns`, `flow` i `Layout.lua`): 14 som standard och upp till 20
-  när sakerna annars skulle göra fönstret högre än skärmen. Skälet: spelet krymper
-  väskfönstret till högst 75 % (`GetContainerScale`, `CONTAINER_SCALE` i
-  `Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua`, nedre marginal `CONTAINER_OFFSET_Y`
-  85) men räknar bara om skalan när fönstret öppnas. Tidy Pack siktar på skala 0,85
-  (`TARGET_SCALE`). Egen uträkning (inte provad i spelet, 36 platser antagen som största
-  väska, skärmhöjd 768): med 12 kolumner blev 160 fyllda platser ca 1050 enheter höga och
-  fick inte plats ens vid 75 %; med 20 kolumner ca 770. Bredden begränsas till 75 % av
-  skärmen. 14 kolumner gör också att grupper med 13 saker får plats på en rad.
-- ✅ Lediga platser i väskikonen uppe till vänster, som spelet visar med handkontroll
-  (`CountContainer.Count`; spelet visar den bara då): `updatePortraitCount` visar den också
-  med mus. Rutan för lediga platser (gruppen Empty) är kvar som släppplats för saker, med
-  handkontroll den enda, eftersom spelets väskknappar döljs. Den heter "Add to bag" (före
-  2026-11-10 "Free", längst ned), står näst först och delar översta raden med Favorites,
-  har ett + mitt i rutan, antalet lediga platser nere
-  till höger och en tooltip ("Free slots: N / Drop an item here to put it in your bags").
-  Handkontrollens markör börjar på första riktiga sak (`startGroupIndex`), inte på rutan.
-  Inte provat i spelet.
-- ✅ Quest-saker (`QuestLock.lua`, `Layout.lua`, `QuestsView.lua`, byggt 2026-11-10 efter
-  skissen `.design/sketch-quests-tab.html`): (1) varje quest-sak på en vanlig ruta visar antal man har /
-  antal som behövs ("3/7", grönt när det räcker) uppe till vänster (questloggens `numFulfilled` och
-  `numRequired`; `entry.questRecord`, `extra.quest` i `Layout.lua`), och tooltipen säger "Needed for: <quest>
-  (3/7)" och "And N more quests". (2) `ns.UpdateQuestStacks`: har du flera högar av samma sak räknas de
-  största tills antalet räcker som quest-saker, resten (över) är vanliga saker och går att sälja; en ensam
-  hög är alltid kvar hel och spelets egna quest-saker rörs aldrig. (3) Tredje fliken Quests
-  (`ns.BuildQuestsView`, avsnitt och quests fälls ut för sig): klara quests överst ("Ready to turn in", `C_QuestLog.ReadyForTurnIn`), sedan de som
-  pågår, med de riktiga rutorna, namn, antal och en stapel, och tom ruta med grå text för det som saknas;
-  "Other quest items" sist; högst så många quests som ryms (`maxContentHeight`), resten som "...and N more
-  quests". Samma rutor flyttas mellan flikarna. En grön/blå prick på fliken (`ns.UpdateQuestsNotice`) när en
-  quest är klar. (4) Inställningen `showQuestItemsInBags` ("Show quest items in Bags", påslagen): avstängd
-  ersätts gruppen Quest Items i Bags av en rad "N slots hold quest items – see Quests" (`questNote`) som
-  öppnar fliken. Inte provat i spelet.
-- ⚠️ Fliken Bank (`Bank.lua`, `Layout.lua`, byggd 2026-11-12, i `main` sedan 2026-11-12, issue #1,
-  skissen `.design/sketch-bank-tab.html`): flik 2 mellan Bags och Quests (flikarna är nu Bags 1, Bank 2,
-  Quests 3). Hos bankiren (`BANKFRAME_OPENED`/`CLOSED`) visar fliken bankens saker i samma grupper och
-  avsnitt som Bags, med egna rutor av spelets mall `ContainerFrameItemButtonTemplate`, en per plats i varje
-  köpt bankflik (`C_Bank.FetchPurchasedBankTabIDs(Enum.BankType.Character)`, behållare 6–14). Väskans nummer
-  sätts med `SetID` på en osynlig föräldraram och platsen med `SetID` på rutan, så spelets klick är otaintat:
-  högerklick flyttar mellan bank och väskor, och "släpp var som helst" lägger saken på första lediga
-  bankplats. Spelets `BankFrame` görs osynligt och litet (`SetAlpha(0)`, `SetScale(0.01)`), aldrig dolt:
-  dess `OnHide` stänger banken. Skyddsnät (2026-11-14, issue #4): `BankFrame` görs osynligt först när fliken
-  Bank lagts ut utan fel (`ns.SetBankLayoutOk(true)`), och återställs direkt om ett fel stoppar utläggningen. Stängs väskan stängs banken (`C_Bank.CloseBankFrame`). Kugghjulets meny har
-  "Show the game's bank window" hos bankiren (köpa bankplats, byta väska i banken). Inställningen `bankTab`
-  ("Use the Bank tab at bankers"). Borta från banken: senast kända innehåll ur `TidyPackCharDB.bank`, vanliga
-  `ItemButton` med bild, antal, kvalitet och tooltip (`SetHyperlink`), och en rad överst om när det sparades.
-  Hos bankiren räknas bankens höjd in i den gemensamma höjden, så flikarna är lika höga; borta kan fliken
-  Bank bli högre. Inte byggt än: bankens väskor och "+" för att köpa i raden längst ner (spelets fönster
-  via kugghjulet i stället), kontogemensam bank (Warband; Forevers kod har `Enum.BankType.Account`),
-  handkontroll (Tidy Pack tar då inte över spelets fönster), specialväskor i banken (sorteras som vanliga
-  saker). Inte provat i spelet.
-- ⚠️ Antal i tooltipen (`Bank.lua`, 2026-11-12, kollegans förslag, skissen `.design/sketch-settings-in-bag.html`
-  variant 1c): raden "Bags 12 · Bank 40 · Total 52" i ljusblått, bara när saken finns i den sparade banken.
-  Väskan med `C_Item.GetItemCount(id)`, banken summerad ur `TidyPackCharDB.bank` (räknas om när den sparade
-  banken byts ut). Bara den här karaktären. Inställningen `showCounts`. Inte provat i spelet.
-- ✅ Egna grupper (`Groups.lua`, `GroupsPage.lua`, byggda 2026-11-10 efter skissen
-  `.design/sketch-groups.html`): upp till 8 per konto, efter Favorites och "Add to bag". En sak
-  läggs dit med kugghjulets meny ("Add to Group ▸", med en bockruta per grupp och "New
-  Group...") eller en hel typ ("Add All "<typ>" Items to Group ▸": klass och undertyp ur
-  `C_Item.GetItemInfoInstant`, typens namn ur `C_Item.GetItemSubClassInfo`). En sak eller
-  typ ligger i högst en grupp (en bockruta flyttar den). Företräde i `ns.GetGroup`: Favorites,
-  New, Quest Items och Junk först, sedan de egna grupperna (enskild sak före typregel, sedan
-  den grupp som står högst), sedan spelets typer. Grupperna i väskan (kugghjulet → Groups…, sedan 2026-11-12; förut sidan "Groups" i inställningarna): välj en
-  grupp, ändra ordning (▲▼), byt namn, ta bort, och se och ändra vad den innehåller (länk,
-  namn, nummer eller släpp en sak). Tooltipen visar "Tidy Pack group: …". Rubrikerna kommer ur
-  `ns.groupNames`, ordningen ur `ns.groupOrder`, som `ns.RebuildGroupOrder` bygger om. Inte
-  provat i spelet.
-- ✅ Inom en grupp ligger lika saker bredvid varandra (drycker, mat, förband, skriftrullar;
-  vapen, rustning, ammunition; handelsvaror, ädelstenar, förbättringar, recept), sedan
-  bäst kvalitet, namn och störst hög. Små grupper delar rad. Fönstret är 14 rutor brett, och bredare (upp till 20) när sakerna annars skulle bli för höga.
-- ✅ Kugghjulet (`Marks.lua`) är den enda knapp Tidy Pack lägger i väskfönstret, på
-  sorteringsknappens plats. Det är spelets egen menyknapp (`DropdownButton`): med en sak på
-  markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List" /
-  "Add to Group ▸", annars "Junk List…" / "Groups…" och inställningarnas undermenyer. Svagt tills man håller en sak, pekar på det eller har menyn öppen.
-- ✅ Favorites (`Marks.lua`): Alt-klick (mus, öppnar menyn för saken) eller via kugghjulet. Sparas per itemID och konto.
-- ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-klick-menyn, via kugghjulet eller i skräplistan i väskan
-  (kugghjulet → Junk List…, sedan 2026-11-12; förut en sida i inställningarna) (lägg till med länk, namn, nummer eller genom att släppa en sak;
-  ta bort med det röda krysset). Saker på listan hamnar sist i Junk, får spelets eget
-  skräpmynt (`JunkIcon` på rutan) och föreslås först när väskorna är fulla. En sak kan inte vara både favorit och på listan. Sparas per itemID och konto.
-- ⚠️ Frågor om radering (`MakeRoom.lua`), i en panel med samma mall som lootfönstret
-  (`DefaultPanelFlatTemplate`): (1) när en sak från skräplistan lootas (antalet ökar,
-  `C_Item.GetItemCount` vid `BAG_UPDATE_DELAYED`) frågar Tidy Pack direkt, (2) när loot
-  misslyckas med `ERR_INV_FULL` föreslås skräplistan först, annars den billigaste grå saken
-  om det nya är värt mer. Panelen hänger under lootfönstret (220 bred) eller syns uppe i
-  mitten (260 bred, `TOP -135`). Raderas bara när spelaren trycker Delete
-  (`DeleteCursorItem` kräver en hårdvaruhändelse och tar en sak per tryck; `hidePanel()` körs
-  efter `DeleteCursorItem()`, och i strid göms panelen direkt vid `PLAYER_REGEN_DISABLED` så att
-  inget blockeras). I strid väntar
-  frågorna om skräplistan. Med handkontroll: under lootfönstret kopplas knapparna in i
-  lootfönstrets markör, uppe i mitten blir panelen en fråga
-  (`GamepadMode.FrameControlsManager:HandlePopupShown`), bara utanför strid. Måste provas i
-  spelet, särskilt med handkontroll.
-- ⚠️ Inställningar i väskan (`Options.lua`, `Marks.lua`, `Panels.lua`, 2026-11-12; skissen `.design/sketch-settings-in-bag.html`):
-  allt finns under kugghjulet. Menyn: Junk List…, Groups…, undermenyerna Show med tre små rubriker
-  (granskningen 2026-11-15, rader med `section` i `ns.optionMenus`): On items (Item level and BoE, Upgrade
-  arrows, Marks for later quests – grå utan Questie), In tooltips (Bag and bank counts, Group line
-  `tooltipLines`) och In the window (Quest items in Bags, Junk value in the header `junkValue`, Search box
-  `showSearchBox`, Show by bag `groupByBag`); Merchants and loot (Lock items at merchants, Ask to delete junk
-  list loot, Suggest a deletion when full) och Bag and bank (Replace the game's bag buttons, Use the Bank tab at
-  bankers, hos bankiren Show the game's bank window), och Show Tips Again. Valen definieras i
-  `ns.optionMenus` (Options.lua); varje rad har en tooltip (`SetTooltip`), och kryssrutorna lämnar menyn öppen
-  (`MenuResponse.Refresh`). Junk List och Groups öppnas i väskan som vyerna "junk" och "groups"
-  (`ns.OpenPanel`, `layoutPanelView` i Layout.lua, ingen flik vald – `SetTabVisuallySelected(0)`): rubrikrad med
-  Done, en `ScrollFrameTemplate` som rullas med mushjulet, skräplistan som rutor med rött kryss, "+", skrivruta
-  (namn, länk, nummer, shift-klick) och de två frågorna om skräp; grupperna som rader med ▲▼, Rename och ✕, en
-  utfälld grupp med regler, små rutor, "+" och skrivruta, och "+ New group" (klick eller släppt sak). Spelets
-  inställningar: sidan "Tidy Pack" (canvas) med logga, version och författare ur TOC-filen, fyra rader hjälp,
-  länken till CurseForge (`## X-Website`) i en markerad ruta att kopiera (ett addon kan inte öppna
-  webbläsaren), en rad om hur väskorna öppnas (loggan eller B) och Show Tips Again. Loggans högerklick öppnar väskan med kugghjulets meny; `/tidypack` och
-  addonmenyn gör det bara när väskan redan är öppen, annars öppnar de inställningssidan (`ns.OpenGearMenu`). `GroupsPage.lua` och skräplistans sida finns inte längre. Avvikelse
-  från skissen: Rename öppnar Tidy Packs ruta för namn (`ns.AskRenameGroup`) i stället för att skriva på
-  raden. Med handkontroll är panelernas knappar inte inkopplade i markören. Inte provat i spelet.
-- ⚠️ Läget "Show by bag" (`groupByBag`, `Layout.lua`, `Bank.lua`, `Options.lua`, 2026-11-14): växlar mellan
-  kategorier och att visa varje utrustad väska (Backpack, 1–4 och reagensväskan) samt varje bankflik på en
-  egen rad med tunn linje ovanför och väskans ikon och namn som rubrik. Alla väskans platser visas i exakt
-  slot-ordning inklusive tomma rutor (utan "+ N"), medan Favorites och egna grupper stannar kvar överst.
-  Borta från banken sparas även bankflikarnas namn, ikon och antal platser i `TidyPackCharDB.bank.tabs`.
-  Inte provat i spelet än.
-- ⚠️ Quests i förväg (`QuestHints.lua`): kräver Questie (QuestieDB, `## OptionalDeps`).
-  Saker som behövs för quests man inte har gjort, för ens ras och klass, som man kan ta nu
-  eller inom 5 nivåer (och som inte är mer än 5 nivåer under en), får kartans gula
-  utropstecken (atlas `QuestNormal`) uppe till höger och raden "Needed later for: <quest>
-  (<zon>, level N)" i tooltipen (högst 3, sedan "...and N more quests"). Grå sådana saker
-  säljs och föreslås aldrig. Utan Questie skrivs en rad i chatten, en gång per konto.
-  QuestieDB:s data för Forevers nya quests är inte komplett.
-- ✅ New: saker som spelet markerar som nya hamnar överst tills fönstret stängs. Tidy Pack
-  kommer ihåg dem själv, eftersom spelet tar bort markeringen när musen hålls över saken.
-- ✅ Lås (`QuestLock.lua`): quest-saker, vanliga saker som en pågående quest kräver
-  (namnet i målet, t.ex. "Linen Cloth: 3/10") och saker i utrustningsset. Låsikonen syns
-  bara hos en handlare. Med mus är rutan då avstängd (`Disable`). Med handkontroll får
-  markören inte klicka på den (`SmartNavigation_MarkFrameBlockingSmartNavClick`), så att
-  varken A eller X gör något (se Beslut 2026-11-09 om handkontrollen). Tooltipen visas ändå
-  (`SetMotionScriptsWhileDisabled`) och får raden "Needed for: <quest>" och hos handlaren
-  en röd rad "Locked by Tidy Pack: can't be sold."
-- ⚠️ Låsen: namnmatchningen följer spelets språk (engelska). Spelets egen knapp
-  "Sell All Junk" i handlarfönstret känner inte till låsen. Med handkontroll kan låset inte
-  sättas eller släppas i strid; det görs när striden är över.
-- ⚠️ Ingen egen Sell Junk-knapp (togs bort 2026-11-09, användarens beslut): spelets egen
-  "Sell All Junk" (`MerchantSellAllJunkButton`) i handlarfönstret säljer alla grå saker, och
-  går att nå med handkontroll. Den känner inte till Tidy Packs lås eller skräplista, så saker
-  på skräplistan som inte är grå säljs för hand. `Junk.lua` har bara `ns.GetJunkKind` kvar.
-- ✅ Junk-rubriken visar skräpets värde.
-- ✅ Tomma platser: en ruta per väsktyp med antalet. Siffran blir röd vid 5 eller färre.
-  När väskorna blir helt fulla visas "Your bags are full." en gång (`UIErrorsFrame`).
-- ✅ Nivå och "BoE" bara på gröna och bättre vapen och rustningar.
-- ✅ Handkontroll: fönstret och rutorna är spelets egna, så spelets markör och knappar
-  (använd, utrusta, sälj, dela, förstör, länka) fungerar som vanligt. Måste provas i spelet.
-- ⚠️ Handkontrollens markör (`Gamepad.lua`): börjar på första saken i New (annars första
-  rutan), LB/RB hoppar till förra/nästa grupp, styrkorset går till närmaste ruta åt det
-  hållet (spelets fria navigering i stället för rutnätet), och står markören på en ruta som
-  döljs flyttas den till närmaste synliga. Begränsningar: inget av det kan göras i strid
-  (görs när striden är över), och LB/RB bygger på spelets väskräkning – med nyckelringen
-  påslagen gör LB inget på saker i ryggsäcken och RB inget på nycklar, som i spelets fönster.
-- ✅ kugghjulets tooltip visar handkontrollens knapp A med handkontroll, och Alt-klick med mus.
-- ⚠️ Sökruta och titelrad (`Layout.lua`, `Options.lua`, `Core.lua`, 2026-11-14): titelradens
-  text på de tre flikarna (Backpack, Bank, Quests) är borttagen eftersom flikarna redan
-  visar vilken vy som är öppen; bara panelvyerna (`junk`, `groups`) har rubrik i titelraden.
-  Spelets sökruta (`BagItemSearchBox`) är avstängd som standard (`showSearchBox = false`) och
-  kan slås på under kugghjulet → Show → Search box. När den är på visas den till vänster i
-  titelraden (`TOPLEFT 18, -3`) bara i flikarna Bags och Bank, och töms när man byter flik eller
-  stänger fönstret. Sökträffar får samma blå sken som väskraden (`extra.bagGlow`) medan övriga
-  saker och tomma rutor tonas ner (`alpha = 0.35`); fungerar även i Bank borta från bankiren
-  genom namnmatchning. Inte provat i spelet än.
-- ✅ Pengar och markering av nya saker är spelets egna.
-- ✅ Väskorna man har på sig syns inte bland sakerna (`GamepadBagBar` döljs med
-  handkontroll).
-- ✅ Spelets städknapp (`BagItemAutoSortButton`) och spelets väskmeny (`PortraitButton`,
-  klick på väskikonen) döljs. Utan menyn kan ingen råka stänga av "Combined Bags".
-- ⚠️ Byta väska (`BagSwap.lua`): högerklick på en vanlig väska i gruppen Bags (eller
-  Equip på handkontrollen) byter ut den minsta vanliga väskan när alla fyra platser är fulla.
-  Bara utanför strid; specialväskor byts inte; storleken läses från tooltipen ("14 Slot
-  Bag", mönster från `CONTAINER_SLOTS` eller `(%d+) Slot`). Grön pil på större väskor.
-- ⚠️ Nyckelringen: med handkontroll (och `showKeyring` på) visar spelet nycklarna i
-  väskfönstret, och då hamnar de i Keys. Med mus är nyckelringen en egen knapp vid
-  väskknapparna, som Tidy Pack inte ändrar.
-- ⚠️ "Combined Bags" (CVar `combinedBags`) slås på en gång vid första inloggningen.
+## 1. Facts
 
-## Så fungerar det (viktigt vid nya patchar)
-**Öppna aldrig väskan från addonets kod** (`OpenAllBags`, `ToggleAllBags`, `OpenBag`, `ToggleBag`).
-Spelet bygger väskans rutor när den öppnas (`ContainerFrame_GenerateFrame` → `UpdateItemSlots`, som
-skapar och fyller i knapparna). Körs det från ett addons kod blir knapparna och deras värden
-(`bagID`, `Items`) addonets, och spelet stoppar sedan `C_Container.UseContainerItem` när du klickar på
-en sak: disenchant och andra besvärjelser på en sak ger rutan "TidyPack has been blocked from an
-action" (hittat 2026-11-12). Därför är loggan en säker
-knapp (`SecureActionButtonTemplate`, type `click`) som klickar på spelets egen
-`MainMenuBarBackpackButton`, som finns kvar fast väskraden är dold. Inställningssidan har
-ingen säker knapp (borttagen 2026-11-14, issue #2): en säker knapp där gör hela sidan skyddad
-i strid och får inte ankras till text eller ramar som sitter i text. `/tidypack` och addonmenyn
-öppnar inställningssidan när väskan är stängd, och vid bankiren öppnar spelet väskan själv. Att stänga väskan från addonets kod är ofarligt.
+- Addon name and folder: `TidyPack` (must match `TidyPack.toc`).
+- Target: WoW Forever 1.60.1, Interface 16001, build 70938 (the patch-check baseline). Check the
+  version in `.build.info` in the game folder (product `wowf`) or in the game:
+  `/dump select(4, GetBuildInfo())`.
+- WoW Forever runs on the retail client (TOC family `_Mainline`, Blizzard code name "Camelot").
+  Blizzard's code for it is the `forever` branch of `Gethe/wow-ui-source`; folders named `Camelot`
+  there are Forever's own changes. Verify APIs against that branch, not `live`.
+- The game is installed at `/Applications/World of Warcraft/_forever_/` (English client, EU). The
+  project folder is linked in as `_forever_/Interface/AddOns/TidyPack` (symbolic link), so changes
+  show after `/reload`. A new or renamed TOC entry needs a full restart of the game.
+- SavedVariables: `TidyPackDB` (account) and `TidyPackCharDB` (character).
+- GitHub: https://github.com/danieldichterheineman/TidyPack – **public**. Nothing private in files
+  or commits: no keys, passwords, e-mail addresses or home-folder paths. Secrets (`CF_API_TOKEN`)
+  live only in GitHub Secrets.
+- CurseForge: https://www.curseforge.com/wow/addons/tidy-pack (project id 1794643).
+- The owner doesn't program. Explain changes to them in Swedish, in plain words.
 
-Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
-`ContainerFrameCombinedBags` och använder bara `hooksecurefunc` och `HookScript`, aldrig
-överskrivna funktioner:
-- `UpdateFrameSize`: spelet har gett fönstret storlek efter sitt rutnät. Tidy Pack räknar
-  bort spelets rutnät (`GetColumns`, `GetRows`, ruta 37 och avstånd 5) och får fram
-  kanterna, titelraden och raden med pengar.
-- `UpdateItemLayout` och `UpdateItems`: Tidy Pack går igenom rutorna
-  (`EnumerateValidItems`), sorterar in dem i grupper, flyttar dem (fästa i `MoneyFrame`,
-  som spelets eget rutnät), sätter märken och lås och sätter fönstrets storlek.
-- `SetSearchBoxPoint`: med handkontroll kortas sökrutan av så att kugghjulet får plats.
-- `OnHide` (HookScript): gruppen New glöms.
-- Rutornas `OnClick` (HookScript, en gång per ruta): Alt-klick (vänster) öppnar menyn för saken vid rutan
-  (`MenuUtil.CreateContextMenu`, samma meny som kugghjulet har med en sak på markören). Alt-högerklick gör
-  inget (spelet använder saken). Medan Alt hålls ner (`MODIFIER_STATE_CHANGED`) visas märket "..." på
-  varje sak; tooltipen har raden "Alt-click: Tidy Pack options"; kugghjulet visar "Drop here for options" när
-  du håller en sak; en tipsrad längst ner i Bags visas de 5 första gångerna fönstret öppnas
-  (`itemTip = { opens, dismissed }`) tills den stängs eller du Alt-klickar.
-- `EventRegistry`-eventet `ContainerFrameItemButton.OnItemClicked` (sist i spelets klick på
-  en ruta): väskbytet.
-- `TooltipDataProcessor.AddTooltipPostCall` (typ Item): raden "Needed for" och den röda
-  raden på låsta saker hos en handlare (tooltipens ägare är en låst ruta).
-- Handkontrollens markör (`Gamepad.lua`), som är spelets `SmartNavigation`:
-  - `hooksecurefunc(SmartNavigation, "SetUseGridNavigation")`: spelet slår på sitt rutnät
-    för väskfönstret (i `SmartNavPanelInfoAdded`). Tidy Pack slår av det en bildruta senare
-    med `SmartNavigation:SetUseGridNavigation(bagFrame, false)`.
-  - `hooksecurefunc(SmartNavigation, "SelectButton")`: hamnar markören på en dold ruta i
-    väskfönstret flyttar Tidy Pack den en bildruta senare med
-    `SmartNavigation:SetTargetButtonForFrame(bagFrame, ruta)`. En dold väskknapp efter en
-    synlig sak betyder LB/RB (`Gamepad_SetCursorToBag` väljer väskan före eller efter).
-  - Efter varje utläggning kontrolleras om markören står på en ruta som just dolts.
-  - Spelet tillåter addons att anropa `SetUseGridNavigation`, `SetTargetButtonForFrame` och
-    `SmartNavigation_*` utanför strid (de går via `SecureHelper`). I strid väntar Tidy Pack
-    på `ADDON_RESTRICTION_STATE_CHANGED` eller `PLAYER_REGEN_ENABLED`.
-- Panelen för frågorna (`MakeRoom.lua`, namn `TidyPackMakeRoomPanel`) använder samma mall
-  som lootfönstret (`DefaultPanelFlatTemplate`, rubrik med `SetTitle`, knappar med
-  `UIPanelButtonTemplate`). Den flyttas mellan `LootFrame` (TOP mot lootfönstrets BOTTOM,
-  -2) och `UIParent` (TOP, -135, strata DIALOG). Den reagerar på `UI_ERROR_MESSAGE` med
-  `ERR_INV_FULL`, `BAG_UPDATE_DELAYED` (antalet av sakerna på skräplistan med
-  `C_Item.GetItemCount`), `LOOT_CLOSED`, `PLAYER_ENTERING_WORLD` och `PLAYER_REGEN_ENABLED`,
-  läser lootet med `GetNumLootItems`, `GetLootSlotType`, `GetLootSlotLink` och
-  `GetLootSlotInfo`, och raderar i knappens klick med `C_Container.PickupContainerItem` och
-  `DeleteCursorItem`. Med handkontroll: `SmartNavigation:RefreshButtonGroups(LootFrame)`
-  under lootfönstret, `GamepadMode.FrameControlsManager:HandlePopupShown/HandlePopupHide`
-  uppe i mitten.
-- Kugghjulet (`Marks.lua`) är `CreateFrame("DropdownButton")` med `SetupMenu`, `SetMenuAnchor`
-  (`CreateAnchor`) och `OpenMenu` vid `OnReceiveDrag`. Menyn byggs med
-  `rootDescription:CreateTitle` och `CreateButton`.
-- Inställningarna (`Options.lua`): `Settings.RegisterVerticalLayoutCategory`,
-  `Settings.RegisterAddOnSetting`, `Settings.CreateCheckbox` (med `SetValueChangedCallback`
-  och `AddModifyPredicate`), `CreateSettingsListSectionHeaderInitializer`,
-  `CreateSettingsButtonInitializer`, `Settings.RegisterCanvasLayoutSubcategory`,
-  `Settings.RegisterAddOnCategory` och `Settings.OpenToCategory`. Skräplistans sida:
-  `WowScrollBoxList`, `MinimalScrollBar`, `CreateScrollBoxListLinearView`,
-  `ScrollUtil.InitScrollBoxListWithScrollBar`, `CreateDataProvider`, `InputBoxTemplate`,
-  atlas `RedButton-Exit` och `hooksecurefunc(ChatFrameUtil, "InsertLink")` för
-  shift-klickade länkar.
-- Questie (`QuestHints.lua`): `LibQuestieDB.RequireContract(3)`,
-  `LibQuestieDB.Item.Get(id, "relatedQuests")`, `LibQuestieDB.Quest.GetAll` (målen i grupp 3,
-  `requiredSourceItems`, `requiredLevel`, `questLevel`, `requiredRaces`, `requiredClasses`,
-  `name`, `zoneOrSort`) och `LibQuestieDB.Enum.raceMaskById`. Klassens bit är 2^(klass − 1).
-  Zonens namn kommer från `C_Map.GetAreaInfo`. Anropen ligger i `pcall`, så att ett fel i
-  QuestieDB inte stoppar Tidy Pack.
-- Rutornas `JunkIcon` (spelets skräpmynt) visas även på markerat skräp. Villkoret innehåller
-  spelets eget (`UpdateJunkItem`: grått, säljbart och hos en handlare).
-- Spelets delar som används: `ContainerFrameCombinedBags`, `MoneyFrame`, `PortraitButton`,
-  rutornas `UpgradeIcon` och `JunkIcon`, `GamepadBagBar`, `BagItemAutoSortButton`,
-  `MerchantFrame`, `LootFrame`, `SmartNavigation`, `STARTING_BAG_INDEX`, `ENDING_BAG_INDEX`,
-  `InputIconTextureSetUtility`, `ERR_INV_FULL`, mallarna `DefaultPanelFlatTemplate` och
-  `UIPanelButtonTemplate`, och atlasbilderna `auctionhouse-icon-favorite`, `bags-junkcoin`,
-  `QuestNormal` och `LFG-lock`.
+## 2. How to work
 
-- Fliken Bank (`Bank.lua`): egna rutor av `ContainerFrameItemButtonTemplate` (klicket läser
-  `GetParent():GetID()` och `GetID()`, `ContainerFrameItemButtonMixin:GetBagID`), `C_Bank.FetchPurchasedBankTabIDs`,
-  `C_Bank.CloseBankFrame`, eventen `BANKFRAME_OPENED`, `BANKFRAME_CLOSED`, `PLAYERBANKSLOTS_CHANGED`,
-  `BANK_TABS_CHANGED` och `BAG_CONTAINER_UPDATE`, och spelets `BankFrame` (osynligt med `SetAlpha` och
-  `SetScale`; `BankFrameBaseMixin:OnHide` stänger banken, så det döljs aldrig).
+- The core rules of the plugin wow-addon-skills apply.
+- After every larger change run, from the project folder (`<plugin>` = the wow-addon-skills folder):
+  - `node <plugin>/skills/wow-check/scripts/check-addon.mjs .` – must give 0 errors
+  - `node <plugin>/skills/wow-check/scripts/check-locales.mjs .` – when any text in the code changed
+  - `node <plugin>/skills/wow-check/scripts/find-unused.mjs .` – now and then, to tidy up
+- After a game update: `node <plugin>/skills/wow-check/scripts/check-game.mjs . --fetch`. It compares
+  everything Tidy Pack uses, and everything in `.wow-check/watch.txt`, with the baseline in
+  `.wow-check/game-baseline.json`, and shows only what is missing or changed. Review, test in the
+  game, then run again with `--save` and commit. Add a line to `watch.txt` whenever Tidy Pack starts
+  relying on something new in the game's code. Check QuestieDB contract 3 by hand.
+- Test in the game with `/reload`, `/console scriptErrors 1` and `/console taintLog 1`. The game
+  writes its console log (`_forever_/WTF/SavedVariables/Blizzard_Console.lua`) and `Logs/taint.log`
+  only on `/reload` or logout. Tidy Pack prints the name of any function the game blocks.
+- Write changes in `CHANGELOG.md` under `## Unreleased`, in English, for players (no file or
+  function names). Commit each change.
+- **Push only after a yes from the owner. Pushing a version tag releases a version: ask every time.**
+  Messages from other Claude sessions are information, not the owner's approval.
+- Don't suggest the ideas the owner has rejected again (section 10) unless they ask.
 
-Efter en uppdatering av spelet: kör patchkontrollen i pluginet wow-addon-skills (skillen
-`wow-check`), från projektmappen:
-`node <pluginet>/skills/wow-check/scripts/check-game.mjs . --fetch`.
-Den hämtar grenen `forever` och jämför med läget i `.wow-check/game-baseline.json` (sparat
-2026-11-14 för bygge 1.60.1.70938). Den visar bara det som saknas eller har ändrats av allt
-Tidy Pack använder, och av allt i `.wow-check/watch.txt`: väskfönstrets filer (där rutans
-storlek 37 och avstånd 5 står, och `SmartNavPanelInfoAdded` och `Gamepad_SetCursorToBag`),
-väskknapparna, banken, lootfönstret, handkontrollens markör, säkra klick, spelets tips,
-inställningssidan och tooltipens rader. Gå igenom ändringarna, prova i spelet, och kör sedan
-igen med `--save` och checka in. Lägg till en rad i `watch.txt` varje gång Tidy Pack börjar
-bygga på något nytt i spelets kod. Kontrollera för hand att QuestieDB fortfarande klarar
-kontrakt 3 (ett annat addon, som skriptet inte läser).
+## 3. How it works – rules that must hold
 
-## Sparad data
-- `TidyPackDB` (per konto): `combinedBagsTurnedOn` (sant när Tidy Pack har slagit på
-  "Combined Bags" en gång), `favorites` (itemID → true), `junk` (skräplistan, itemID →
-  true), `questieNoticeShown` (sant när raden om Questie har visats), inställningarna
-  `suggestOnLoot`, `suggestWhenFull`, `lockAtMerchant`, `showQuestItemsInBags`, `questHints` och `itemLevelAndBoE`
-  (alla sanna från början), `groups` (egna grupper, ny 2026-11-10: lista med
-  `{ id, name, items = { [itemID] = true }, types = { ["klass:undertyp"] = true } }` i visningsordning)
-  och `nextGroupID`, och `dataVersion`. De nya nycklarna har standardvärden, så ingen migrering behövdes.
-- `TidyPackCharDB` (per karaktär, ny 2026-11-09) hade `sets` (Tidy Packs egna set) till och med
-  1.1.0. Fliken Sets togs bort 2026-11-14 och `charMigrations[2]` (`CHAR_DATA_VERSION = 2`,
-  `Core.lua`) tar bort `sets`. Setens makron "TP <namn>" ligger kvar hos spelaren; `/tidypack equip`
-  i dem skriver nu en rad om Equipment Manager (`Options.lua`).
-- `TidyPackDB.showSearchBox` och `groupByBag` (nya 2026-11-14, falska från början). Nya nycklar,
-  ingen migrering.
-- `TidyPackDB.language` (ny 2026-11-15, `"auto"` från början, annars en språkkod som `"deDE"`). Ny nyckel,
-  ingen migrering.
-- `TidyPackCharDB.bank` (ny 2026-11-12, inget standardvärde): `{ time, free, items = { { link, count,
-  quality, icon, bag, slot, quest, bound, noValue } } }`, sparas vid varje genomgång hos bankiren.
-  `TidyPackDB.bankTab` och `showCounts` (sanna från början). Nya nycklar, ingen migrering.
-- `TidyPackDB.tooltipLines` och `junkValue` (nya 2026-11-12, sanna från
-  början). Nya nycklar, ingen migrering.
-- Version 2 (2026-11-10): `sellJunkButton` tas bort ur sparad data (knappen finns inte längre).
-- Version 1: första versionen (2026-11-09). Allt utom `combinedBagsTurnedOn` lades till som
-  nya nycklar med standardvärden, så ingen migrering behövdes.
+Tidy Pack has no bag window of its own. It rearranges the game's `ContainerFrameCombinedBags`
+with `hooksecurefunc` and `HookScript` only, never by overwriting the game's functions. That keeps
+everything the game lets you do with an item – use, equip, sell, split, link – working, also with a
+controller. The rules below each come from a real problem.
 
-## Idéer och önskemål
-- Quest-saker är byggda (2026-11-10, se Funktioner; planen A + fliken Quests). Kompisens förslag (2026-11-10): visa vilken
-  quest en sak hör till och antal (3/7), och bara låsa det som behövs. Skiss med tre sätt i
-  `.design/sketch-quests.html` (och `.png`): A antal på ikonen och i tooltipen (rekommenderas
-  först), B en grupp med rubrik per quest, C en flik "Quests". Planen: A, sedan C som en översikt, med Quest Items kvar i väskan (B behövs troligen inte); skiss i `.design/sketch-quests-tab.html` (och `.png`): klara quests överst, grön prick på fliken, och ett valfritt val "Show quest items in the Bags tab" (påslaget från början; avstängt ersätts gruppen av en rad "N slots hold quest items – see Quests"). Samma rutor flyttas mellan flikarna, aldrig i båda samtidigt. Spelet ger `numFulfilled` och
-  `numRequired` per mål (`C_QuestLog.GetQuestObjectives`, kontrollerat i forever). En hög är en
-  ruta och kan inte delas i visningen, men överblivna högar kan bli säljbara. Väntar på ett ja till planen.
-- Nästa efter första testet: introduktion med sex korta tips i spelets tipsruta (välkommen,
-  stjärnan, LB/RB, låsta saker, större väska), ett i taget och en gång per konto.
-  Med handkontroll utan knapp och med kontrollens knappsymboler. Se skissen.
-- Möjliga senare: slå ihop högar av samma sak till en ruta, fälla ihop grupper, visa
-  antalet pilar och kulor i rubriken.
-- Valt bort för att hålla addonet avskalat: andra karaktärers väskor (banken byggs nu som fliken Bank, issue #1), egna grupper
-  (egna set finns i stället, i en egen flik),
-  flera utseenden, val av ordning, flytt till post och handel, uppgraderingspilar på
-  utrustning (nivån säger för lite i Forevers föremål).
-- Går inte: sälja eller öppna saker automatiskt (spelet kräver ett klick på en säker knapp).
+1. **Never open the bags from addon code** (`OpenAllBags`, `ToggleAllBags`, `OpenBag`,
+   `ToggleBag`). The game builds the item buttons when the bags open (`ContainerFrame_GenerateFrame`
+   → `UpdateItemSlots`); from addon code the buttons and their values (`bagID`, `Items`) become the
+   addon's, and the game then blocks `C_Container.UseContainerItem` – disenchanting showed "TidyPack
+   has been blocked from an action" (2026-11-12). The logo is therefore a secure button
+   (`SecureActionButtonTemplate`, `type1 = "click"`, `useOnKeyDown = false`) that clicks the game's
+   hidden `MainMenuBarBackpackButton`. `/tidypack` and the addon menu open the gear menu only when
+   the bags are open; otherwise they open Tidy Pack's page in the game's options. At a banker the
+   game opens the bags itself. Closing the bags from addon code is harmless.
+2. **Never write values into the game's frames or tables.** Not even through the template's own
+   methods: `SetMatchesSearch` is called only on Tidy Pack's own buttons (`isOwnLiveButton` in
+   `Layout.lua`); the game sets the search state of its own buttons.
+3. **No secure button on the options page.** It makes the whole page protected in combat, and a
+   secure frame can't be anchored to text ("Cannot anchor protected frames to regions" stopped
+   the page from being built, 2026-11-14).
+4. **No `RegisterGameMenuEscHandler`.** Adding Tidy Pack to the game's Esc list tainted the game
+   menu ("blocked from an action", 2026-11-12). Esc closes the bags as usual.
+5. **No `StaticPopup` and no `HelpTip:Show`.** Both are shared with the game's own dialogs and
+   tips. Questions use an own panel built from `DefaultPanelFlatTemplate`; the first-time guide uses
+   an own frame from `HelpTipTemplate`.
+6. **The game's bank window is made invisible, never hidden.** Its `OnHide` closes the bank, so
+   `Bank.lua` uses `SetAlpha(0)` and `SetScale(0.01)` – and only after the Bank tab has been laid
+   out without errors (`ns.SetBankLayoutOk`). The reagent bag's own window is moved off screen the
+   same way.
+7. **Own item buttons use the game's template** (`ContainerFrameItemButtonTemplate`) on a holder
+   frame with `SetID(bag)`, and the button with `SetID(slot)`. The game's click reads
+   `GetParent():GetID()` and `GetID()`, so right-click, drag and drop work untainted. Never set
+   `button.bagID`.
+8. **Controller cursor calls only outside combat.** `SmartNavigation:SetUseGridNavigation`,
+   `SetTargetButtonForFrame` and `SmartNavigation_*` are allowed for addons outside combat (they go
+   through `SecureHelper`). In combat Tidy Pack waits for `ADDON_RESTRICTION_STATE_CHANGED` or
+   `PLAYER_REGEN_ENABLED`. Locked items are blocked for the cursor with
+   `SmartNavigation_MarkFrameBlockingSmartNavClick`, not with `Disable` (that runs the game's
+   button-hint code in Tidy Pack's name).
+9. **Deleting needs the player's press.** `DeleteCursorItem` needs a hardware event and deletes one
+   item per press; nothing runs between the click and the delete, and the panel hides when combat
+   starts.
+10. **Texts are built when used, not when a file loads** (section 7, Languages).
 
-## Filer
-- `TidyPack.toc`: namn och laddordning
-- `Locales.lua`: språkvalet (`ns.L`, `ns.LANGUAGES`, `ns.SetLanguage`, `ns.AddTranslation`); engelskan är
-  nyckeln i koden
-- `Locales/*.lua`: en översättning per språk (deDE, esES, esMX, frFR, itIT, koKR, ptBR, ruRU, zhCN, zhTW);
-  `esMX.lua` är ändringar ovanpå `esES.lua`, som laddas före
-- `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
-- `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
-- `LogoButton.lua`: loggan i stället för spelets väskrad nere till höger
-- `Media/Logo.tga`: loggan som spelbild
-- `Tour.lua`: guiden med spelets tipsrutor första gången väskan öppnas
-- `QuestsView.lua`: fliken Quests – rubriker, texter, staplar och rader per quest
-- `Groups.lua`: egna grupper – data, regler, ordning, frågor (`ns.ShowDialog`), kugghjulets menyer och tooltipen
-- `Panels.lua`: skräplistan och de egna grupperna i väskans fönster (öppnas från kugghjulet)
-- `QuestLock.lua`: vilka saker som är låsta (quest och spelets utrustningsset),
-  handlarläget och raden i tooltipen
-- `BagSwap.lua`: byter ut den minsta väskan, och avgör vilka väskor som får en grön pil
-- `Bank.lua`: fliken Bank – bankens rutor, sparad bank per karaktär och spelets bankfönster
-- `Layout.lua`: ordnar om spelets väskfönster: grupper, specialväskor, rubriker, New,
-  märken, lås, tomma platser, flikarna (Bags, Bank, Quests), sökrutan, varningen för fulla väskor och att städknappen och väskmenyn döljs
-- `QuestHints.lua`: saker som quests man inte har tagit än behöver, via Questies databas
-- `Marks.lua`: favoriter och skräplistan, med Alt-klick och kugghjulet med spelets meny (hette
-  `Favorites.lua` före 2026-11-09)
-- `Junk.lua`: vad som räknas som skräp (`ns.GetJunkKind`)
-- `MakeRoom.lua`: frågorna om radering, när skräp lootas och när väskorna är fulla
-- `Options.lua`: inställningarna i kugghjulets meny (`ns.optionMenus`), sidan om Tidy Pack i spelets
-  inställningar, `/tidypack` och addonmenyn
-- `Gamepad.lua`: handkontrollens markör (start, LB/RB, fri navigering, dolda rutor), låsen
-  för markören och knappsymboler i text
-- `CHANGELOG.md`: ändringarna, på engelska, för spelare
-- `.design/sketch.html`: skissen av hur addonet ser ut, med förslaget på introduktion
-  (följer inte med till spelarna)
+The hooks Tidy Pack uses:
+- `UpdateFrameSize`, `UpdateItemLayout`, `UpdateItems`, `UpdateName`, `UpdateCurrencyFrames` on the
+  bag frame: subtract the game's grid (button 37, gap 5), sort the buttons into groups, place them,
+  set marks and locks, size the window, place the money row.
+- `SetSearchBoxPoint`: places the search box in the title bar.
+- `OnHide`: the group New is forgotten.
+- `EventRegistry` callback `ContainerFrameItemButton.OnItemClicked` (the end of the game's click on
+  an item): bag swaps (`BagSwap.lua`).
+- Each tab's `OnEnter` (`HookScript`): holding an item over a tab switches to it.
+- Each item button's `OnClick` (`HookScript`, once per button): Alt-click opens the item menu.
+- `UpdateQuestItem` per button: hides the game's yellow quest border.
+- `UpdateContainerFrameAnchors`: moves the reagent bag window away.
+- `MicroMenuContainer:SetPoint` / `Layout`: keeps the logo next to the micro menu.
+- `BagsBar:Show`, `BagItemSearchBox:Show`, `CountContainer:Show`, `PortraitButton:Show`,
+  `BagItemAutoSortButton:Show`, the money frame's border `Show`: hide the game's parts Tidy Pack
+  replaces.
+- `TooltipDataProcessor.AddTooltipPostCall` (items): quest, lock, group and count lines.
+- `SmartNavigation:SetUseGridNavigation` and `SelectButton`: the controller cursor (`Gamepad.lua`).
 
-## Testlista
-<!-- Det användaren ska prova i spelet efter varje större ändring. -->
-1. Addonet syns och är aktiverat i addonlistan (knappen AddOns på karaktärsskärmen).
-2. Första inloggningen: om "Combined Bags" var av kommer ett meddelande i chatten.
-3. B öppnar spelets väskfönster med grupperna. Inga väskor syns bland sakerna. Kvastknappen
-   syns inte, och klick på väskikonen uppe till vänster öppnar ingen meny.
-4. Sakerna hamnar i rätt grupp och ligger i rätt ordning (drycker före mat, vapen före
-   rustning).
-5. New: loota något, öppna väskan – saken ligger i New även när musen hålls över den, och
-   flyttar till sin grupp när fönstret stängs och öppnas igen.
-6. Favorites: håll Alt ("..." syns på sakerna), Alt-klicka på Hearthstone och välj Add to Favorites (hamnar överst), gör om och välj Remove from Favorites (tillbaka). Tipsraden längst ner i Bags syns de första 5 gångerna och försvinner med x. Plocka
-   upp en sak, se att kugghjulet lyser upp, och släpp den på kugghjulet. Kvar efter `/reload`.
-7. Tomma platser: en ruta med antalet, röd vid 5 eller färre. Släpp en sak där. Fyll
-   väskorna: "Your bags are full." visas en gång.
-8. Mus: högerklick använder och utrustar, dra och släpp flyttar, shift-klick länkar i chatten,
-   shift-dra delar en hög.
-9. Sökrutan tonar ner det som inte matchar.
-10. Hos en handlare: låsta saker har ett lås och går inte att klicka på (quest-sak, en vanlig
-    sak som en quest kräver, en sak i ett utrustningsset). Tooltipen visas ändå, med
-    "Needed for" och den röda raden "Locked by Tidy Pack: can't be sold." Spelets egen
-    "Sell All Junk" säljer alla grå saker och känner inte till låsen. Inställningen "Lock
-    quest and set items" (Esc → Options → AddOns → Tidy Pack) slår av och på låsen.
-11. Väskbyte: med alla fyra väskplatser fulla och en större väska bland sakerna (grön pil):
-    högerklick byter ut den minsta väskan och sakerna flyttas med. I strid kommer ett
-    meddelande i stället.
-12. Nivå och BoE syns bara på gröna och bättre vapen och rustningar.
-13. Handkontroll, utanför strid:
-    - Loota något och öppna väskan: markören står på saken i New. Utan nya saker står den
-      på första rutan – aldrig på en tom plats eller utanför rutorna.
-    - LB och RB hoppar till förra och nästa grupp. (Med nyckelringen påslagen gör LB inget
-      på saker i ryggsäcken, precis som utan Tidy Pack.)
-    - Styrkorset går till rutan närmast åt det håll du trycker, även mellan grupper som
-      delar rad. Uppåt från översta raden längst till höger når kugghjulet.
-    - Use, Equip, Sell och Split fungerar. Sälj en sak med X: markören hamnar på saken som
-      tar dess plats.
-    - Plocka upp en sak med A och lägg den på kugghjulet. kugghjulets tooltip visar knappen A.
-    - Hos en handlare gör A och X ingenting på låsta saker, och tooltipen har den röda
-      raden. Efter handeln går quest-saker att använda igen.
-    - Inget "Interface action failed because of an AddOn" i chatten eller som fel.
-    - Nycklarna syns i Keys.
-14. I strid (t.ex. mot en träningsdocka): använd en dryck ur väskan, och se att fönstret
-    uppdateras när du lootar. Med handkontroll fungerar markören som utan Tidy Pack tills
-    striden är över, och rättas sedan.
-15. Efter `/reload` ser allt likadant ut.
-16. Skräplistan: Alt-klicka på en vit sak och välj Add to Junk List – den hamnar sist i Junk med spelets
-    skräpmynt. Gör om och välj Remove from Junk List – den går tillbaka. Med handkontroll: plocka upp en sak
-    med A, gå till kugghjulet, tryck A och välj "Add to Junk List" i menyn. Saker på listan som
-    inte är grå säljs för hand (spelets "Sell All Junk" tar bara grå).
-17. Loota en sak som står på skräplistan: frågan "You looted ..., which is on your junk
-    list. Delete it?" kommer direkt – under lootfönstret, och uppe i mitten om lootfönstret
-    stängs. Delete raderar just den saken, "Not now" stänger. Inte i strid: då kommer frågan
-    när striden är över. Med handkontroll: frågan uppe i mitten ska få markören direkt.
-18. Fulla väskor: fyll väskorna och loota eller flå något. När "Inventory is full." visas
-    kommer en panel under lootfönstret, med samma ram och bredd, och föreslår skräplistan
-    eller den billigaste grå saken (bara om det nya är värt mer). Med handkontroll: gå ned
-    till knapparna med styrkorset och tryck A på Delete. Inget felmeddelande om blockerade
-    handlingar.
-19. Kugghjulet: klicka utan sak – menyn visar "Junk List…" och "Settings…". Släpp en sak på kugghjulet –
-    menyn visar "Add to Favorites" och "Add to Junk List". Menyn ser ut som spelets egna.
-    kugghjulet lyser upp när du pekar på den och medan menyn är öppen.
-20. Inställningar: Esc → Options → AddOns → Tidy Pack, `/tidypack` och addonmenyn vid
-    minikartan öppnar sidan. Ingen etikett slutar med "...", och tooltipen förklarar varje
-    rad. Varje kryssruta gör det den säger, även efter `/reload`.
-    Rubriken för quests säger om Questie finns, och utan Questie går kryssrutan inte att
-    ändra. Skräplistans sida: lägg till genom att shift-klicka på en länk (t.ex. i chatten)
-    medan rutan är aktiv, skriv ett namn eller nummer, eller släpp en sak på sidan; ta bort
-    med det röda krysset. Rullningslisten syns bara när listan inte får plats.
-21. Quests i förväg, med Questie installerat: saker som en quest du inte tagit än behöver
-    har ett gult utropstecken uppe till höger, och tooltipen visar "Needed later for: ...".
-    Utan Questie: en rad i chatten första gången, och aldrig mer.
-22. Utseende: panelen ser ut som lootfönstret, kugghjulet står i höjd med sökrutan, och Tidy Packs
-    siffror och märken krockar inte med spelets egna (antal nere till höger, skräpmynt och
-    grön pil uppe till vänster).
-23. Prestanda: öppna väskan, loota och sälj något, och skriv sedan
-    `/dump C_AddOnProfiler.GetAddOnMetric("TidyPack", Enum.AddOnProfilerMetric.PeakTime)`.
-    Svaret är den längsta tid Tidy Pack har tagit under en bildruta, i millisekunder (en
-    bildruta är ungefär 16 ms vid 60 bilder per sekund). Addonlistan visar också hur mycket
-    av datorns tid varje addon använder.
-24. Specialväskor: med ett koger eller en själsväska på plats ligger den längst ned under
-    en linje, med väskans ikon och namn, sina saker och sina lediga platser. Empty räknar
-    bara vanliga platser. Utan specialväska syns ingen linje.
-25. Mer luft: rutorna står längre från ramen än förut, och inget krockar (kugghjulet, sökrutan,
-    pengarna). Skicka en skärmbild.
-26. (Borttaget 2026-11-14: fliken Sets.) Ett gammalt makro "TP <namn>" på en actionbar: klick
-    ger raden "Tidy Pack no longer has sets …" i chatten. Saker i spelets utrustningsset är låsta
-    hos en handlare.
-27. Efter uppdateringen: starta om spelet helt (ny rad i TOC-filen), och kontrollera att
-    favoriter, skräplista och inställningar finns kvar.
-28. (Borttaget 2026-11-14: fliken Sets och snabbtangenterna.)
-29. Specialväska och `/reload`: med en specialväska på plats (t.ex. Apprentice's Mining Pack
-    eller ett koger), gör `/reload` och öppna väskan direkt, med mus och med handkontroll.
-    Grupperna och linjen ovanför specialväskan syns, och inget felmeddelande kommer.
-30. (Borttaget 2026-11-14: fliken Sets.)
-33. "Add to bag": rutan står näst först (bredvid Favorites, eller först utan favoriter), har ett
-    + och antalet lediga platser, och en tooltip. Släpp en sak på den – saken hamnar i väskorna.
-    Prova också med handkontroll: markören börjar på en riktig sak, och en sak du plockat upp
-    med A kan läggas ner på rutan.
-34. Egna grupper: släpp en dryck på kugghjulet → "Add to Group ▸ New Group..." → namnet "Potions"
-    → saken hamnar i gruppen Potions (efter Favorites och "Add to bag"). Släpp en annan dryck →
-    "Add All "Potion" Items to Group ▸ Potions": alla drycker flyttar dit och lämnar Consumables.
-    Kontrollera: tooltipen visar "Tidy Pack group: Potions"; en favorit och en skräpmarkerad sak
-    ligger kvar i Favorites och Junk; en ny dryck du lootar ligger i New tills du stänger väskan
-    och sedan i Potions. Esc → Options → AddOns → Tidy Pack → Groups: välj gruppen, ▲▼ ändrar
-    ordning, Rename, ✕ (med fråga), kryss tar bort en regel eller sak, lägg till en sak med länk,
-    namn eller genom att släppa den. Skapa 8 grupper: "New Group" blir avstängd. Med handkontroll:
-    menyn och sidan nås med markören. `/reload` och logga in igen: grupperna finns kvar.
-50. Inställningar i väskan (2026-11-12): klicka på kugghjulet. Menyn har
-    Junk List…, Groups…, Show ▸, Merchants and loot ▸, Bag and bank ▸ och Show Tips Again. Peka på en rad:
-    tooltipen förklarar. Klicka i en kryssruta: menyn står kvar och väskan ändras bakom (t.ex. Item level and
-    BoE). "Marks for later quests" är grå utan Questie. Junk List…: väskan visar skräplistan, ingen flik är
-    vald; släpp en sak (på "+" eller var som helst), skriv ett namn och tryck Enter, shift-klicka en länk i
-    chatten medan rutan är aktiv, ta bort med krysset, och kryssa i/ur de två frågorna. Många saker: rulla
-    med mushjulet. Done eller en flik går tillbaka. Groups…: "+ New group" (klick, eller släpp en sak), ▲▼,
-    Rename, ✕ (frågar), klicka en rad för att fälla ut: regler med kryss, små rutor, "+", skrivruta. Esc →
-    Options → AddOns → Tidy Pack: logga, version, "By …", hjälpen, länken och Show Tips Again; klicka på länken, Cmd+C,
-    klistra in i webbläsaren (öppna sidan också i strid: ingen "Interface action failed"). Högerklick på loggan öppnar väskan med menyn;
-    `/tidypack` och addonmenyn gör det med öppen väska (stängd väska: inställningssidan, test 49). Show ▸ In tooltips ▸ Group line av: ingen rad "Tidy Pack group". Show ▸ har rubrikerna On items, In tooltips och In the window, med Show by bag sist.
-    Junk value in the header av: rubriken Junk utan pengar. Starta om spelet (TOC-filen ändrad).
-49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
-    i banken: "Bags N · Bank N · Total N" i blått. En sak som bara finns i väskan: ingen rad. Lägg in eller
-    ta ut något hos bankiren: siffrorna följer med. "Show bag and bank counts" av: ingen rad.
-48. Fliken Bank (2026-11-12): prata med en bankir. Väskan öppnas på fliken Bank,
-    spelets bankfönster syns inte och banken är sorterad i grupper med linjer mellan avsnitten. Högerklick på
-    en sak i Bank: den hamnar i väskan. Byt till Bags, högerklicka på en sak: den hamnar i banken. Dra en sak
-    från Bank till fliken Bags och släpp den i väskan, och tvärtom. Släpp en sak på tom yta i Bank: den
-    läggs i banken ("Drop anywhere to put it in your bank"). "N free" nere till vänster visar bankens lediga
-    platser. Kugghjulet → "Show the game's bank window": spelets fönster syns igen (köp en bankplats), och av
-    igen. Stäng väskan: banken stängs. Gå därifrån och öppna Bank: raden "You're not at a banker – this is
-    what your bank held today …" och sakerna med tooltips. Logga in med en karaktär som aldrig varit på
-    banken: "Visit a banker once …". Inställningen "Use the Bank tab at bankers" av: spelets fönster som
-    vanligt. Inget "Interface action failed" och inget felmeddelande om blockerade handlingar
-    (`/console taintLog 1`, kontrollera `Logs/taint.log` efteråt). Öppna karaktärsfönstret (`C`) hos bankiren och se var det hamnar. Med handkontroll: spelets bankfönster som vanligt.
-52. Finputs (2026-11-12): titeln följer vyn (`updateTitle` i relayout); Esc-hanteraren via `RegisterGameMenuEscHandler` togs bort
-    samma dag: den gav rutan "blocked from an action" när Esc öppnade spelets meny (addonet ändrar spelets
-    lista över hanterare, som spelets skyddade kod sedan läser); linjen före
-    specialväskorna är samma tunna linje som mellan avsnitten (`LINE_COLOR`); tooltip på grupprubrikerna (en
-    osynlig ram över rubriken: antal saker, platser, värde; en släppt sak läggs i väskan); kortare tooltip på
-    kugghjulet och loggan; spelets ljud (IG_CHARACTER_INFO_OPEN/CLOSE) för paneler och ikonval; en mörk hinna
-    som tonas bort på 0,12 s när innehållet byts (`ns.PlayViewTransition`). Inte provat i spelet.
-51. Granskning mot Forevers källkod (2026-11-14, bygge 1.60.1.70938): (a) Råvaror med en undertyp som inte
-    stod i `TRADE_SUBCLASSES` hamnade i en grupp som aldrig visades och blev osynliga. Nu läggs spelets egna
-    undertyper till (`C_AuctionHouse.GetAuctionItemSubClasses`), en okänd undertyp får en grupp i samma stund
-    (`addTradeSubclass` i `ns.GetGroup`), och `flow` visar alltid en grupp som har saker även om den saknas i
-    `ns.groupOrder` (rubriken "Other"). Provat i en Lua-tolk med låtsasvärden för spelets funktioner (tre
-    lägen: spelets lista finns, saknas, ger fel), inte i spelet. Prova i spelet: en råvara av ovanlig sort
-    syns i en egen grupp sist bland råvarorna. (b) Loggan: efter ett högerklick med öppen väska, eller en
-    släppt sak, var knappens klick avstängt tills nästa klick utanför strid; `PostClick` slår nu på det igen.
-    Prova: högerklicka på loggan med öppen väska, gå in i strid, klicka på loggan – väskan öppnas.
-55. Språk (2026-11-15): kugghjulet → Language ▸ visar Automatic (med spelets språk inom parentes) och elva
-    språk. Välj Deutsch: en rad i chatten om /reload, och Reload Now blir klickbar. Klicka den: flikarna,
-    kugghjulets meny, gruppernas rubriker, tooltipar och skräplistans panel är på tyska. Prova också Русский,
-    한국어 och 简体中文 – syns tecknen, eller rutor? – och en knapp med lång text (Rename och Add i panelerna,
-    Delete/Not now under lootfönstret, Show Tips Again på inställningssidan) klipps inte. På Mac: tooltip-raden
-    säger "Option-Klick". Tillbaka till Automatic och Reload Now: engelska igen.
-54. Granskning (2026-11-15): slå på Search box och sök med en reagens i reagensväskan och en sak i
-    banken hos bankiren: träffarna lyser, resten tonas ner, och sakerna i spelets egna rutor tonas
-    som förut (spelet sätter deras sökläge själv; Tidy Pack anropar `SetMatchesSearch` bara på sina
-    egna rutor, `isOwnLiveButton` i `Layout.lua`). Disenchanta en sak efter en sökning: ingen ruta
-    "blocked from an action". `/tidypack equip Fishing`: raden om Equipment Manager i chatten.
-53. Disenchant (2026-11-12): öppna väskan med loggan efter `/reload`, disenchanta en sak och använd en sak
-    på en annan (t.ex. en sten på ett vapen): ingen ruta "blocked from an action". Klick på loggan öppnar
-    och stänger, högerklick öppnar kugghjulets meny (väskan öppnas först om den är stängd), en sak på
-    markören läggs i väskorna. `/tidypack` med stängd väska: Tidy Packs sida i spelets inställningar
-    öppnas (utan Open Bags-knapp, öppna i stället med B eller loggan). I strid: loggan öppnar och stänger väskan.
-47. Uppgraderingspil (2026-11-11): `bags-greenarrow` uppe till höger på utrustning (inte skräp) vars nivå
-    (`C_Item.GetCurrentItemLevel`) är högre än den sämre av platserna den passar (`SLOTS_FOR`, INVSLOT_*; tom
-    plats = 0) och som du kan använda (ingen röd rad i `C_TooltipInfo.GetBagItem`, sparat per länk tills du går
-    upp i nivå, lär dig något eller byter utrustning). Döljs under låset hos handlaren. Inställningen
-    `upgradeArrows`. Rådatan har `leftColor` (bekräftat 2026-11-14 i Forevers kod: `TooltipDataHandler.lua` läser
-    `lineData.leftColor`); skulle den ändå saknas visas pilen även på saker du
-    inte kan använda. Inte provat i spelet.
-46. Quest-ramen (2026-11-11): spelets gula ram runt quest-saker döljs efter spelets `UpdateQuestItem`
-    (hook per ruta); utropstecknet på saker som startar en quest står kvar. Inte provat i spelet.
-45. Harmoni och rullning (2026-11-11): raden med pengar har samma vänster- och högerkant som bakgrunden
-    (ankrad till `inset`); bakgrunden når 3 närmare sidorna än sakernas luft upptill, `INSET_PAD_X` 15; luften runt bakgrunden är lika (PADDING_SIDE 16, PADDING_TOP 20, raden 6 från
-    nederkanten, MONEY_RAISE 13). Höjden i alla flikar = `sharedHeight` (Bags, minst fem set-platser);
-    Quests växer aldrig utan rullas med mushjulet över bakgrunden (`ns.ScrollQuests`, en del i taget),
-    med en smal gul markering i ett spår till höger. Raden "...and N more" finns inte längre. Inte provat i spelet.
-44. Reagensväskan (2026-11-11): med mus visar spelet väskplats 5 i ett eget fönster (`ENDING_BAG_INDEX` sätts
-    när spelets fil laddas; att ändra den skulle smitta spelets kod och kan blockera att saker används).
-    Fönstret fästs till vänster om Tidy Pack med nederkanterna i linje (`dockReagentBag`, efter
-    `UpdateContainerFrameAnchors` och efter varje storleksändring). Sakerna sorteras inte. Inte provat i spelet.
-43. Väskor (2026-11-11, skissen `.design/sketch-bag-bar.html`, ändrad 2026-11-14 för issue #8 och högerklick i strid): loggan (`Media/Logo.tga`, 64×64, okomprimerad
-    TGA gjord ur `.design/logo.png`) ersätter spelets väskrad (`BagsBar` döljs efter varje Show,
-    `LogoButton.lua`, inställningen `replaceBagBar`): klick (`type1 = "click"`) öppnar väskan (en säker knapp som klickar på `MainMenuBarBackpackButton`, se "Så fungerar det"); högerklick (`type2 = nil` som standard, bara `"click"` före klick utanför strid när väskan är stängd) öppnar
-    inställningarna utan att stänga en öppen väska i strid (stängd väska i strid ger chattraden att öppna väskan först). Knappen ankras i `UIParent` på `MicroMenuContainer`s plats (`updatePosition`, uppdateras utanför strid via `SetPoint`/`Layout`/`PLAYER_ENTERING_WORLD`/`UI_SCALE_CHANGED`), inte direkt i `MicroMenuContainer`. En släppt sak läggs i väskorna, ingen siffra på loggan (användarens önskan). I väskfönstret, på en högre rad med pengar (spelets myntruta
-    `MoneyFrame.Border` döljs och ritas om 46 hög med samma bilder, `BAR_HEIGHT`; pengarna flyttas upp 10 till mitten
-    av raden, `MONEY_RAISE`, men inte när spelet visar valutor under dem; 22 stora ikoner till vänster,
-    pengarna till höger): "N free"
-    följt av fem små väskikoner (antal platser); musen över en ger sakerna i den och väskikonen själv samma blåa sken (`bagGlow` och `button.glow`,
-    färgen `BAG_GLOW_COLOR`; väskikonens sken tillagt 2026-11-12) och tonar ner resten;
-    en väska som släpps på en plats byter ut den (`PutItemInBag`), en vanlig sak läggs i den väskan;
-    medan du håller en väska lyser platserna och raden säger "Drop on one of your bags to swap it".
-    Alla tre flikar byter när du håller en sak över dem. Inte provat i spelet.
-42. Avsnitt (2026-11-11, skissen `.design/sketch-order.html`; innehållet centreras mellan ramens kanter med `contentShift`, eftersom pengaraden sitter längre från höger kant): Bags i fem avsnitt (`ns.GetGroupSection`):
-    1 Favorites, egna grupper, New; 2 Consumables, Equipment; 3 råvaror och Recipes & Gems; 4 Quest Items;
-    5 Keys, Miscellaneous, Spare Bags, Junk. Nytt avsnitt = ny rad och en tunn gul linje (`sectionYs`,
-    `placeSectionLines`). Med mus visas inte "Add to bag"; "N free" står nere till vänster (rött vid 5 eller
-    färre) och byts mot "Drop anywhere ..." medan du håller en sak. Med handkontroll: "Add to bag" kvar,
-    ingen text. Gruppen med recept, ädelstenar och förbättringar heter "Recipes & Gems". Inte provat i spelet.
-41. Guiden (2026-11-11, `Tour.lua`, ändrad 2026-11-14 för issue #3): egen ram av mallen `HelpTipTemplate`
-    utanför spelets delade pool (`HelpTip:Show` byttes ut för att inte smitta spelets egna tipsrutor).
-    Första gången väskan öppnas i Bags: fyra rutor med Next/Got it – en sak (Alt-klick), kugghjulet,
-    fliken Bank (ny 2026-11-15) och fliken Quests. Saknas något att peka på hoppas steget över. Stängs väskan mitt i börjar
-    guiden om nästa gång. Klar → `tourDone = true`. Kugghjulet eller Options → Show Tips Again
-    (`ns.ResetTour`). Visas inte med handkontroll eller med spelets inställning "hideHelptips"
-    (`HelpTip:AreHelpTipsEnabled`). Ersätter den blå tipsraden (`itemTip` används inte längre).
-    Provat i spelet 2026-11-14 (laddar utan fel; återstår att prova disenchant/använd sak på sak).
-40. Råvaror och släpp (2026-11-11, skissen `.design/sketch-drop-and-crafting.html`): Trade Goods delas i
-    grupper per undertyp (`trade<subClassID>`, namn från `C_Item.GetItemSubClassInfo`); grupper för dina
-    yrken står först med yrkets ikon och namn i grått (`ns.GetTradeGroupKeys`, `GetProfessions`,
-    `SKILL_LINES_CHANGED`). Ädelstenar, förbättringar och recept står kvar i "Trade Goods". ⚠️ Undertypernas
-    och yrkenas nummer är retail-värden, inte i Forevers dokumentation – kontrollera att Cloth hamnar
-    först för en skräddare. Avvikelse från skissen: inga rader "Your professions"/"Other crafting".
-    Håll en sak över väskan: gul kant och "Drop anywhere to put it in your bags"; släpp på tom yta →
-    första lediga plats i en vanlig väska (`C_Container.PickupContainerItem`); full väska → spelets
-    röda "Inventory is full". Inte provat i spelet.
-39. (Borttaget 2026-11-14 med fliken Sets; texten nedan är historik.) Set i väskan (2026-11-10, skissen `.design/sketch-sets-in-bag.html`, ändrad 2026-11-14 för issue #8): dra setets ikon till en
-    actionbar → makrot "TP <namn>" (kontots, `/tidypack equip <namn>`, setets ikon) skapas eller uppdateras
-    och läggs på markören (`ns.PickupSetMacro`); `truncateUtf8` kortar av setnamn vid 32 tecken och makronamn vid 16 byte på hel UTF-8-teckengräns så att tecken som å/ä/ö aldrig delas mitt i; släpp på en knapp och klicka – setet tas på. Byt namn eller
-    ikon: makrot följer med. I strid: en rad i chatten, inget makro. Klick på ikonen: ett rutnät med ikoner i
-    fliken (setets saker först), ett klick byter ikonen, Done tillbaka, rullningen står kvar efter ett klick.
-    "..." → Rename: namnet skrivs på raden (Enter/Esc). Med handkontroll: spelets ruta som förut, nu med
-    synliga ikoner (listan låg i lagret HIGH under rutans DIALOG). Inte provat i spelet.
-38. Mer plats (2026-11-10, efter 1.0.1, skissen `.design/sketch-more-room.html`): ingen sökruta
-    (`BagItemSearchBox` döljs efter varje `Show`), ingen väskikon (`PortraitContainer`, `PortraitButton`
-    och `CountContainer` döljs, ramen byts till `ButtonFrameTemplateNoPortrait` med
-    `NineSliceUtil.ApplyLayoutByName`), och sakerna börjar direkt under titeln (`searchRoom()`: 55 med
-    mus, 43 med handkontroll – 30 och 40 lämnade ett band; justerat efter en
-    skärmbild). Flikarna börjar 14 från kanten. Alla tre flikar har samma höjd (`sharedHeight` i
-    `relayout`: den högsta av Bags, `ns.SETS_VIEW_HEIGHT` och `MIN_QUESTS_HEIGHT`); Quests visar "...and N
-    more" i stället för att växa. Sets: fem numrerade platser (`ns.MAX_SETS = 5`, samma som Equip set
-    1–5), tomma platser med "+" som skapar ett set (klick eller släppt sak), ingen New Set-knapp, ingen
-    tipstext. Ett klick (eller en släppt sak) gör den tomma raden till en skrivruta (`startNaming`):
-    Enter skapar setet utan ikon (första sakens ikon visas), Esc eller tom ruta avbryter, fel visas
-    i rött under rutan. Med handkontroll öppnas spelets ruta för namn och ikon som förut. Dolda quest-saker i Bags: en ruta med antalet och spelets gula quest-ram
-    (`TEXTURE_ITEM_QUEST_BORDER`), tooltip och klick öppnar Quests. Quests saknar sammanfattningsraden.
-    Mac: `ns.KeyText` byter "Alt-click" mot "Option-click" (`IsMacClient`). Inte provat i spelet.
-37. Sista granskningen (2026-11-10): kugghjulet är gult utan ram (ramen togs bort 2026-11-11; grå bild som
-    färgas, `SetDesaturated` + `SetVertexColor`), i lagret HIGH så att det syns över titelraden. Quests har
-    en rad under titeln ("8 quests need items – 1 ready to turn in"). Inställningssidan: Bag window (nivå och
-    BoE, quest-saker i Bags, knappen Your own groups), Merchants (Lock items at merchants), Quests (Questie),
-    Junk (två kryssrutor och Junk List). Texterna säger "favorite" i stället för "star".
-36. Kugghjul och ⋯ (2026-11-10): ett kugghjul i fönsterhuvudet, till vänster om stängknappen, på alla
-    flikar: meny med Junk List, Groups, Settings och två kryssrutor (Show quest items in Bags, Lock quest
-    and set items); en sak som släpps på det öppnar menyn för favorit/skräp/set/grupp som förut. Sökrutan
-    går ända fram till kanten. På varje set-rad står "..." (tooltip "More options") i stället för ett
-    kugghjul. Quests: tre rubriker med antal ("Ready to turn in (1)", "In progress (7)", "Other quest
-    items (3)") med plus/minus; allt hopfällt första gången utom "Ready to turn in" när en quest är klar;
-    ett klick fäller ut och valet finns kvar efter /reload. Under en öppen rubrik står en rad per quest
-    (plus/minus, namn, totalen till höger); ett klick på en quest fäller ut just den: en rad per sak med små rutor
-    (skala 26/37, `entry.scale` i Layout.lua) följda av namn och antal (`questOpen["q<questID>"]`). Ingen rullist (inte byggd): ryms inte allt står "...and N more quests".
-35. Quest-saker: ta en quest som kräver saker (t.ex. fenor, 3 av 7). Bags: Quest Items visar "3/7" på
-    rutan, grönt när det räcker; tooltipen säger "Needed for: <quest> (3/7)". Har du två högar av samma sak
-    med mer än questen behöver: den största hålls kvar i Quest Items, den andra ligger bland vanliga saker och
-    går att sälja hos handlaren. Fliken Quests: klara quests överst under "Ready to turn in", sedan de som
-    pågår, med rutor, namn, antal och en stapel; det du inte har plockat än syns som grå text med en tom
-    ruta; en sak som två quests behöver visas bara under den första. En prick på fliken lyser när en quest
-    är klar. Esc → Options → AddOns → Tidy Pack → "Show quest items in Bags" av: Bags visar en rad "N slots
-    hold quest items – see Quests", och ett klick öppnar fliken Quests. Fönstret är lika högt i alla flikar.
-    Med många quests: de som inte får plats ersätts av "...and N more quests". Med handkontroll: nå
-    fliken och rutorna i den.
-32. Stora väskor: med så många saker att fönstret annars skulle bli högre än skärmen blir
-    fönstret bredare (upp till 20 kolumner) och ryms. Fyll gärna alla väskplatser och kontrollera
-    att sökrutan, kugghjulet och flikarna syns och går att nå. Byt flik Bags ↔ Sets: fönstret
-    ändrar inte storlek. Med mus syns antalet lediga platser i väskikonen uppe till vänster,
-    och hjälptexten under setlistan syns med 1–3 set.
-31. Bakgrund och lås: bakgrunden bakom sakerna är mörk och hel i båda flikarna. Med "Lock
-    quest and set items" avstängd går låsta saker att klicka på hos handlaren.
+## 4. Features
 
-### Provat i spelet
-- 2026-11-09, testversion `v0.2.0-alpha1` på en annan dator (skärmbilder): addonet laddas
-  (1), väskfönstret visar grupperna utan väskor och kvastknapp (3), Hearthstone ligger i
-  Favorites (6), Empty visar antalet (7), nivå och BoE bara på grönt (12), Junk visar
-  värdet, ★-menyn utan sak (19) och inställningssidan och skräplistans sida (20, bara
-  utseendet). Fel som hittades: fyra etiketter på inställningssidan var för långa och
-  slutade med "..." – kortade. Resten av listan är inte provad.
-- 2026-11-09, `v0.2.0-alpha2`: mer luft syns, fliken Bags fungerar. Fel: flikarna hade
-  olika storlek (spelets valda flik är högre och de andras text flyttas ned, så "Sets"
-  kapades av ramen), och tom flik Sets lade texten långt ovanför fönstret och krympte
-  fönstret. Rättat: båda flikarna använder den valda flikens bilder, 80 enheter breda, den
-  andra lite mörkare; listan placeras när höjden är känd och är minst 120 hög.
-- 2026-11-09, `v0.2.0-alpha2` hos en kollega (hunter, koger med pilar, reagensväska
-  "Shipwright's Satchel" i eget fönster): inga grupper alls, spelets eget rutnät med alla
-  tomma platser. Flikarna och ★ fanns, så uppstarten gick bra; troligen stoppade ett fel i
-  genomgången (`relayout`), sannolikt i delen för specialväskor. Felet är inte hittat
-  genom att läsa koden. Därför skriver Tidy Pack nu felet en gång i chatten
-  (`safeRelayout`). Väntar på felraden.
-- 2026-11-09, `1.0.0` (zip-filen) med handkontroll, Mining Pack som specialväska: grupperna
-  försvann efter en stund och spelets ruta "TidyPack has been blocked from an action only
-  available to the Blizzard UI" kom. Spelets konsollogg
-  (`_forever_/WTF/SavedVariables/Blizzard_Console.lua`) visade felet: `Layout.lua:280`,
-  `contentHeight` var nil. Linjen ovanför specialväskorna placerades innan höjden var
-  räknad; första genomgången efter inloggning eller `/reload` stannade då, och alla
-  följande likaså. Samma fel förklarar troligen kollegans koger ovan. Rättat. Vad spelet
-  stoppade är inte känt än – Tidy Pack skriver nu funktionens namn i chatten
-  (ADDON_ACTION_FORBIDDEN/BLOCKED), och `taintLog` ska vara på vid nästa prov.
+Status: ✅ tried in the game · ⚠️ built, not tried in the game yet.
 
-## Arbetssätt
-- Kärnreglerna i pluginet wow-addon-skills gäller.
-- Kör skillen `wow-check` efter varje större ändring.
-- Testa i spelet med `/reload` efter varje ändring och `/console scriptErrors 1` påslaget.
-- Skriv ändringar i `CHANGELOG.md` under `## Unreleased` (skapa rubriken överst igen efter en
-  släppt version) och committa med git.
+**Bags tab**
+- ✅ Groups in a fixed order: Favorites, your own groups, New, Consumables, Equipment, crafting
+  materials per type (your professions first), Recipes & Gems, Quest Items, Keys, Miscellaneous,
+  Spare Bags, Junk. Five parts with a thin line between them. Empty groups are hidden. Similar items
+  sit side by side (`Categories.lua`, `Groups.lua`). A group with items that isn't in the order is
+  shown last under "Other", so no item can ever be hidden.
+- ✅ 14 columns, up to 20 when the window would otherwise be taller than the screen.
+- ✅ New loot stays in New until the window closes.
+- ✅ Item level and "BoE" on uncommon or better weapons and armor.
+- ⚠️ Upgrade arrows (`bags-greenarrow`) on gear you can use with a higher item level than the worse
+  of the slots it fits (`upgradeArrows`). "Can use" = no red line in `C_TooltipInfo.GetBagItem`
+  (`leftColor`, confirmed in Forever's `TooltipDataHandler.lua`), cached per link.
+- ⚠️ Group headings: point at one for items, slots and merchant value; drop an item on it.
+- ⚠️ Drop anywhere: hold an item over the bags – gold glow and "Drop anywhere to put it in your
+  bags". With a controller, the "Add to bag" slot is the drop target.
+- ⚠️ Special bags (quivers, soul bags, profession bags, the reagent bag) get their own part at the
+  bottom with the bag's icon and name. With the mouse, the reagent bag is drawn with own buttons
+  and the game's separate reagent window is moved off screen (✅ tried 2026-11-14).
+- ⚠️ "Show by bag" (`groupByBag`): each bag and bank tab in slot order with its empty slots;
+  Favorites and own groups stay on top.
+- ⚠️ Search box (`showSearchBox`, off by default): in the title bar of Bags and Bank; matches glow
+  blue, the rest dims; works on the saved bank by item name.
+- ⚠️ Bag row at the bottom, on a taller money row: "N free" (red at 5 or fewer) and small icons of
+  your bags; point at one to light up its items; drop a bag on one to swap it (`PutItemInBag`).
+- ⚠️ Bag swap: right-click a bigger spare bag (or Equip with a controller) to replace your smallest
+  bag (`BagSwap.lua`, outside combat).
+- ⚠️ Keyring: with a controller (and `showKeyring` on) the game shows keys in the bag window and
+  they go to Keys; with the mouse the keyring keeps its own button, which Tidy Pack doesn't touch.
+- ✅ The game's sort button, portrait menu and bag count are hidden (nobody can turn off "Combined
+  Bags" by mistake). Tidy Pack turns on "Combined Bags" once, at the first login.
 
-## Publicering
-- Status: projektet "Tidy Pack" (CurseForge-id 1794643) godkändes av CurseForge 2026-11-10. **1.0.1
-  släpptes 2026-11-10** med taggen `v1.0.1`: arbetsflödet `.github/workflows/release.yml` byggde
-  `TidyPack-v1.0.1-forever.zip`, laddade upp den till CurseForge ("Success!", spelversion 1.60.1, typ
-  release) och skapade en release på GitHub. Det var första uppladdningen via Upload API:t, så nyckeln
-  `CF_API_TOKEN` fungerar. Kontrollera på CurseForge att filen blir godkänd och synlig.
-- Filen fick visningsnamnet "v1.0.1-forever" på CurseForge (packagerns standard: taggen och speltypen).
-  Från nästa version sätter arbetsflödet namnet med `-n "TidyPack-<version>:TidyPack-<version>"` (filnamn:
-  visningsnamn), med versionen ur TOC-filen.
-- 1.0.0 laddades upp för hand 2026-11-09 med "publish manually once approved" och står som "Pending
-  Release". Den har kraschen med specialväskor och knappen Sell Junk och ska **aldrig publiceras** –
-  användaren tar bort den eller låter den stå orörd.
-- Version 1.0.0 förbereddes så: LICENSE (MIT), README.md (projektbeskrivningen), CHANGELOG.md, zip-filen i
-  `.release/` och texterna till projektsidan i `.design/curseforge-page.md`. Kategori Bags & Inventory,
-  spelversion WoW Forever 1.60.1, Questie som valfritt beroende. Loggan är `.design/logo.png` (egen
-  teckning, källa `logo.svg`).
-- 1.0.1 släpptes utan att användaren hade bekräftat den sista zip-filen i spelet (gult kugghjul, omordnad
-  inställningssida, raden under titeln i Quests). Nästa version: börja med de punkterna i testlistan.
-- GitHub-sidan: `.github/README.md` är förstasidan på GitHub (logga, installation, kort
-  funktionslista, länk till feedback). GitHub visar den före `README.md` i roten, som i stället
-  är CurseForge-beskrivningen och också följer med i zip-filen. Håll funktionerna lika i
-  båda, och uppdatera raden om CurseForge när projektet är godkänt. Loggan ligger i
-  `.design/logo.png` (länkas med adress till `main`). Repots "Social preview" (1280 × 640,
-  `.design/social-preview.png`) kan bara läggas in för hand: Settings → General → Social
-  preview. Beskrivning och ämnesord sätts med `gh repo edit`.
-- Testversioner för andra datorer läggs som förhandsversion (pre-release) under Releases på
-  GitHub, med zip-filen från `package-addon.mjs` (den hamnar i `.release/`, som git
-  ignorerar). Första: `v0.2.0-alpha1`, andra: `v0.2.0-alpha2`, tredje: `v0.2.0-alpha3`, fjärde: `v0.2.0-alpha4`, femte: `v0.2.0-alpha5` (alla 2026-11-09). Efter 1.0.0: `v1.0.1-alpha1` (2026-11-09, rättelsen för specialväskor, ny bakgrund, set-menyn, utan Sell Junk). Taggarna har `alpha` i namnet. När
-  arbetsflödet nedan finns får bara rena versionstaggar (vN.N.N) något att göra; testtaggar
-  med `alpha` startar ingenting och laddas inte upp till CurseForge.
-- CurseForge-projektet: id 1794643 (`## X-Curse-Project-ID` i TOC-filen), adress
-  `curseforge.com/wow/addons/tidy-pack`. 1.0.0 laddades upp med "publish manually once
-  approved" (bekräftat 2026-11-10), så den släpps inte av sig själv när projektet godkänns;
-  den har kraschen och ska inte släppas. Hemligheten `CF_API_TOKEN` ligger i repot
-  (2026-11-10). Arbetsflödet
-  markerar inga filer för manuell release (packagern har ingen sådan flagga), så 1.0.1 blir
-  tillgänglig så fort CurseForge godkänt filen.
-- Automatisk uppladdning (pushad och provbyggd 2026-11-10, men ingen riktig tagg är släppt än):
-  `.github/workflows/release.yml` startar bara när en tagg som `v1.0.1` pushas (inte
-  `v1.0.1-alpha1`). Först kontrolleras att taggen stämmer med `## Version:` i TOC-filen
-  (ett fast nummer, inte `@project-version@`), sedan bygger BigWigs packager v2 zip-filen
-  utifrån `.pkgmeta`, laddar upp den till CurseForge som Release och lägger en release med
-  zip-filen på GitHub. Kräver hemligheten `CF_API_TOKEN` (användaren lägger in den själv)
-  och `## X-Curse-Project-ID: <id>` i TOC-filen (saknas än). Packagern känner igen Forever
-  (Interface 16xxx, spelversionstyp 88568). Fråga alltid före en tagg: den släpper en
-  version. `.github/workflows/package-check.yml` är ett provbygge som startas för hand
-  (Actions → Package check → Run workflow): samma packager med `-d` (ingen uppladdning, ingen
-  nyckel), och zip-filen sparas som nedladdningsbar fil i 7 dagar. Provet 2026-11-10 gav
-  samma 19 filer som `package-addon.mjs`, byte för byte lika med flaggan `-u` (Unix-radslut;
-  utan den skriver packagern Windows-radslut, CRLF). Packagern kände igen Forever
-  (spelversion 1.60.1) och döper filen `TidyPack-<tagg>-forever.zip`. Byggtypen följer taggen:
-  en ren `vN.N.N` ger Release, annars (som vid provet, efter taggen `v1.0.1-alpha1`) Alpha.
-  Två spår på GitHub: förhandsversioner (alpha, för testare, med `gh release create
-  --prerelease`) och rena versioner (laddas upp av arbetsflödet). GitHubs "Latest" pekar
-  alltid på den senaste rena versionen.
-- Packagerns skript (`release.sh`) kräver bash 4.3 eller nyare. Macens egen bash är 3.2, så
-  provbygget görs på GitHub med `package-check.yml` (inget behöver installeras).
-- Kvar innan första riktiga släppet: hemligheten `CF_API_TOKEN` (användaren lägger in den),
-  `## X-Curse-Project-ID` i TOC-filen och att CurseForge godkänt projektet. Att API:t tar emot
-  uppladdningar till ett ännu ogodkänt projekt är inte verifierat.
+**Logo**
+- ✅ The Tidy Pack logo replaces the game's bag buttons (`replaceBagBar`). Click opens and closes the
+  bags, right-click opens the gear menu, a dropped item goes into the bags. No count on the logo.
 
-## Beslut
-- 2026-11-08: Addon för WoW Forever som hanterar väskorna man bär med sig, med fokus på
-  sortering. Baganator (licens All Rights Reserved) är inspiration: ingen kod kopieras,
-  bara idéer om funktioner.
-- 2026-11-08: Namn Tidy Pack (`TidyPack`), engelska i spelet. Spelet ska installeras på den
-  här Macen och addonet länkas in i `AddOns`. Projektmapp i hemmappen.
-- 2026-11-09: Bara den grupperade visningen, med fast ordning och inga val. Ingen
-  inställningssida och inget slash-kommando. Pengar ska synas.
-- 2026-11-09: Måste fungera med handkontroll. Därför ordnar Tidy Pack om spelets eget
-  väskfönster i stället för att ha ett eget. Ett eget fönster kan inte få spelets knappar för
-  handkontroll, eftersom att använda saker är skyddat och addons bara får koppla in egna
-  fönster i handkontrollens styrning utanför strid. Fönstret ligger där spelet lägger det
-  och går inte att flytta.
-- 2026-11-09: Väskor ska vara lätta att byta men inte synas bland sakerna. Högerklick
-  eller Equip på en större väska byter ut den minsta, och spelets väskrad för handkontroll
-  döljs.
-- 2026-11-09: Nivå och BoE på utrustning, som i Baganator. Reagenser
-  (`Enum.ItemClass.Reagent`) räknas som Consumables.
-- 2026-11-09: Git i projektmappen, en commit per ändring.
-- 2026-11-09 (0.2.0): Stjärnmärkning (Alt-klick och ★-knapp), questlås som spärrar hos
-  handlaren, egen Sell Junk-knapp (12 per klick), gruppen New, skräpets värde, varning för
-  fulla väskor och skydd för utrustningsset.
-- 2026-11-09 (0.2.0): Så rent som möjligt: elva grupper utan sektioner och linjer, lås bara
-  hos handlaren, nivå och BoE bara på gröna och bättre, Sell Junk bara när det finns skräp,
-  svag ★-knapp, och spelets väskmeny borttagen.
-- 2026-11-09: Handkontrollen rättad efter genomläsning av Blizzards kod (inte provat i
-  spelet än). Spelets markör började på den dolda väskknappen, LB/RB gick till dolda
-  väskknappar, och rutnätet passade inte grupperna. Nu: start i New, LB/RB mellan grupper,
-  spelets fria navigering och flytt bort från dolda rutor. Ingen egen knappbindning för
-  LB/RB: spelets knappstack för handkontroll (`InputBindingManager`) är delad, och en
-  bindning från ett addon skulle smitta spelets egna knappar (taint).
-- 2026-11-09: Med handkontroll stängs låsta rutor inte av. Spelets markör lyssnar på när
-  rutan den står på stängs av eller på (`TrackButtonEnabledState`) och kör då knapptipsens
-  kod, som bygger om knappbindningarna. Gör Tidy Pack det, sker det i Tidy Packs namn, och
-  sedan kan spelet blockera Use och Sell. I stället används spelets egen spärr för markörens
-  klick, som addons får sätta utanför strid.
-- 2026-11-09: Spelets tips (HelpTip), hjälpskyltar (HelpPlate) och nybörjarguide är
-  avstängda med handkontroll i Forever. En introduktion i Tidy Pack ska därför använda
-  spelets mall `HelpTipTemplate` i egna ramar. Föreslagen och skissad
-  (`.design/sketch.html`), byggs efter första testet i spelet.
-- 2026-11-09: Städning: questloggen gås igenom högst en gång per bildruta och väskan läggs
-  bara om när något nytt krävs, Sell Junk uppdateras en gång per bildruta, och varje sak
-  frågas bara en gång om den behövs för en quest.
-- 2026-11-09: Blizzards addonpolicy har inga regler om utseende. Addons får använda spelets
-  mallar, typsnitt och bilder i spelet, men inte kopiera spelets bildfiler eller se ut att
-  komma från Blizzard. Därför: frågepanelen har lootfönstrets mall, skräpet spelets
-  skräpmynt, quest-märket kartans utropstecken och siffran för tomma platser samma plats
-  som spelets egen siffra för antal. Panelens rubrik är "Tidy Pack", så att det syns vem som
-  frågar.
-- 2026-11-09: Spelets egna frågerutor (StaticPopup) används inte. De är delade, och ett
-  addon som visar sin fråga i dem kan smitta spelets egna frågor (taint), t.ex. den när man
-  raderar en sak. Panelen är en egen ram byggd av spelets mallar.
-- 2026-11-09: Fulla väskor: automatiska förslag, men radering bara när spelaren trycker
-  Delete (användarens önskan, och spelets regel för `DeleteCursorItem`). Med handkontroll
-  flyttas markören inte till Delete, så att ett tryck på A för att loota aldrig raderar.
-- 2026-11-09: Quests i förväg använder QuestieDB som valfritt beroende. Ingen data kopieras,
-  eftersom QuestieDB:s licens är en blandning av GPLv3 och "all rights reserved". Användaren
-  godkände att Tidy Pack berättar en gång att Questie låser upp funktionen. På CurseForge
-  ska Questie anges som valfritt beroende. "Lär av dina karaktärer", som fyller luckorna för
-  Forevers nya quests, tas efter att detta är provat.
-- 2026-11-09: Skräplistan ska ge förslag automatiskt när en sak från listan lootas, t.ex.
-  vid flåning (användarens förtydligande). Saker ska kunna läggas till utan att man har dem,
-  därför en egen sida med länk, namn och nummer. Shift-klickade länkar fångas med
-  `hooksecurefunc(ChatFrameUtil, "InsertLink")`, eftersom spelet bara lägger länkar i
-  chatten och några egna fält.
-- 2026-11-09: En enda knapp i väskfönstret (★, spelets `DropdownButton` med spelets meny) i
-  stället för ★ och skräpmynt bredvid varandra. Användaren ville ha luft och ett
-  inbyggt intryck; spelets eget väskfönster har bara en knapp på den platsen.
-- 2026-11-09: Inställningssida (ändrar beslutet från 2026-11-09 om att inte ha någon):
-  användaren vill kunna välja vad som är på, t.ex. Questie. Huvudsidan använder spelets
-  vanliga rader, skräplistan en egen sida. Öppnas från Options, `/tidypack`, addonmenyn vid
-  minikartan och ★.
-- 2026-11-09: Etiketterna på inställningssidan är högst ungefär lika långa som "Show item
-  level and BoE on gear". Spelet kortar av längre etiketter med "..." (sett i spelet).
-  Förklaringen står i tooltipen, som på spelets egna sidor.
-- 2026-11-09: Mer luft mellan ramen och rutorna (användarens önskan): 6 enheter på var
-  sida, 4 under sökrutan och 9 ovanför pengarna. Pengarna står kvar där spelet lägger dem.
-- 2026-11-09: Specialväskor i egna grupper längst ned under en linje, med väskans ikon och
-  namn (användarens önskan: tydligt att de inte hör till de vanliga väskorna). Linjen ändrar
-  beslutet om "inga linjer" – den syns bara när en specialväska finns.
-- 2026-11-09: Knappen i väskfönstret är ett kugghjul (`questlog-icon-setting`, spelets
-  bild för inställningar) i stället för ★, eftersom den nu gör mer än favoriter. Gruppen
-  Favorites behåller stjärnan.
-- 2026-11-09: Namn och ikon för set väljs i spelets egen ruta
-  (`IconSelectorPopupFrameTemplate`, som Forevers utrustningsset), med utrustningens ikoner
-  först. Ikonen sparas som `icon` i setet; äldre set utan ikon visar första sakens ikon.
-  Setens sida har en rubrikrad per set med ikon, namn, antal, Edit och Delete.
-- 2026-11-09: Granskning: sökrutan går nu fram till knappen även med mus (spelet gav den en
-  fast bredd, 330) och döljs i fliken Sets. Questies databas frågas i bakgrunden, högst
-  3 ms per bildruta, så att väskfönstret aldrig väntar på den (Sell Junk frågar direkt för
-  grå saker).
-- 2026-11-09: Rubriken är "Backpack" (spelets `BACKPACK_TOOLTIP`) i stället för "Combined
-  Backpack" (användarens val). Byts efter spelets `UpdateName`.
-- 2026-11-09: Flikarna i Forevers egna fönster: flikar som byter hela fönstrets innehåll
-  sitter under fönstret (`PanelTabButtonTemplate`, t.ex. handlarens Merchant/Buyback och
-  karaktärsfönstret). Flikar ovanpå (`PanelTopTabButtonTemplate`) används bara inuti ett
-  fönster (samlingarnas Items/Sets). Forevers bank har ikonflikar på sidan
-  (`LargeSideTabButtonTemplate`). Forevers nya trollbok har flikar under titelraden,
-  inuti fönstret (`TabSystemTemplate` + `TabSystemTopButtonTemplate`, TOPLEFT 70, -26).
-- 2026-11-09: Flikarna Bags och Sets byggs som trollbokens (användaren visade den som
-  förebild): `TabSystemTemplate` med `TabSystemTopButtonTemplate`, 90 breda, text i
-  `GameFontNormal`/`GameFontHighlight`. Den valda är högre, som i spelet. På användarens
-  önskan sitter de utanför ramen, ovanpå fönstrets övre kant (BOTTOMLEFT mot fönstrets
-  TOPLEFT 62, -2) – mallen är gjord för flikar som hänger ovanpå en ram. Sökrutan har
-  spelets plats. Mallen läser `tabTemplate` när den skapas, så Tidy Pack sätter mallen och
-  poolen efteråt.
-- 2026-11-09 (efter skärmbilder av `v0.2.0-alpha4`): den valda flikens text var mindre
-  (knappen är avstängd och spelet använde dess "disabled"-stil) – rättat med
-  `SetDisabledFontObject`. Kugghjulet såg avstängt ut vid 0.35 – nu 0.6. Fliken Sets:
-  New Set står på sökrutans plats, läget efter namnet, en Equip-knapp till höger (avstängd
-  när allt sitter på), större saker (22) och en tom ruta med "+" sist. Spelets prick på
-  fliken Sets (`SetTabNotification`) när ett set saknar något. Snabbtangenter i
-  `Bindings.xml` (öppna Sets, Equip set 1–5) via den namngivna ramen `TidyPackKeys`, så
-  att inga globala funktioner behövs.
-- 2026-11-09: Färre steg (användarens önskan, alla fem förslagen): allt om set sköts i
-  fliken Sets (rader med sakerna, släpp på en rad, högerklick för Edit/Remove/Delete, New
-  Set i fliken), fliken Sets öppnas när man håller en sak över den, kugghjulets meny utan
-  sak har bara Junk List och Settings, setens sida i inställningarna är borttagen, och
-  grupperna "Bags" och "Empty" heter "Spare Bags" och "Free".
-- 2026-11-09: Flikarna Bags och Sets är alltid lika stora (användarens önskan), till
-  skillnad från spelets egna flikar där den valda är högre.
-- 2026-11-09: Egna set (användarens önskan): egna samlingar per karaktär, inte spelets
-  utrustningsset. Läggs till via ★-menyn (högerklick används av spelet). Flikarna Bags och
-  Sets ovanför fönstret; klick på ett set tar på det direkt, med varning när något saknas.
-  Setens sida i inställningarna visar var varje sak finns. Saker i set låses hos handlaren,
-  som spelets utrustningsset. Rutan för namn är en egen ram (inte StaticPopup). Sell Junk
-  flyttades till höger ovanför fönstret för att inte krocka med flikarna.
-- 2026-11-09: Väskfönstret behåller spelets egen bakgrund. Den är halvgenomskinlig
-  (`PANEL_BACKGROUND_COLOR`, samma som spelets andra fönster), så questlistan syns svagt
-  bakom ett stort väskfönster. Tidy Pack ändrar inte bakgrunden, eftersom fönstret då
-  skulle se annorlunda ut än resten av spelet.
+**Marks and the gear button**
+- ✅ Gear button (`Marks.lua`, the game's `DropdownButton`) at the top right of the window. With an
+  item on the cursor: Add to Favorites / Junk List / Group ▸ / Add All "type" Items to Group ▸.
+  Without: Junk List…, Groups…, Show ▸ (headings On items, In tooltips, In the window), Merchants and
+  loot ▸, Bag and bank ▸, Language ▸, Show Tips Again. Checkboxes keep the menu open.
+- ✅ Alt-click (Option-click on a Mac) an item for the same menu; "..." on every item while Alt is
+  held; a tooltip line says so.
+- ✅ Favorites and the junk list (per account, by item id). Junk list items get the game's junk coin,
+  sort last in Junk and are suggested first when the bags are full.
+- ⚠️ Own groups (`Groups.lua`, up to 8 per account): single items or a whole type; managed in the
+  bag window (gear → Groups…).
+- ⚠️ Junk list panel in the bag window (gear → Junk List…): drop, type a name, link or number,
+  remove with the red cross, and the two loot questions.
 
-- 2026-11-09 (utseende, användarens val A–D efter skärmbilder med handkontroll): hel, mörk
-  bakgrund bakom sakerna (`InsetFrameTemplate` med mörkare marmor, `inset` i `Layout.lua`).
-  Det ändrar beslutet ovan om att behålla spelets genomskinliga bakgrund: när de tomma
-  rutorna döljs lyser questlistan igenom. Fliken Sets har ett tomt läge med text och New Set
-  i mitten. Mer luft mellan grupperna (`SHELF_GAP` 10, `PADDING_TOP` 8). Rubrikerna behåller
-  storleken (`GameFontNormal`): nästa mindre typsnitt är för litet på en tv. Inte provat i
-  spelet – färgen på bakgrunden justeras efter en skärmbild.
+**Merchants and loot**
+- ✅ Locks at merchants (`lockAtMerchant`): quest items, items a quest needs, items in the game's
+  equipment sets. Lock icon, can't be clicked; the tooltip says why. The merchant's own "Sell All
+  Junk" button doesn't know about the locks. Quest locks match item names in the game's language;
+  with a controller, locks can't change in combat and catch up afterwards.
+- ⚠️ Junk list loot (`suggestOnLoot`): looting an item on the list asks right away whether to delete
+  it. Bags full (`suggestWhenFull`): a panel under the loot window suggests the junk list first, then
+  the cheapest grey item if the new loot is worth more. Nothing is deleted without pressing Delete.
 
-- 2026-11-09 (genomgång av funktionerna, användarens val): (1) "Add What I'm Wearing" i
-  setets meny (`ns.AddWornToSet`, allt utom skjorta och tabard). (2) Ett kugghjul på varje
-  set-rad öppnar setets meny (`DropdownButton`), eftersom högerklick inte syns och inte nås
-  med handkontroll; högerklick finns kvar. (3) Inställningen `lockAtMerchant` ("Lock quest
-  and set items"), påslagen från början. (4) Knappen Sell Junk är borttagen (`Junk.lua` har
-  bara `ns.GetJunkKind` kvar, inställningen `sellJunkButton` används inte längre): spelet har
-  `MerchantSellAllJunkButton`. Den säljer alla grå saker och känner inte till låsen eller
-  skräplistan. Funktioner och testlistan ovan är rättade efter det. Inte provat i spelet.
+**Bank tab** (issue #4: test in the game)
+- ⚠️ At a banker: the bank sorted in the same groups, with own buttons; right-click and drag between
+  bank and bags; drop on empty space to put an item in the bank. The game's bank window is invisible;
+  gear → Bag and bank → "Show the game's bank window" brings it back (buying a bank slot). Closing
+  the bags closes the bank. Setting `bankTab`.
+- ⚠️ Away from the bank: what the bank held last time (per character), with tooltips.
+- ⚠️ Tooltip counts (`showCounts`): "Bags 12 · Bank 40 · Total 52", this character only.
+- Not built: the account (warband) bank, bank bags and buying slots in the bottom row, controller.
 
-- 2026-11-10: rutan för lediga platser heter "Add to bag" (användarens val bland "Add to bag",
-  "Free slots" och "Drop here") och flyttades från sist till näst först, bredvid Favorites,
-  så att den inte tar en egen rad (65 enheters höjd) och ligger nära siffran i väskikonen.
-  Rutan behålls, eftersom den är släppplatsen. Se funktionslistan.
-- 2026-11-10 (efter test av 1.0.1 med skärmbilder, användarens val A–G): mer luft innanför
-  bakgrunden, ljusare bakgrund, samma storlek i båda flikarna, fler kolumner efter behov,
-  14 som standard, hjälptext i Sets och siffran i väskikonen. Siffran i gruppen Free är kvar:
-  rutan är släppplatsen för saker. Tänkbart senare (kompisens förslag, se nedan): dela upp
-  quest-saker efter quest med antal (3/7) och bara låsa det antal som behövs.
+**Quests tab**
+- ⚠️ Quest items show "3/7" (green when done); the tooltip says which quest. Extra stacks beyond
+  what a quest needs are normal items and can be sold.
+- ⚠️ Quests tab: ready quests first, then in progress, then other quest items; a heading or quest
+  opens with a click; scrolls with the mouse wheel; a dot on the tab when a quest is ready.
+- ⚠️ "Quest items in Bags" off: the Bags tab shows one line with how many slots they use.
+- ⚠️ With Questie (QuestieDB, optional): a yellow exclamation mark on items that quests you can take
+  now or within 5 levels will need, and "Needed later for: …". Without Questie: one chat line, once.
+  QuestieDB's data for Forever's new quests isn't complete.
 
-- 2026-11-10: egna grupper byggda enligt det godkända förslaget (användaren svarade "Ja, bygg";
-  frågorna om konto/karaktär, antal och placering besvarades med mina rekommendationer: per konto,
-  högst 8, efter Favorites och "Add to bag"). Två avvikelser från skissen: en sak eller typ ligger i
-  högst en grupp (bockrutan flyttar den i stället för att lägga den i flera), och raden om att en
-  favorit eller skräpmarkerad sak ligger kvar i sin grupp är en rubrikrad i menyn (guld), inte grå.
+**Other**
+- ⚠️ Languages (section 7).
+- ✅ First-time guide (`Tour.lua`): four tips – Alt-click, the gear, the Bank tab, the Quests tab.
+  Not shown with a controller or with the game's tips turned off. Gear → Show Tips Again.
+- ✅ Tidy Pack's page in Esc → Options → AddOns: logo, version, author, short help, a link to copy,
+  Show Tips Again.
+- ⚠️ Controller cursor (`Gamepad.lua`): starts on the newest loot, LB/RB jump between groups, the
+  D-pad goes to the nearest item, never stays on a hidden button. The panels (junk list, groups) and
+  the Bank tab aren't reachable with the cursor yet (issue #6).
+- Removed: the Sets tab (2026-11-14, the game's Equipment Manager does the job; old "TP" macros print
+  a line), Tidy Pack's own Sell Junk button (2026-11-09).
 
-- 2026-11-10: städning efter en granskning (analys av alla `ns`-medlemmar, lokala variabler och
-  inställningar; ingen oanvänd funktion hittades): borttaget oanvänt `addonName` i 14 filer
-  (`local _, ns = ...`) och oanvänd `L` i `Junk.lua`; knappvariablerna i `Marks.lua` heter
-  `gearButton` i stället för `starButton`; gamla kommentarer om ★-knappen och Sell Junk rättade;
-  migrering 2 tar bort `sellJunkButton` ur sparad data; `.design/sketch.html` märkt som gammal.
-  Kvar med avsikt: `locale` i `Locales.lua` (mall för översättningar) och `migrations` (mall).
+## 5. Saved data
 
-## Beslut (forts.)
-- 2026-11-12: Alla inställningar under kugghjulet i väskan, och skräplistan och grupperna i väskans eget fönster
-  (användarens önskan efter skissen `.design/sketch-settings-in-bag.html`). Spelets inställningssida behålls,
-  men bara med information: vem som gjort Tidy Pack, en kort hjälp och länken till CurseForge (användarens
-  förslag). Antalet i tooltipen är den korta varianten på en rad (1c, användarens val).
+`Core.lua` has the defaults and the migrations (`DATA_VERSION = 2`, `CHAR_DATA_VERSION = 2`). New keys
+with a default need no migration; a key that is removed or changes meaning needs one.
 
-- 2026-11-15: Språkval (användarens val: "Alla spelets språk"). Tidy Pack följer spelets språk
-  (`GetLocale`) och kugghjulets Language ▸ kan välja vilket som helst av spelets elva språk (WowLocale i
-  `LFGListInfoDocumentation.lua`: enUS, deDE, esES, esMX, frFR, itIT, koKR, ptBR, ruRU, zhCN, zhTW; enGB
-  visas som enUS och ptPT som ptBR). Ingen svenska: spelet finns inte på svenska. Bytet gäller efter
-  `/reload` (knappen Reload Now, `C_UI.Reload`), eftersom flikar och knappar redan har sina texter. `L`
-  slår upp översättningen varje gång en text används; de två listor som läses när filerna laddas
-  (`ns.groupNames` i `Categories.lua`, `ns.optionMenus` i `Options.lua`) byggs om i `ns.OnLoad`, och
-  `ns.SetLanguage` körs i `Core.lua` före alla `ns.OnLoad`. Spelets typsnitt (`FontFamily` med alfabeten
-  roman, korean, simplifiedchinese, traditionalchinese och russian i `Blizzard_Fonts_Shared/Shared/Fonts.xml`)
-  ska kunna visa alla språk oavsett spelets språk – inte provat i spelet. Översättningarna är
-  maskinöversatta (Claude), med spelets egna ord där de är kända (t.ex. "Plunder", "Camelote", "Хлам",
-  "잡동사니", "装绑"). "Alt-" står före ordet för klick i alla språk, så att `ns.KeyText` kan byta till
-  "Option-" på Mac. Knappar med fast bredd växer med texten (`ns.FitButtonText`). Rättelser från spelare
-  kan senare tas in via CurseForges översättningsverktyg.
+- `TidyPackDB` (account): `favorites` and `junk` (item id → true); `groups` (list of
+  `{ id, name, items = { [itemID] = true }, types = { ["class:subclass"] = true } }`) and
+  `nextGroupID`; `questOpen` (open headings in the Quests tab); `tourDone`; `questieNoticeShown`;
+  `combinedBagsTurnedOn`; `language` (`"auto"` or a language code); the options `itemLevelAndBoE`,
+  `upgradeArrows`, `questHints`, `showCounts`, `tooltipLines`, `showQuestItemsInBags`, `junkValue`,
+  `showSearchBox` (false), `groupByBag` (false), `lockAtMerchant`, `suggestOnLoot`, `suggestWhenFull`,
+  `replaceBagBar`, `bankTab`; `dataVersion`.
+- `TidyPackCharDB` (character): `bank` = `{ time, free, tabs, items = { { link, count, quality, icon,
+  bag, slot, quest, bound, noValue } } }`, saved at every change at a banker; `dataVersion`.
+- Migrations: account 2 (2026-11-10) removes `sellJunkButton`; character 2 (2026-11-14) removes
+  `sets` (the Sets tab).
 
-## Källor
+## 6. Files
+
+- `TidyPack.toc` – name and load order. `Locales.lua` and `Locales/*.lua` first, then `Core.lua`.
+- `Locales.lua` – `ns.L`, `ns.LANGUAGES`, `ns.SetLanguage`, `ns.AddTranslation`.
+- `Locales/<code>.lua` – one translation per language; `esMX.lua` is changes on top of `esES.lua`.
+- `Core.lua` – saved data, migrations, events, `ns.OnLoad`, `ns.KeyText`, `ns.FitButtonText`,
+  blocked-action reporting, "Combined Bags".
+- `Categories.lua` – which group an item belongs to, order within a group, crafting groups.
+- `Groups.lua` – own groups: data, rules, order, dialogs, menus, tooltip line.
+- `QuestLock.lua` – locks (quests, equipment sets), merchant state, quest tooltip lines.
+- `QuestHints.lua` – items that later quests need (QuestieDB).
+- `BagSwap.lua` – bag swaps and which bags get a green arrow.
+- `Layout.lua` – rearranges the bag window: groups, parts, headings, marks, locks, special and
+  reagent bags, money and bag row, search, tabs, views, drop glow, fade. (2,366 lines – a candidate
+  for splitting, section 10.)
+- `Bank.lua` – the Bank tab, saved bank, tooltip counts, the game's bank window.
+- `QuestsView.lua` – the Quests tab.
+- `Marks.lua` – favorites, junk list marks, Alt-click, the gear button and its menu, Language ▸.
+- `Panels.lua` – the junk list and own groups in the bag window.
+- `Tour.lua` – the first-time guide.
+- `LogoButton.lua` – the logo instead of the game's bag bar.
+- `Junk.lua` – what counts as junk (`ns.GetJunkKind`).
+- `MakeRoom.lua` – the delete questions (junk list loot, full bags).
+- `Options.lua` – the gear menu's options (`ns.optionMenus`), the options page, `/tidypack`, the
+  addon menu.
+- `Gamepad.lua` – the controller cursor, cursor locks, button icons in text.
+- `Media/Logo.tga` – the logo in the game (made from `.design/logo.png`).
+- `.wow-check/` – patch-check baseline and watch list.
+- `.design/` – sketches, logo sources, CurseForge texts, `agents-history-sv.md`; never in the zip.
+- `.github/` – the GitHub front page (`README.md`) and the release workflows.
+
+## 7. Languages
+
+- Tidy Pack follows the game's language (`GetLocale`) or the one picked under gear → Language ▸, any
+  of the game's eleven: enUS, deDE, esES, esMX, frFR, itIT, ptBR, ruRU, koKR, zhCN, zhTW (`enGB` shows
+  as enUS, `ptPT` as ptBR). No Swedish – the game has no Swedish client. A change applies after
+  `/reload` (the menu's Reload Now, `C_UI.Reload`).
+- The English text is the key: `L["English text"]`. `L` looks up the translation every time a text
+  is used. Never build texts when a file loads; `ns.groupNames` and `ns.optionMenus` are (re)built in
+  `ns.OnLoad`, and `Core.lua` calls `ns.SetLanguage` before every `ns.OnLoad`.
+- In translations `%s`/`%d` keep the English order, and "Alt-" stands before the word for click
+  (`ns.KeyText` turns it into "Option-" on a Mac). Buttons with text grow with it
+  (`ns.FitButtonText`).
+- The translations are machine-made (2026-11-15) using the game's own words where known; the README
+  asks for corrections. CurseForge's translation tool could take player corrections later.
+- When an English text changes, its translations stop showing until they are redone:
+  `check-locales.mjs` lists them. The full guide is in the plugin:
+  `skills/wow-maintain/references/translations.md`.
+
+## 8. Test checklist
+
+What the owner tries in the game after larger changes. Start the game fully after a TOC change;
+otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on.
+
+**Basics**
+1. Tidy Pack is listed and enabled in the AddOns list. First login with "Combined Bags" off: one
+   chat line, and the setting is on.
+2. B opens the bag window with groups; no bags among the items; no sort button; clicking the
+   portrait opens no menu. After `/reload` everything looks the same.
+3. Items land in the right group and order (potions before food, weapons before armor); crafting
+   materials per type, your professions first; an unusual crafting material still shows.
+4. New: loot something – it stays in New while hovered and moves to its group after reopening.
+5. Mouse: right-click uses and equips, drag moves, shift-click links, shift-drag splits.
+
+**Marks and menus**
+6. Hold Alt: "..." on items; Alt-click the Hearthstone → Add to Favorites (top) → again → Remove.
+   On a Mac the tooltip says "Option-click".
+7. Junk list: Alt-click a white item → Add to Junk List (last in Junk, junk coin); gear → Junk List…:
+   add by dropping, name or shift-clicked link; remove with the cross; scroll a long list.
+8. Own groups: drop a potion on the gear → Add to Group ▸ New Group… "Potions"; drop another →
+   Add All "Potion" Items to Group ▸ Potions; tooltip "Tidy Pack group: Potions"; gear → Groups…:
+   ▲▼, Rename, ✕, rules; 8 groups disables "New Group"; still there after `/reload`.
+9. Gear menu: Show ▸ has the headings On items, In tooltips, In the window; each line explains
+   itself; a checkbox keeps the menu open and the window changes behind it.
+10. Group headings: point at one – items, slots, value; drop an item on one – it goes into the bags.
+
+**Bags window**
+11. Drop anywhere: gold glow and text; dropping fills the first free normal slot.
+12. Bag row: "N free" red at 5 or fewer; point at a bag icon – its items light up; drop a bigger bag
+    on one – it swaps; right-click a bigger spare bag – replaces the smallest (in combat: a message).
+13. Special bags (quiver, profession bag) at the bottom under a line, also right after `/reload`;
+    the reagent bag's items in their own part; its separate window never shows.
+14. Show by bag: each bag on its own rows with empty slots; Favorites and own groups stay on top.
+15. Search box (gear → Show → In the window): matches glow, the rest dims, also in Bank away from the
+    banker; disenchant an item after a search – no "blocked from an action".
+16. Large bags: the window gets wider (up to 20 columns) instead of taller than the screen; tabs,
+    gear and money stay reachable; the window doesn't change size when switching tabs.
+17. Upgrade arrow on wearable gear better than what you wear; none on items you can't use.
+
+**Logo**
+18. Click the logo: bags open and close. Right-click: the gear menu (bags open first if closed). Drop
+    an item on it: it goes into the bags. Disenchant and "use an item on another" after opening with
+    the logo: no "blocked from an action". In combat: the logo still opens and closes the bags.
+
+**Merchants and loot**
+19. At a merchant: quest items, items a quest needs and equipment-set items show a lock, can't be
+    clicked, the tooltip has the red line. "Lock items at merchants" off: they can be clicked.
+20. Loot an item on the junk list: the question comes (under the loot window, or at the top when it
+    closes); Delete deletes that item, Not now closes; in combat the question waits.
+21. Full bags: loot fails with "Inventory is full" – the panel suggests the junk list or the cheapest
+    grey item; Delete deletes it. No blocked-action message.
+
+**Bank**
+22. At a banker: the bags open on the Bank tab, sorted; the game's bank window is invisible.
+    Right-click an item in Bank → bags, and in Bags → bank; drag between the tabs; drop on empty
+    space in Bank → bank; "N free" shows the bank's free slots. Gear → "Show the game's bank window"
+    and back. Closing the bags closes the bank. Open the character window (C) at the banker.
+23. Away from the banker: "You're not at a banker – this is what your bank held today …"; a character
+    that never visited: "Visit a banker once …". "Use the Bank tab at bankers" off: the game's window.
+24. Tooltip counts: "Bags N · Bank N · Total N" for an item in both; none for an item only in the
+    bags; counts follow changes at the banker.
+
+**Quests**
+25. Take a quest that needs items (e.g. 3 of 7): "3/7" on the item, green when done; tooltip "Needed
+    for: …"; two stacks beyond the need – the extra one can be sold.
+26. Quests tab: ready quests first; headings and quests open with a click and stay open after
+    `/reload`; mouse wheel scrolls; a dot on the tab when a quest is ready. "Quest items in Bags" off:
+    one line in Bags, and clicking it opens Quests.
+27. With Questie: yellow exclamation marks and "Needed later for: …". Without: one chat line, once.
+
+**Languages**
+28. Gear → Language ▸ → Deutsch → Reload Now: tabs, menus, headings, tooltips and panels in German.
+    Try Русский, 한국어 and 简体中文: characters show (no boxes); long buttons (Rename, Add, Delete,
+    Not now, Show Tips Again) don't clip. Back to Automatic → Reload Now: the game's language again.
+
+**Guide and options page**
+29. Gear → Show Tips Again, reopen the bags: four tips – an item, the gear, the Bank tab, the Quests
+    tab; Next goes on, Got it ends.
+30. Esc → Options → AddOns → Tidy Pack: logo, version, help, link (click, Cmd+C); opens in combat
+    without "Interface action failed". `/tidypack` with bags closed opens this page; with bags open,
+    the gear menu. An old "TP" set macro prints the Equipment Manager line.
+
+**Controller**
+31. Loot and open the bags: the cursor is on the new item (else the first item), never on an empty or
+    hidden spot. LB/RB jump between groups; the D-pad goes to the nearest item. Use, Equip, Sell,
+    Split work; after selling, the cursor is on the item that took its place. Pick up an item with A
+    and drop it on the gear (its tooltip shows A). At a merchant A and X do nothing on locked items.
+    No "Interface action failed". Keys show in Keys.
+
+**Combat and performance**
+32. In combat (training dummy): use a potion from the bags; the window updates while looting; with a
+    controller the cursor works as without Tidy Pack and is fixed after combat.
+33. `/dump C_AddOnProfiler.GetAddOnMetric("TidyPack", Enum.AddOnProfilerMetric.PeakTime)` after
+    opening, looting and selling: the longest frame Tidy Pack used, in ms (a frame is ~16 ms at 60 fps).
+
+### Tried in the game
+- 2026-11-09 (`v0.2.0-alpha1`–`alpha2`): groups, favorites, item level, junk value, options page,
+  tabs. Fixed: too long option labels, unequal tabs.
+- 2026-11-09 (`1.0.0` with a controller): a crash with special bags (`contentHeight` nil) – fixed;
+  1.0.0 must never be published.
+- 2026-11-10–11: many layout fixes from the owner's screenshots (money row, bag row, spacing,
+  scrolling Quests). 1.0.1 was released before the owner had tried its last zip; 1.1.0 was tried
+  first.
+- 2026-11-12: "blocked from an action" with Esc (removed handler) and with disenchant (logo opened the
+  bags from addon code – fixed with the secure logo; confirmed working).
+- 2026-11-14: guide loads without errors; reagent bag with the mouse works (empty and with items);
+  options page error with the secure button found in the console log – button removed.
+
+## 9. Publishing
+
+- Released: **1.0.1** (2026-11-10) and **1.1.0** (2026-11-11), both through the release workflow.
+  **1.0.0** was uploaded by hand as "publish manually once approved" and has the special-bag crash:
+  never publish it.
+- Next: **1.2.0** after the owner has tried the Unreleased changes (Bank tab, languages, reagent bag,
+  search box, Show by bag, removed Sets tab). Steps: set `## Version: 1.2.0`, rename `## Unreleased`
+  to `## 1.2.0 (date)`, run `check-addon.mjs --release`, commit, ask, push, ask, then push the tag
+  `v1.2.0`. Afterwards the owner updates the CurseForge description from `README.md` by hand.
+- `.github/workflows/release.yml` runs only for clean version tags (`vN.N.N`): it checks the tag
+  against `## Version:` in the TOC, builds the zip with BigWigs packager v2 from `.pkgmeta` (`-u` for
+  Unix line endings, `-n "TidyPack-<version>:TidyPack-<version>"`), uploads it to CurseForge as a
+  Release (`CF_API_TOKEN`, `## X-Curse-Project-ID`) and makes a GitHub release. Tags like
+  `v1.2.0-alpha1` start nothing.
+- `.github/workflows/package-check.yml`: a dry run started by hand (Actions → Package check → Run
+  workflow); the zip is kept for 7 days. The packager needs bash 4.3+ (the Mac's is 3.2), so build
+  checks run on GitHub.
+- Test versions for other computers: a GitHub pre-release (`gh release create --prerelease`) with the
+  zip from `package-addon.mjs` (it lands in `.release/`, which git ignores).
+- `README.md` is the CurseForge description and is in the zip; `.github/README.md` is the GitHub
+  front page. Keep their feature lists in step. The logo is `.design/logo.png` (source `logo.svg`);
+  the social preview (`.design/social-preview.png`) is set by hand under Settings → General.
+
+## 10. Ideas and decisions
+
+**Binding decisions** (dates; details in `.design/agents-history-sv.md`)
+- 2026-11-08: Baganator (All Rights Reserved) is inspiration only – no code copied.
+- 2026-11-09: Rearrange the game's own bag window instead of an own window – it is the only way to
+  keep the game's item actions and controller support. The window stays where the game puts it.
+- 2026-11-09: Questie is an optional dependency; no data copied (license). One chat notice, approved.
+- 2026-11-09: Blizzard's policy allows the game's templates, fonts and atlases but not copying its
+  files or looking like Blizzard; panels are titled "Tidy Pack".
+- 2026-11-09: No own LB/RB bindings (the controller binding stack is shared and would taint).
+- 2026-11-09: Deleting only on the player's Delete press; the controller cursor never moves to Delete.
+- 2026-11-09: No own Sell Junk button; the game's "Sell All Junk" exists.
+- 2026-11-09: Tabs like the spellbook (`TabSystemTemplate` + `TabSystemTopButtonTemplate`), above the
+  window's top edge, all the same size; all tabs share one height (`sharedHeight`), set by Bags.
+- 2026-11-11: The logo replaces the game's bag bar; bags are swapped in the bag row.
+- 2026-11-12: All options in the gear menu; the game's options page only informs.
+- 2026-11-14: Solid window background; the Sets tab removed; the window opens on Bags.
+- 2026-11-15: Languages (section 7); Show ▸ with headings; the guide shows the Bank tab.
+
+**Open ideas** (proposed, not decided)
+- Counts for all your characters in the tooltip (needs bags and bank saved per character in
+  `TidyPackDB`). Browsing other characters' bags was rejected 2026-11-09.
+- The account (warband) bank in the Bank tab – Forever has it (`Enum.BankType.Account` in
+  `Camelot/BankFrame.lua`).
+- Controller access to the Bank tab and the panels (issue #6).
+- Split `Layout.lua` into smaller files.
+- Repository in English (issue #7): this file is; code comments and the sketches are still Swedish.
+- Bank: bank bags and buying slots in the bottom row (issue #4).
+
+**Rejected by the owner – don't suggest again unless asked**
+- 2026-11-09: several looks, choosing the order, mail and trade, browsing other characters' bags.
+- 2026-11-12: collapsible groups, a "what's new" window, moving or scaling the window, sort options,
+  a sell-junk button, changes to the CurseForge page, selecting and moving several items at once.
+
+**Can't be done**: selling or opening items automatically (the game needs a click on a secure button).
+
+## 11. Sources
+
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1
-- Interface-nummer och TOC-suffix: https://warcraft.wiki.gg/wiki/TOC_format
-- Blizzards kod för Forever: https://github.com/Gethe/wow-ui-source/tree/forever
-- Byta väska som inte är tom: https://warcraft.wiki.gg/wiki/Bag
-- Att använda saker är skyddat: https://warcraft.wiki.gg/wiki/API_C_Container.UseContainerItem
-- Alt-klick räknas som modifierat klick: https://warcraft.wiki.gg/wiki/API_IsModifiedClick
-- Handkontrollens markör i Forever (grenen `forever`, 1.60.1): `SmartNavigation.lua`,
-  `Utility.lua` och `SecureHelper.lua` i `Blizzard_GamepadSmartNavigation`, och
-  `SetupGamepad`, `SmartNavPanelInfoAdded` och `Gamepad_SetCursorToBag` i
-  `Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua`
-- Radera saker: https://warcraft.wiki.gg/wiki/API_DeleteCursorItem (hårdvaruhändelse sedan
-  9.0.2, en sak per händelse sedan 9.1.5)
-- Blizzards addonpolicy: https://us.forums.blizzard.com/en/wow/t/ui-add-on-development-policy/24534
-- QuestieDB för andra addons: https://github.com/Questie/QuestieDB (`docs/api.md`,
-  `docs/forever.md`, `LICENSE.md`), Questie med stöd för Forever:
-  https://github.com/Questie/Questie
-- Spelets tips och handkontroll: `HelpTip:AreHelpTipsEnabled` i
-  `Blizzard_SharedXML/HelpTip.lua`, `Blizzard_HelpPlate/Camelot/HelpPlateOverrides.lua` och
-  `TutorialLogic:IsNPEAllowed` i `Blizzard_NewPlayerExperience/Camelot/`
+- Interface numbers and TOC suffixes: https://warcraft.wiki.gg/wiki/TOC_format
+- Blizzard's code for Forever: https://github.com/Gethe/wow-ui-source/tree/forever
+- Using items is protected: https://warcraft.wiki.gg/wiki/API_C_Container.UseContainerItem
+- Deleting items: https://warcraft.wiki.gg/wiki/API_DeleteCursorItem (hardware event since 9.0.2,
+  one item per event since 9.1.5)
+- Swapping a non-empty bag: https://warcraft.wiki.gg/wiki/Bag
+- Blizzard's add-on policy: https://us.forums.blizzard.com/en/wow/t/ui-add-on-development-policy/24534
+- QuestieDB for other add-ons: https://github.com/Questie/QuestieDB (`docs/api.md`, `docs/forever.md`,
+  `LICENSE.md`); Questie with Forever support: https://github.com/Questie/Questie
+- Controller cursor in Forever: `Blizzard_GamepadSmartNavigation` (`SmartNavigation.lua`,
+  `Utility.lua`, `SecureHelper.lua`) and `SetupGamepad`, `SmartNavPanelInfoAdded`,
+  `Gamepad_SetCursorToBag` in `Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua`
+- Tips and the controller: `HelpTip:AreHelpTipsEnabled` in `Blizzard_SharedXML/HelpTip.lua`,
+  `Blizzard_HelpPlate/Camelot/HelpPlateOverrides.lua`, `TutorialLogic:IsNPEAllowed` in
+  `Blizzard_NewPlayerExperience/Camelot/`
+- Languages: `WowLocale` in `LFGListInfoDocumentation.lua`; font families in
+  `Blizzard_Fonts_Shared/Shared/Fonts.xml`
