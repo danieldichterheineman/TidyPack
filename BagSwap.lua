@@ -1,22 +1,22 @@
 -- TidyPack – BagSwap.lua
--- Byter väska med ett klick. När du högerklickar på en väska i gruppen Bags (eller väljer
--- Equip på handkontrollen) och alla fyra väskplatser är fulla, byter Tidy Pack ut din
--- minsta väska mot den nya. Spelet flyttar då sakerna från den gamla väskan till den nya.
--- Finns en tom väskplats sköter spelet det själv.
--- ⚠️ Fungerar bara utanför strid. Specialväskor (t.ex. koger och väskor för örter) byts
--- inte, eftersom de bara rymmer vissa saker.
+-- Swaps a bag with one click. When you right-click a bag in the group Bags (or choose Equip on
+-- the controller) and all four bag slots are full, Tidy Pack replaces your smallest bag with the
+-- new one. The game then moves the items from the old bag to the new one.
+-- If a bag slot is empty, the game handles it itself.
+-- ⚠️ Works only outside combat. Special bags (e.g. quivers and herb bags) aren't swapped,
+-- because they only hold certain items.
 
 local _, ns = ...
 local L = ns.L
 
-local NUM_BAGS = Constants.InventoryConstants.NumBagSlots -- de fyra vanliga väskplatserna
+local NUM_BAGS = Constants.InventoryConstants.NumBagSlots -- the four normal bag slots
 
--- Fönster där ett högerklick gör något annat med saken: säljer den, lägger den i banken
--- eller bifogar den. Då byter Tidy Pack inte väska.
+-- Windows where a right-click does something else with the item: sells it, puts it in the bank
+-- or attaches it. Then Tidy Pack doesn't swap bags.
 local OTHER_WINDOWS = { "MerchantFrame", "BankFrame", "MailFrame", "TradeFrame", "GuildBankFrame", "AuctionHouseFrame" }
 
--- Mönster för raden "14 Slot Bag" i väskans tooltip. Det byggs av spelets egen text
--- (CONTAINER_SLOTS, "%d Slot %s" på engelska) när den finns, så att det fungerar på fler språk.
+-- Pattern for the line "14 Slot Bag" in a bag's tooltip. It is built from the game's own text
+-- (CONTAINER_SLOTS, "%d Slot %s" in English) when it exists, so it works in more languages.
 local slotPattern = "(%d+) Slot"
 if type(CONTAINER_SLOTS) == "string" and CONTAINER_SLOTS:find("%d", 1, true) then
     slotPattern = CONTAINER_SLOTS
@@ -25,11 +25,11 @@ if type(CONTAINER_SLOTS) == "string" and CONTAINER_SLOTS:find("%d", 1, true) the
         :gsub("%%s", ".+")
 end
 
--- Antal platser per väska, så att tooltipen bara behöver läsas en gång per sorts väska.
+-- Slots per bag, so the tooltip only has to be read once per kind of bag.
 local sizeByItemID = {}
 
--- Antal platser i en väska som ligger bland sakerna (inte på en väskplats). Spelet har
--- ingen funktion för det, så Tidy Pack läser raden "14 Slot Bag" i väskans tooltip.
+-- Slots in a bag that lies among the items (not in a bag slot). The game has no function for
+-- that, so Tidy Pack reads the line "14 Slot Bag" in the bag's tooltip.
 local function getBagItemSize(bagID, slot, itemID)
     if sizeByItemID[itemID] then
         return sizeByItemID[itemID]
@@ -47,7 +47,7 @@ local function getBagItemSize(bagID, slot, itemID)
     return nil
 end
 
--- Sant om saken är en vanlig väska, inte en specialväska.
+-- True if the item is a normal bag, not a special bag.
 local function isNormalBag(itemID)
     local _, _, _, _, _, classID = C_Item.GetItemInfoInstant(itemID)
     return classID == Enum.ItemClass.Container and (C_Item.GetItemFamily(itemID) or 0) == 0
@@ -62,8 +62,8 @@ local function hasEmptyBagSlot()
     return false
 end
 
--- Den minsta vanliga väskan på en väskplats som är mindre än newSize. Väskan som den nya
--- väskan ligger i kan inte bytas ut, eftersom den nya då skulle flytta in i sig själv.
+-- The smallest normal bag in a bag slot that is smaller than newSize. The bag the new bag lies
+-- in can't be replaced, since the new one would then move into itself.
 local function findBagToReplace(newSize, fromBagID)
     local bestBag, bestSize
     for bagID = 1, NUM_BAGS do
@@ -77,8 +77,8 @@ local function findBagToReplace(newSize, fromBagID)
     return bestBag, bestSize
 end
 
--- Sant om väskan skulle göra väskorna större: en väskplats är tom, eller väskan är större
--- än någon av dina vanliga väskor. Layout.lua visar då en grön pil på den.
+-- True if the bag would make the bags bigger: a bag slot is empty, or the bag is bigger than one
+-- of your normal bags. Layout.lua then shows a green arrow on it.
 function ns.IsBagUpgrade(bagID, slot, itemID)
     if not isNormalBag(itemID) then
         return false
@@ -100,10 +100,10 @@ local function isOtherWindowOpen()
     return false
 end
 
--- Körs efter spelets eget klick på en ruta i väskorna, både med mus och handkontroll.
+-- Runs after the game's own click on an item button, with mouse and controller.
 local function onItemClicked(_, button)
     if CursorHasItem() then
-        return -- vänsterklick: saken plockades upp eller bytte plats
+        return -- left click: the item was picked up or moved
     end
     local bagID, slot = button:GetBagID(), button:GetID()
     if not bagID or bagID < 0 or bagID > NUM_BAGS then
@@ -111,10 +111,10 @@ local function onItemClicked(_, button)
     end
     local info = C_Container.GetContainerItemInfo(bagID, slot)
     if not info or info.isLocked or not isNormalBag(info.itemID) then
-        return -- inte en väska, eller så håller spelet redan på med den
+        return -- not a bag, or the game is already busy with it
     end
     if isOtherWindowOpen() or hasEmptyBagSlot() then
-        return -- spelet sköter klicket själv
+        return -- the game handles the click itself
     end
     if InCombatLockdown() then
         ns.Print(L["Bags can't be swapped in combat."])
@@ -130,8 +130,8 @@ local function onItemClicked(_, button)
         ns.Print(L["All your bags are already this big or bigger."])
         return
     end
-    -- Plocka upp den nya väskan och lägg den på väskplatsen. Spelet byter väskorna och
-    -- flyttar sakerna. Går det inte läggs väskan tillbaka.
+    -- Pick up the new bag and put it in the bag slot. The game swaps the bags and moves the
+    -- items. If that fails, the bag is put back.
     C_Container.PickupContainerItem(bagID, slot)
     PutItemInBag(C_Container.ContainerIDToInventoryID(target))
     if CursorHasItem() then
@@ -139,5 +139,5 @@ local function onItemClicked(_, button)
     end
 end
 
--- Spelet skickar det här eventet sist i varje klick på en ruta i väskorna.
+-- The game sends this event last in every click on an item button.
 EventRegistry:RegisterCallback("ContainerFrameItemButton.OnItemClicked", onItemClicked, ns)
