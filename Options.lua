@@ -1,10 +1,10 @@
 -- TidyPack – Options.lua
--- Alla inställningar finns under kugghjulet i väskfönstret (användarens önskan 2026-11-12, skissen
--- .design/sketch-settings-in-bag.html): ns.optionMenus nedan blir undermenyerna Show, Merchants and loot
--- och Bag and bank (Marks.lua), och skräplistan och grupperna öppnas i väskan (Panels.lua).
--- Sidan i spelets inställningar (Esc → Options → AddOns → Tidy Pack) har inga val: den berättar vad
--- Tidy Pack är och vem som gjort det, hur man använder det och var det finns (CurseForge).
--- /tidypack, addonmenyn vid minikartan och högerklick på loggan öppnar väskan med kugghjulets meny.
+-- All options are under the gear button in the bag window (the owner's wish 2026-11-12, sketch
+-- .design/sketch-settings-in-bag.html): ns.optionMenus below becomes the submenus Show, Merchants and loot
+-- and Bag and bank (Marks.lua), and the junk list and the groups open in the bag window (Panels.lua).
+-- The page in the game's options (Esc → Options → AddOns → Tidy Pack) has no options: it tells what
+-- Tidy Pack is and who made it, how to use it and where to find it (CurseForge).
+-- Right-click on the logo opens the bags with the gear menu; /tidypack and the addon menu do so too.
 
 local addonName, ns = ...
 local L = ns.L
@@ -18,14 +18,14 @@ local function refresh()
 end
 
 ---------------------------------------------------------------------------
--- Inställningarna i kugghjulets meny
+-- The options in the gear menu
 ---------------------------------------------------------------------------
--- key är nyckeln i ns.db (Core.lua har standardvärdena). onChange körs efter en ändring.
--- enabled (en funktion) gör raden grå när den inte går att ändra. En rad med bara section är en
--- liten rubrik i undermenyn (Show ▸ har åtta val, uppdelade i tre grupper; granskningen 2026-11-15).
+-- key is the key in ns.db (Core.lua has the defaults). onChange runs after a change.
+-- enabled (a function) greys out the line when it can't be changed. A line with only section is a
+-- small heading in the submenu (Show ▸ has eight options in three groups; review 2026-11-15).
 
--- Byggs när språket är valt (ns.OnLoad nedan), eftersom filen laddas innan Tidy Pack vet vilket
--- språk spelaren valt (Locales.lua).
+-- Built once the language is chosen (ns.OnLoad below), because this file loads before Tidy Pack
+-- knows which language the player picked (Locales.lua).
 local function buildOptionMenus()
     return {
         {
@@ -97,7 +97,7 @@ local function buildOptionMenus()
                         refresh()
                     end },
             },
-            -- Hos bankiren: spelets eget bankfönster, t.ex. för att köpa en bankplats (Bank.lua).
+            -- At a banker: the game's own bank window, e.g. to buy a bank slot (Bank.lua).
             extra = function(submenu)
                 if ns.IsAtBank and ns.IsAtBank() and ns.TakesOverBank and ns.TakesOverBank() then
                     submenu:CreateCheckbox(L["Show the game's bank window"], ns.IsGameBankFrameShown,
@@ -113,12 +113,12 @@ ns.OnLoad(function()
 end)
 
 ---------------------------------------------------------------------------
--- Öppna inställningarna: väskan med kugghjulets meny
+-- Open the options: the bags with the gear menu
 ---------------------------------------------------------------------------
 
 local settingsCategory
 
--- Tidy Packs sida i spelets inställningar. Utanför strid; i strid står en rad i chatten.
+-- Tidy Pack's page in the game's options. Outside combat; in combat a line in the chat.
 local function openAboutPage()
     if settingsCategory and not InCombatLockdown() then
         Settings.OpenToCategory(settingsCategory:GetID())
@@ -127,12 +127,12 @@ local function openAboutPage()
     end
 end
 
--- page = "junk" eller "groups" öppnar den panelen i väskan; utan page öppnas kugghjulets meny.
--- ⚠️ Väskan öppnas aldrig härifrån med OpenAllBags: öppnas den från addonets kod stoppar spelet
--- sedan bland annat disenchant på sakerna i den (LogoButton.lua). Är väskan stängd (/tidypack,
--- addonmenyn) öppnas i stället Tidy Packs sida i spelets inställningar. En säker "Open Bags"-knapp
--- får inte ligga på den här sidan: den gör hela sidan skyddad i strid (issue #2) och får inte
--- fästas vid textrader. Loggan öppnar väskan på ett säkert sätt i stället.
+-- page = "junk" or "groups" opens that panel in the bags; without page the gear menu opens.
+-- ⚠️ The bags are never opened from here with OpenAllBags: opened from addon code, the game then
+-- blocks e.g. disenchanting the items in them (LogoButton.lua). If the bags are closed (/tidypack,
+-- the addon menu), Tidy Pack's page in the game's options opens instead. A secure "Open Bags"
+-- button must not be on that page: it makes the whole page protected in combat (issue #2) and
+-- can't be anchored to text lines. The logo opens the bags safely instead.
 function ns.OpenSettings(page)
     if not ns.bagFrame then
         return
@@ -145,7 +145,7 @@ function ns.OpenSettings(page)
         ns.OpenPanel(page)
         return
     end
-    -- En bildruta senare, när fönstret och kugghjulet syns.
+    -- One frame later, when the window and the gear are shown.
     C_Timer.After(0, function()
         if ns.OpenGearMenu then
             ns.OpenGearMenu()
@@ -154,7 +154,7 @@ function ns.OpenSettings(page)
 end
 
 ---------------------------------------------------------------------------
--- Sidan i spelets inställningar: om Tidy Pack
+-- The page in the game's options: about Tidy Pack
 ---------------------------------------------------------------------------
 
 local function metadata(field)
@@ -199,7 +199,7 @@ local function createAboutPage()
     local linkTitle = page:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     linkTitle:SetPoint("TOPLEFT", how, "BOTTOMLEFT", 0, -20)
     linkTitle:SetText(L["Updates and feedback"])
-    -- Ett addon kan inte öppna webbläsaren, så adressen står markerad i en ruta och kopieras.
+    -- An addon can't open the browser, so the address stands highlighted in a box to copy.
     local website = metadata("X-Website") or WEBSITE_FALLBACK
     local link = CreateFrame("EditBox", nil, page, "InputBoxTemplate")
     link:SetSize(380, 22)
@@ -207,7 +207,7 @@ local function createAboutPage()
     link:SetPoint("TOPLEFT", linkTitle, "BOTTOMLEFT", 6, -8)
     link:SetText(website)
     link:SetCursorPosition(0)
-    -- Rutan går inte att skriva i: allt som ändras sätts tillbaka.
+    -- The box can't be typed in: every change is put back.
     link:SetScript("OnTextChanged", function(self, userInput)
         if userInput then
             self:SetText(website)
@@ -226,9 +226,9 @@ local function createAboutPage()
     copyHint:SetText((IsMacClient and IsMacClient()) and L["Click the link and press Cmd+C to copy it."]
         or L["Click the link and press Ctrl+C to copy it."])
 
-    -- Ingen säker "Open Bags"-knapp här: spelet visar och flyttar den här sidan i
-    -- SettingsPanelMixin:DisplayLayout, och en säker knapp gör hela sidan skyddad i strid
-    -- (issue #2) och kraschar om den fästs vid text eller ramar som är fästa vid text.
+    -- No secure "Open Bags" button here: the game shows and moves this page in
+    -- SettingsPanelMixin:DisplayLayout, and a secure button makes the whole page protected in combat
+    -- (issue #2) and fails when anchored to text or to frames anchored to text.
     local bagHint = page:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
     bagHint:SetPoint("TOPLEFT", copyHint, "BOTTOMLEFT", 0, -20)
     bagHint:SetPoint("RIGHT", page, "RIGHT", -20, 0)
@@ -259,12 +259,12 @@ ns.OnLoad(function()
 end)
 
 ---------------------------------------------------------------------------
--- /tidypack och addonmenyn vid minikartan
+-- /tidypack and the addon menu at the minimap
 ---------------------------------------------------------------------------
 
 SLASH_TIDYPACK1 = "/tidypack"
--- "/tidypack equip <namn>" stod i setens makron ("TP <namn>") i 1.1.0 och tidigare, innan fliken Sets togs bort.
--- Ett sådant makro på en actionbar säger nu vad som hänt, i stället för att öppna inställningarna.
+-- "/tidypack equip <name>" was in the sets' macros ("TP <name>") in 1.1.0 and earlier, before the Sets tab was removed.
+-- Such a macro on an action bar now says what happened, instead of opening the options.
 SlashCmdList.TIDYPACK = function(message)
     local command = (message or ""):match("^%s*(%S+)")
     if command and command:lower() == "equip" then
@@ -274,7 +274,7 @@ SlashCmdList.TIDYPACK = function(message)
     ns.OpenSettings()
 end
 
--- Addonmenyn vid minikartan anropar den här (## AddonCompartmentFunc i TOC-filen).
+-- The addon menu at the minimap calls this (## AddonCompartmentFunc in the TOC file).
 function TidyPack_OnAddonCompartmentClick()
     ns.OpenSettings()
 end
