@@ -1,21 +1,21 @@
 -- TidyPack – Categories.lua
--- Bestämmer vilken grupp en sak hör till, och i vilken ordning grupperna och sakerna
--- kommer. Ordningen är fast – det finns inga inställningar för den.
+-- Decides which group an item belongs to, and in which order the groups and the items
+-- come. The order is fixed – there are no options for it.
 
 local _, ns = ...
 local L = ns.L
 
--- Grupperna, i den ordning de visas. Grupper utan saker visas inte. Empty (rutan där du
--- släpper en sak för att lägga den i väskorna) står näst först, så att den delar översta
--- raden med Favorites i stället för att ta en egen rad längst ned.
+-- The groups, in the order they show. Groups without items don't show. Empty (the slot where you
+-- drop an item to put it in the bags) comes second, so it shares the top line with Favorites
+-- instead of taking its own line at the bottom.
 ns.baseGroupOrder = {
     "Favorites", "Empty", "New", "Consumables", "Equipment", "TradeGoods",
     "QuestItems", "Keys", "Miscellaneous", "Bags", "Junk",
 }
 
--- Avsnitten i fliken Bags (användarens önskan 2026-11-11). Varje avsnitt börjar på en ny rad med
--- en tunn linje ovanför; grupper inom ett avsnitt delar rad. 1 dina egna (Favorites, egna grupper,
--- New), 2 vardag, 3 råvaror, 4 quests, 5 övrigt. Specialväskorna står sist under spelets linje.
+-- The parts of the Bags tab (the owner's wish 2026-11-11). Each part starts on a new line with a
+-- thin line above; groups within a part share lines. 1 your own (Favorites, own groups, New),
+-- 2 everyday, 3 crafting, 4 quests, 5 the rest. The special bags come last under the game's line.
 local SECTION_OF = {
     Favorites = 1, Empty = 1, New = 1, Consumables = 2, Equipment = 2, TradeGoods = 3,
     QuestItems = 4, Keys = 5, Miscellaneous = 5, Bags = 5, Junk = 5,
@@ -31,12 +31,12 @@ function ns.GetGroupSection(group)
     end
     return 5
 end
--- Det som visas: spelets grupper med spelarens egna grupper insatta efter Empty ("Add to
--- bag"). Groups.lua bygger om den när grupperna ändras (ns.RebuildGroupOrder).
+-- What shows: the game's groups with the player's own groups inserted after Empty ("Add to
+-- bag"). Groups.lua rebuilds it when the groups change (ns.RebuildGroupOrder).
 ns.groupOrder = ns.baseGroupOrder
 
--- Gruppernas rubriker i spelet. Fylls i igen när språket är valt (ns.OnLoad nedan), eftersom
--- filen laddas innan Tidy Pack vet vilket språk spelaren valt (Locales.lua).
+-- The groups' headings in the game. Filled in again once the language is chosen (ns.OnLoad below),
+-- because this file loads before Tidy Pack knows which language the player picked (Locales.lua).
 ns.groupNames = {}
 
 local function setBaseGroupNames()
@@ -45,13 +45,13 @@ local function setBaseGroupNames()
     names.New = L["New"]
     names.Consumables = L["Consumables"]
     names.Equipment = L["Equipment"]
-    names.TradeGoods = L["Recipes & Gems"] -- råvarorna har egna grupper; här står recept, ädelstenar och förbättringar
+    names.TradeGoods = L["Recipes & Gems"] -- crafting materials have their own groups; this holds recipes, gems and enhancements
     names.QuestItems = L["Quest Items"]
     names.Keys = L["Keys"]
-    names.Bags = L["Spare Bags"] -- inte "Bags", som fliken ovanför fönstret heter
+    names.Bags = L["Spare Bags"] -- not "Bags", which is the tab above the window
     names.Miscellaneous = L["Miscellaneous"]
     names.Junk = L["Junk"]
-    names.Empty = L["Add to bag"] -- rutan visar antalet lediga platser, och en sak som släpps dit hamnar i väskorna
+    names.Empty = L["Add to bag"] -- the slot shows the free slots, and an item dropped there goes into the bags
 end
 setBaseGroupNames()
 ns.OnLoad(setBaseGroupNames)
@@ -59,27 +59,27 @@ ns.OnLoad(setBaseGroupNames)
 local ItemClass = Enum.ItemClass
 local ConsumableSubclass = Enum.ItemConsumableSubclass
 
--- Grupp och plats inom gruppen efter typ av sak (Enum.ItemClass). Platsen gör att lika
--- saker ligger bredvid varandra utan egna rubriker: vapen (1) före rustning (2) och
--- ammunition (3) i Equipment, handelsvaror (1) före recept (4) i Trade Goods.
--- Typer som inte står här hamnar i Miscellaneous.
+-- Group and place within the group by kind of item (Enum.ItemClass). The place keeps similar
+-- items next to each other without own headings: weapons (1) before armor (2) and
+-- ammunition (3) in Equipment, trade goods (1) before recipes (4) in Trade Goods.
+-- Kinds not listed here go to Miscellaneous.
 local byClass = {
     [ItemClass.Weapon] = { "Equipment", 1 },
     [ItemClass.Armor] = { "Equipment", 2 },
     [ItemClass.Projectile] = { "Equipment", 3 },
-    -- Handelsvaror (råvaror) får en grupp per undertyp, se tradeGroupKey nedan.
+    -- Trade goods (crafting materials) get a group per subclass, see tradeGroupKey below.
     [ItemClass.Gem] = { "TradeGoods", 2 },
     [ItemClass.ItemEnhancement] = { "TradeGoods", 3 },
     [ItemClass.Recipe] = { "TradeGoods", 4 },
-    [ItemClass.Reagent] = { "Consumables", 6 }, -- reagenser som besvärjelser förbrukar
+    [ItemClass.Reagent] = { "Consumables", 6 }, -- reagents that spells use up
     [ItemClass.Questitem] = { "QuestItems", 1 },
     [ItemClass.Key] = { "Keys", 1 },
     [ItemClass.Container] = { "Bags", 1 },
     [ItemClass.Quiver] = { "Bags", 2 },
 }
 
--- Plats inom Consumables efter undertyp (Enum.ItemConsumableSubclass): drycker först,
--- sedan mat, förband, skriftrullar och sist annat.
+-- Place within Consumables by subclass (Enum.ItemConsumableSubclass): potions first,
+-- then food, bandages, scrolls and the rest last.
 local consumableOrder = {
     [ConsumableSubclass.Potion] = 1,
     [ConsumableSubclass.Elixir] = 1,
@@ -90,19 +90,19 @@ local consumableOrder = {
 }
 
 ---------------------------------------------------------------------------
--- Råvaror per yrke (användarens önskan 2026-11-11)
+-- Crafting materials per profession (the owner's wish 2026-11-11)
 ---------------------------------------------------------------------------
--- Handelsvaror delas upp efter spelets egen undertyp (Cloth, Leather, Herb ...), samma uppdelning
--- som auktionshuset i Forever gör (C_AuctionHouse.GetAuctionItemSubClasses). Namnen kommer från
--- spelet (C_Item.GetItemSubClassInfo). Grupper för dina yrken (GetProfessions/GetProfessionInfo)
--- står först, med yrkets ikon och namn; resten står efter, i ordningen nedan.
--- ⚠️ Undertypernas nummer och yrkenas skillLine-nummer står inte i Forevers genererade
---    dokumentation. De är retail-klientens värden. Stämmer de inte blir bara ordningen och
---    yrkets namn i rubriken fel – sakerna hamnar ändå i grupper med spelets egna namn.
+-- Trade goods are split by the game's own subclass (Cloth, Leather, Herb ...), the same split
+-- as the auction house in Forever (C_AuctionHouse.GetAuctionItemSubClasses). The names come from
+-- the game (C_Item.GetItemSubClassInfo). Groups for your professions (GetProfessions/GetProfessionInfo)
+-- come first, with the profession's icon and name; the rest follow, in the order below.
+-- ⚠️ The subclass numbers and the professions' skillLine numbers aren't in Forever's generated
+--    documentation. They are the retail client's values. If they are wrong, only the order and
+--    the profession's name in the heading are wrong – the items still land in groups named by the game.
 local TRADE_SUBCLASSES = { 5, 6, 7, 9, 8, 12, 10, 1, 3, 2, 17, 4, 16, 13, 11, 0 }
--- Undertyp → yrken som använder den (skillLine): Cloth → Tailoring, Leather → Leatherworking och
--- Skinning, Metal & Stone → Blacksmithing, Mining och Engineering, Meat → Cooking, Herb → Alchemy,
--- Herbalism och Inscription, Enchanting → Enchanting, Parts och Devices → Engineering,
+-- Subclass → professions that use it (skillLine): Cloth → Tailoring, Leather → Leatherworking and
+-- Skinning, Metal & Stone → Blacksmithing, Mining and Engineering, Meat → Cooking, Herb → Alchemy,
+-- Herbalism and Inscription, Enchanting → Enchanting, Parts and Devices → Engineering,
 -- Jewelcrafting → Jewelcrafting, Inscription → Inscription.
 local PROFESSIONS_FOR = {
     [5] = { 197 }, [6] = { 165, 393 }, [7] = { 164, 186, 202 }, [8] = { 185 },
@@ -114,16 +114,16 @@ local function tradeGroupKey(subClassID)
     return "trade" .. (subClassID or 0)
 end
 
--- Undertyper som har en grupp. En sak med en undertyp som saknas här skulle hamna i en grupp som
--- aldrig visas, och då syns saken inte i väskan (granskning 2026-11-14). Därför läggs spelets egen
--- lista till (C_AuctionHouse.GetAuctionItemSubClasses, samma som auktionshuset använder), och en
--- undertyp som ändå dyker upp oväntat får en grupp i samma stund (se ns.GetGroup).
+-- Subclasses that have a group. An item with a subclass missing here would land in a group that
+-- never shows, and then the item isn't seen in the bags (review 2026-11-14). So the game's own
+-- list is added (C_AuctionHouse.GetAuctionItemSubClasses, the same the auction house uses), and a
+-- subclass that still turns up unexpectedly gets a group at once (see ns.GetGroup).
 local knownTrade = {}
 for _, subClassID in ipairs(TRADE_SUBCLASSES) do
     knownTrade[subClassID] = true
 end
 
--- Lägger till en undertyp sist i ordningen. Sant om den var ny.
+-- Adds a subclass last in the order. True if it was new.
 local function addTradeSubclass(subClassID)
     if knownTrade[subClassID] then
         return false
@@ -135,8 +135,8 @@ end
 
 local gameSubclassesAdded = false
 
--- Spelets undertyper för handelsvaror som inte står i listan ovan. Läses en gång; anropet ligger i
--- pcall, så att ett fel där inte stoppar Tidy Pack.
+-- The game's trade goods subclasses that aren't in the list above. Read once; the call is in
+-- pcall, so an error there doesn't stop Tidy Pack.
 local function addGameTradeSubclasses()
     if gameSubclassesAdded or not (C_AuctionHouse and C_AuctionHouse.GetAuctionItemSubClasses) then
         return
@@ -152,8 +152,8 @@ local function addGameTradeSubclasses()
     end
 end
 
--- Gruppernas nycklar för råvaror, dina yrken först. Sätter också rubrikerna i ns.groupNames.
--- Groups.lua lägger dem på Trade Goods plats i ns.groupOrder.
+-- The group keys for crafting materials, your professions first. Also sets the headings in
+-- ns.groupNames. Groups.lua puts them in Trade Goods' place in ns.groupOrder.
 function ns.GetTradeGroupKeys()
     addGameTradeSubclasses()
     local mine = {}
@@ -176,7 +176,7 @@ function ns.GetTradeGroupKeys()
             profession = profession or mine[skillLine]
         end
         if profession then
-            -- Yrkets namn bara när det skiljer sig från sortens ("Cloth Tailoring", inte "Cooking Cooking").
+            -- The profession's name only when it differs from the kind's ("Cloth Tailoring", not "Cooking Cooking").
             if profession.name and profession.name ~= subName then
                 ns.groupNames[key] = ("|T%s:13:13|t %s %s"):format(profession.icon, subName,
                     GRAY_FONT_COLOR:WrapTextInColorCode(profession.name))
@@ -195,35 +195,35 @@ function ns.GetTradeGroupKeys()
     return first
 end
 
--- Vilken grupp en sak i väskorna hör till, och sakens plats inom gruppen (lägre först).
--- info kommer från C_Container.GetContainerItemInfo, classID och subClassID från
--- C_Item.GetItemInfoInstant. isQuestItem kommer från ns.IsQuestItem (QuestLock.lua);
--- Layout.lua frågar en gång per sak, eftersom låset behöver samma svar.
+-- Which group an item in the bags belongs to, and its place within the group (lower first).
+-- info comes from C_Container.GetContainerItemInfo, classID and subClassID from
+-- C_Item.GetItemInfoInstant. isQuestItem comes from ns.IsQuestItem (QuestLock.lua);
+-- Layout.lua asks once per item, because the lock needs the same answer.
 function ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
-    -- Det spelaren själv har valt eller just har fått går först.
+    -- What the player has chosen or just received comes first.
     if ns.IsFavorite(info.itemID) then
         return "Favorites", 0
     end
     if ns.IsNew(bagID, slot, info.itemID) then
         return "New", 0
     end
-    -- Quest-saker, även vanliga saker som en pågående quest kräver.
+    -- Quest items, also normal items an active quest needs.
     if isQuestItem then
         return "QuestItems", 0
     end
-    -- Gråa saker är skräp, oavsett vad de är, och så är det du själv markerat som skräp
-    -- (Marks.lua). Markerat skräp ligger efter det gråa.
+    -- Grey items are junk whatever they are, and so is what you marked as junk yourself
+    -- (Marks.lua). Marked junk comes after the grey.
     if info.quality == Enum.ItemQuality.Poor then
         return "Junk", 0
     end
     if ns.IsJunkMarked(info.itemID) then
         return "Junk", 1
     end
-    -- Allt på nyckelringen är nycklar.
+    -- Everything on the keyring is a key.
     if bagID == KEYRING_CONTAINER then
         return "Keys", 0
     end
-    -- Spelarens egna grupper (Groups.lua) går före spelets vanliga typer.
+    -- The player's own groups (Groups.lua) come before the game's normal kinds.
     local custom = ns.GetCustomGroupFor and ns.GetCustomGroupFor(info.itemID, classID, subClassID)
     if custom then
         return custom, 0
@@ -232,7 +232,7 @@ function ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
         return "Consumables", consumableOrder[subClassID] or 5
     end
     if classID == ItemClass.Tradegoods then
-        -- En undertyp utan grupp får en nu, sist bland råvarorna, så att saken alltid syns.
+        -- A subclass without a group gets one now, last among the crafting groups, so the item always shows.
         if addTradeSubclass(subClassID or 0) and ns.RebuildGroupOrder then
             ns.RebuildGroupOrder()
         end
@@ -245,15 +245,15 @@ function ns.GetGroup(bagID, slot, info, classID, subClassID, isQuestItem)
     return "Miscellaneous", 0
 end
 
--- Sakens namn, ur länken: |cff...|Hitem:...|h[Namn]|h|r
+-- The item's name, from the link: |cff...|Hitem:...|h[Name]|h|r
 function ns.GetItemName(link)
     return link and link:match("%[(.-)%]") or ""
 end
 
--- Ordningen inom en grupp: först sakens plats inom gruppen (t.ex. vapen före rustning),
--- sedan bäst kvalitet, namn och störst hög. Sist väska och plats, så att två likadana
--- saker aldrig byter plats med varandra. Bland tomma platser kommer vanliga väskor före
--- specialväskor (t.ex. koger).
+-- The order within a group: first the item's place within the group (e.g. weapons before armor),
+-- then best quality, name and biggest stack. Last bag and slot, so two identical
+-- items never swap places with each other. Among empty slots normal bags come before
+-- special bags (e.g. quivers).
 function ns.CompareEntries(a, b)
     if a.isEmpty or b.isEmpty then
         if a.isEmpty and b.isEmpty then
