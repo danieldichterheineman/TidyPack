@@ -1,17 +1,17 @@
 -- TidyPack – Junk.lua
--- Vad som räknas som skräp. Tidy Pack hade tidigare en egen knapp Sell Junk hos handlaren.
--- Den togs bort 2026-11-09 (användarens beslut): spelet har en egen knapp "Sell All Junk" i
--- handlarens fönster, och Tidy Packs knapp gick inte att nå med handkontroll.
--- ⚠️ Spelets knapp säljer alla grå saker och känner inte till Tidy Packs lås eller
--- skräplista. Saker på skräplistan som inte är grå säljs för hand.
+-- What counts as junk. Tidy Pack used to have its own Sell Junk button at merchants. It was
+-- removed 2026-11-09 (the owner's decision): the game has its own "Sell All Junk" button in the
+-- merchant window, and Tidy Pack's button couldn't be reached with a controller.
+-- ⚠️ The game's button sells every grey item and doesn't know about Tidy Pack's locks or junk
+-- list. Items on the junk list that aren't grey are sold by hand.
 
 local _, ns = ...
 
--- Vad för sorts skräp en sak är: "marked" (du har markerat den som skräp i Marks.lua),
--- "grey" (grå) eller nil (inte skräp). Favoriter, låsta saker, quest-saker och saker
--- som spelet håller på med är aldrig skräp, och inte heller grå saker som en quest behöver
--- senare (QuestHints.lua). Det du själv markerat räknas även om en quest behöver det senare:
--- där har du bestämt dig. Används av förslagen vid fulla väskor och frågan vid loot (MakeRoom.lua).
+-- What kind of junk an item is: "marked" (you marked it as junk in Marks.lua), "grey", or nil
+-- (not junk). Favorites, locked items, quest items and items the game is busy with are never
+-- junk, and neither are grey items a quest will need later (QuestHints.lua). What you marked
+-- yourself counts even if a quest needs it later: there you have decided. Used by the
+-- suggestions when the bags are full and the question on loot (MakeRoom.lua).
 function ns.GetJunkKind(bagID, slot, info)
     if not info or info.isLocked or ns.IsFavorite(info.itemID) or ns.IsLocked(bagID, slot, info) then
         return nil
