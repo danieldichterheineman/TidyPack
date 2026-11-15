@@ -1,12 +1,12 @@
 -- TidyPack – Tour.lua
--- En kort guide första gången väskan öppnas, med en egen ram av spelets mall HelpTipTemplate
--- (utanför spelets delade pool HelpTip.framePool, så att addonets tips aldrig kan smitta
--- spelets egna tipsrutor, Blizzard_SharedXML/HelpTip.lua). Fyra steg med knappen Next/Got it:
--- en sak (Alt-klick), kugghjulet, fliken Bank (granskningen 2026-11-15) och fliken Quests. Guiden visas en gång; Tidy
--- Pack sparar själv att den är klar (TidyPackDB.tourDone), inte i spelets inställningar.
--- Inställningssidan och kugghjulet kan visa den igen (ns.ResetTour).
--- ⚠️ Spelet visar inga tipsrutor med handkontroll eller när spelaren stängt av spelets tips
---    (HelpTip:AreHelpTipsEnabled), och då visas inte guiden heller.
+-- A short guide the first time the bags open, in an own frame from the game's HelpTipTemplate
+-- (outside the game's shared pool HelpTip.framePool, so the addon's tips can never taint the
+-- game's own tips, Blizzard_SharedXML/HelpTip.lua). Four steps with the Next/Got it button:
+-- an item (Alt-click), the gear, the Bank tab (review 2026-11-15) and the Quests tab. Shown once;
+-- Tidy Pack saves itself that it's done (TidyPackDB.tourDone), not in the game's settings.
+-- The options page and the gear can show it again (ns.ResetTour).
+-- ⚠️ The game shows no tips with a controller or when the player has turned the game's tips off
+--    (HelpTip:AreHelpTipsEnabled), and then the guide doesn't show either.
 
 local _, ns = ...
 local L = ns.L
@@ -20,7 +20,7 @@ local function hideTip()
     end
 end
 
--- Stegen: vad rutan pekar på, texten, och var rutan står i förhållande till det den pekar på.
+-- The steps: what the tip points at, the text, and where the tip sits relative to its target.
 local function steps()
     return {
         {
@@ -62,7 +62,7 @@ showStep = function(index)
     end
     local target = info.target()
     if not target or not target:IsVisible() then
-        -- Inget att peka på (t.ex. en tom väska): hoppa till nästa steg.
+        -- Nothing to point at (e.g. an empty bag): go to the next step.
         showStep(index + 1)
         return
     end
@@ -71,10 +71,10 @@ showStep = function(index)
         tip = CreateFrame("Frame", nil, UIParent, "HelpTipTemplate")
     end
     tip:Hide()
-    tip:Reset() -- spelets pool gör det här åt spelets egna tips
+    tip:Reset() -- the game's pool does this for the game's own tips
     tip.width = HelpTip.width
     tip:SetWidth(tip.width)
-    -- Ingen system/cvar/autoHideWhenTargetHides: de går via spelets delade system.
+    -- No system/cvar/autoHideWhenTargetHides: those go through the game's shared system.
     tip:Init(ns.bagFrame, {
         text = info.text,
         buttonStyle = index < #list and HelpTip.ButtonStyle.Next or HelpTip.ButtonStyle.GotIt,
@@ -85,8 +85,8 @@ showStep = function(index)
                 finish()
                 return
             end
-            -- HelpTipTemplateMixin:Close kör callbacken innan den döljer rutan, så samma ram
-            -- måste vänta en bildruta innan den visas igen (annars göms nästa steg direkt).
+            -- HelpTipTemplateMixin:Close runs the callback before it hides the tip, so the same frame
+            -- must wait a frame before it shows again (otherwise the next step hides at once).
             C_Timer.After(0, function()
                 if step == index and ns.bagFrame and ns.bagFrame:IsShown() then
                     showStep(index + 1)
@@ -107,7 +107,7 @@ local function start()
     showStep(1)
 end
 
--- Visar guiden nästa gång väskan öppnas (knappen på inställningssidan).
+-- Shows the guide the next time the bags open (the button on the options page).
 function ns.ResetTour()
     ns.db.tourDone = false
     step = nil
@@ -119,11 +119,11 @@ ns.OnLoad(function()
     if not bagFrame or not HelpTip then
         return
     end
-    -- Lite efter att fönstret öppnats, så att sakerna hunnit läggas ut.
+    -- A little after the window opens, so the items have been laid out.
     bagFrame:HookScript("OnShow", function()
         C_Timer.After(0.3, start)
     end)
-    -- Stängs väskan mitt i guiden börjar den om nästa gång.
+    -- If the bags close in the middle of the guide, it starts over next time.
     bagFrame:HookScript("OnHide", function()
         if step then
             step = nil
