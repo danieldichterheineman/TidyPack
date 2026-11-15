@@ -1,34 +1,34 @@
 -- TidyPack – LogoButton.lua
--- Tidy Packs logga som knapp i stället för spelets väskrad nere till höger (BagsBar: ryggsäcken och
--- fyra väskplatser), användarens önskan 2026-11-11. Klick öppnar väskan, högerklick inställningarna,
--- och en sak som släpps på loggan läggs i väskorna. Loggan visar ingen siffra (användarens önskan); antalet
--- lediga platser står i tooltipen och i väskfönstret. Väskorna
--- byts i stället i väskraden längst ner i väskfönstret (Layout.lua).
--- Inställningen "Replace the game's bag buttons" (replaceBagBar) tar tillbaka spelets väskrad.
--- ⚠️ Loggan öppnar väskan genom att klicka på spelets egen ryggsäcksknapp (en säker knapp med
---    type "click"), aldrig med ToggleAllBags från addonets kod. Spelet bygger väskans rutor när den
---    öppnas, och öppnas den från ett addons kod blir rutorna "addonets". Då stoppar spelet allt som
---    bara spelet självt får göra med dem, till exempel att disenchanta eller använda en sak på en
---    annan (rutan "blocked from an action", hittat 2026-11-12). En säker knapp kan inte visas eller
---    döljas i strid, så inställningen väntar tills striden är över.
--- ⚠️ Spelets väskrad döljs efter varje Show, även i Edit Mode. Den går inte att flytta i Edit Mode
---    så länge loggan ersätter den; loggan placeras vid mikromenyn men är ankrad i UIParent (inte
---    i MicroMenuContainer) så att skyddade ramar inte binder ihop dem, och flyttas efter strid.
+-- Tidy Pack's logo as a button instead of the game's bag bar at the bottom right (BagsBar: the
+-- backpack and four bag slots), the owner's wish 2026-11-11. Click opens the bags, right-click the
+-- options, and an item dropped on the logo goes into the bags. The logo shows no number (the owner's
+-- wish); the free slots are in the tooltip and in the bag window. Bags are
+-- swapped in the bag row at the bottom of the bag window instead (Layout.lua).
+-- The option "Replace the game's bag buttons" (replaceBagBar) brings back the game's bag bar.
+-- ⚠️ The logo opens the bags by clicking the game's own backpack button (a secure button with
+--    type "click"), never with ToggleAllBags from addon code. The game builds the item buttons when
+--    the bags open, and opened from an addon's code the buttons become "the addon's". The game then
+--    blocks everything only the game itself may do with them, e.g. disenchanting or using an item on
+--    another ("blocked from an action", found 2026-11-12). A secure button can't be shown or
+--    hidden in combat, so the option waits until combat is over.
+-- ⚠️ The game's bag bar is hidden after every Show, also in Edit Mode. It can't be moved in Edit Mode
+--    while the logo replaces it; the logo sits next to the micro menu but is anchored to UIParent (not
+--    to MicroMenuContainer) so protected frames don't tie them together, and it moves after combat.
 
 local _, ns = ...
 local L = ns.L
 
 local LOGO = "Interface\\AddOns\\TidyPack\\Media\\Logo"
 local SIZE = 45
-local FRAME_ATLAS = "ui-hud-actionbar-iconframe-bags" -- spelets ram för väskknapparna i Forever
+local FRAME_ATLAS = "ui-hud-actionbar-iconframe-bags" -- the game's frame for the bag buttons in Forever
 local button
 
--- Visar loggan och döljer spelets väskrad, eller tvärtom.
+-- Shows the logo and hides the game's bag bar, or the other way round.
 local waitingForCombat = false
 local waitingForPosition = false
 
--- Placerar loggan direkt till höger om mikromenyn, men ankrad i UIParent så att skyddade
--- ramar inte kopplas till MicroMenuContainer (issue #8). Uppdateras bara utanför strid.
+-- Places the logo right of the micro menu, but anchored to UIParent so protected frames
+-- aren't tied to MicroMenuContainer (issue #8). Updated only outside combat.
 local function updatePosition()
     if not button then
         return
@@ -64,7 +64,7 @@ function ns.ApplyBagBarSetting()
         return
     end
     if InCombatLockdown() then
-        waitingForCombat = true -- görs när striden är över (se lyssnaren längst ner)
+        waitingForCombat = true -- done when combat is over (see the listener at the bottom)
         return
     end
     if ns.db.replaceBagBar then
@@ -80,13 +80,13 @@ ns.OnLoad(function()
     if not BagsBar then
         return
     end
-    -- Namngiven, så att andra addons och /fstack kan hitta den. Namnet börjar med addonets.
-    -- Ser ut som Forevers egen ryggsäcksknapp (Blizzard_MainMenuBarBagButtons/Camelot): 45×45, ikonen
-    -- beskuren av spelets mask, spelets ram för väskknappar ovanpå och actionbarens ram bakom. Den står
-    -- direkt till höger om mikromenyn, där spelets väskor började, så att det ser ut som att väskraden
-    -- krympt till en väska med Tidy Packs logga.
-    -- En säker knapp (SecureActionButtonTemplate) som klickar på spelets ryggsäcksknapp, som finns
-    -- kvar fast väskraden är dold. Se ⚠️ högst upp.
+    -- Named, so other addons and /fstack can find it. The name starts with the addon's.
+    -- Looks like Forever's own backpack button (Blizzard_MainMenuBarBagButtons/Camelot): 45×45, the icon
+    -- cropped by the game's mask, the game's bag-button frame on top and the action bar frame behind. It
+    -- sits right of the micro menu, where the game's bags started, so it looks as if the bag bar
+    -- shrank to one bag with Tidy Pack's logo.
+    -- A secure button (SecureActionButtonTemplate) that clicks the game's backpack button, which
+    -- remains although the bag bar is hidden. See ⚠️ at the top.
     button = CreateFrame("Button", "TidyPackBagButton", UIParent, "SecureActionButtonTemplate")
     button:SetSize(SIZE, SIZE)
     updatePosition()
@@ -113,19 +113,19 @@ ns.OnLoad(function()
         texture:SetSize(46, 46)
     end
     button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-    -- Säkra knappar gör som standard sitt jobb när knappen trycks ned (inställningen
-    -- ActionButtonUseKeyDown, SecureActionButton_OnClick), men knappen lyssnar bara på uppsläpp.
-    -- useOnKeyDown = false: jobbet görs vid uppsläpp, en gång per klick.
-    -- Vänsterklick (type1) klickar alltid på spelets ryggsäcksknapp, även i strid. Högerklick
-    -- (type2) har inget säkert klick som standard, så i strid stänger det aldrig en öppen väska
-    -- utan öppnar bara kugghjulets meny; utanför strid öppnas väskan först om den är stängd.
+    -- By default secure buttons do their job when the button is pressed down (the setting
+    -- ActionButtonUseKeyDown, SecureActionButton_OnClick), but this button listens only for release.
+    -- useOnKeyDown = false: the job is done on release, once per click.
+    -- Left-click (type1) always clicks the game's backpack button, also in combat. Right-click
+    -- (type2) has no secure click by default, so in combat it never closes open bags but only
+    -- opens the gear menu; outside combat the bags open first if they are closed.
     button:SetAttribute("useOnKeyDown", false)
     button:SetAttribute("type1", "click")
     button:SetAttribute("type2", nil)
     button:SetAttribute("clickbutton", MainMenuBarBackpackButton)
-    -- Före klicket: med en sak på markören lägger Tidy Pack den i väskorna, och högerklick när
-    -- väskan är stängd utanför strid slår tillfälligt på type2 så att ryggsäcken öppnas före
-    -- menyn. Attribut kan inte ändras i strid.
+    -- Before the click: with an item on the cursor Tidy Pack puts it in the bags, and a right-click
+    -- with closed bags outside combat turns on type2 for a moment so the backpack opens before
+    -- the menu. Attributes can't change in combat.
     local putItem = false
     button:SetScript("PreClick", function(self, mouseButton)
         putItem = false
@@ -146,7 +146,7 @@ ns.OnLoad(function()
         end
     end)
     button:SetScript("PostClick", function(self, mouseButton)
-        -- Återställ standardvärdena direkt så att ett senare klick i strid alltid beter sig likadant.
+        -- Restore the defaults at once, so a later click in combat always behaves the same.
         if not InCombatLockdown() then
             self:SetAttribute("type1", "click")
             self:SetAttribute("type2", nil)
@@ -155,7 +155,7 @@ ns.OnLoad(function()
             putItem = false
             ns.PutCursorItemInBags()
         elseif mouseButton == "RightButton" then
-            -- En bildruta senare, när väskan som ryggsäcksknappen öppnade syns.
+            -- One frame later, when the bags the backpack button opened are shown.
             C_Timer.After(0, function()
                 ns.OpenSettings()
             end)
@@ -174,13 +174,13 @@ ns.OnLoad(function()
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", GameTooltip_Hide)
-    -- En säker knapp kan inte döljas i strid (t.ex. /reload mitt i en strid); ApplyBagBarSetting
-    -- väntar då tills striden är över.
+    -- A secure button can't be hidden in combat (e.g. /reload in the middle of combat);
+    -- ApplyBagBarSetting then waits until combat is over.
     if not InCombatLockdown() then
         button:Hide()
     end
 
-    -- Spelet visar sin väskrad igen bland annat när Edit Mode ändrar något.
+    -- The game shows its bag bar again, e.g. when Edit Mode changes something.
     hooksecurefunc(BagsBar, "Show", function(self)
         if ns.db.replaceBagBar then
             self:Hide()
@@ -192,7 +192,7 @@ ns.OnLoad(function()
     end
     ns.RegisterEvent("PLAYER_ENTERING_WORLD", updatePosition)
     ns.RegisterEvent("UI_SCALE_CHANGED", updatePosition)
-    -- Inställningen eller mikromenyn ändrades i strid: gör det när striden är över.
+    -- The option or the micro menu changed in combat: do it when combat is over.
     ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if waitingForCombat then
             waitingForCombat = false
