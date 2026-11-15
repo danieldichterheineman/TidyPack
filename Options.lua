@@ -4,7 +4,7 @@
 -- and Bag and bank (Marks.lua), and the junk list and the groups open in the bag window (Panels.lua).
 -- The page in the game's options (Esc → Options → AddOns → Tidy Pack) has no options: it tells what
 -- Tidy Pack is and who made it, how to use it and where to find it (CurseForge).
--- Right-click on the logo opens the bags with the gear menu; /tidypack and the addon menu do so too.
+-- Right-click on the logo opens the gear menu; /tidypack and the addon menu do so when the bags are open.
 
 local addonName, ns = ...
 local L = ns.L
