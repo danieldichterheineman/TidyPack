@@ -1,21 +1,21 @@
 -- TidyPack – Locales.lua
--- All text som visas i spelet går via L["Engelsk text"]. Engelskan är nyckeln och standardspråket.
--- Översättningarna ligger i en fil per språk i mappen Locales (t.ex. Locales/deDE.lua) och lämnas
--- hit med ns.AddTranslation. Saknas en text i en översättning visas den engelska.
+-- All text shown in the game goes through L["English text"]. English is the key and the default.
+-- The translations are one file per language in the Locales folder (e.g. Locales/deDE.lua) and are
+-- handed over with ns.AddTranslation. A text missing from a translation shows in English.
 --
--- Språket (användarens val 2026-11-15): Automatic följer spelets språk (GetLocale), och kugghjulets
--- meny Language ▸ (Marks.lua) kan välja ett annat av spelets elva språk. Valet sparas i
--- TidyPackDB.language ("auto" eller en språkkod) och gäller efter /reload, eftersom flikar och
--- knappar redan har sina texter. Svenska finns inte: spelet finns inte på svenska.
--- ⚠️ Översättningarna är maskinöversatta. Rättelser från spelare är välkomna (README).
+-- The language (the owner's choice 2026-11-15): Automatic follows the game (GetLocale), and the gear
+-- menu's Language ▸ (Marks.lua) can pick another of the game's eleven languages. The choice is saved
+-- in TidyPackDB.language ("auto" or a language code) and applies after /reload, because tabs and
+-- buttons already have their texts. There is no Swedish: the game has no Swedish client.
+-- ⚠️ The translations are machine-made. Corrections from players are welcome (README).
 
 local _, ns = ...
 
-local translations = {} -- språkkod → { ["Engelsk text"] = "översättning" }
-local active            -- översättningen som visas just nu, eller nil för engelska
+local translations = {} -- language code → { ["English text"] = "translation" }
+local active            -- the translation shown now, or nil for English
 
--- L svarar med översättningen för det valda språket, och annars med den engelska texten.
--- Uppslaget görs varje gång en text används, så ett byte av språk gäller allt som ritas efteråt.
+-- L answers with the translation for the chosen language, otherwise with the English text. The
+-- lookup happens every time a text is used, so a language change applies to everything drawn later.
 local L = setmetatable({}, {
     __index = function(_, key)
         return active and active[key] or key
@@ -23,8 +23,8 @@ local L = setmetatable({}, {
 })
 ns.L = L
 
--- Spelets elva språk (WowLocale i spelets dokumentation), med namnet på det egna språket.
--- enGB visas som enUS och ptPT som ptBR av spelet självt (GetLocale).
+-- The game's eleven languages (WowLocale in the game's documentation), named in their own language.
+-- The game itself shows enGB as enUS and ptPT as ptBR (GetLocale).
 ns.LANGUAGES = {
     { code = "enUS", name = "English" },
     { code = "deDE", name = "Deutsch" },
@@ -39,8 +39,8 @@ ns.LANGUAGES = {
     { code = "zhTW", name = "繁體中文" },
 }
 
--- Vilket språk ett val ger: "auto" (eller inget val) betyder spelets språk. Ett språk utan
--- översättning blir engelska.
+-- Which language a choice gives: "auto" (or no choice) means the game's language. A language
+-- without a translation becomes English.
 function ns.ResolveLanguage(choice)
     local code = (choice and choice ~= "auto") and choice or GetLocale()
     if translations[code] then
@@ -49,15 +49,15 @@ function ns.ResolveLanguage(choice)
     return "enUS"
 end
 
--- Byter språk. Core.lua anropar den när den sparade datan är inläst, innan resten av addonet
--- startar (ns.OnLoad).
+-- Switches language. Core.lua calls it once the saved data is loaded, before the rest of the addon
+-- starts (ns.OnLoad).
 function ns.SetLanguage(choice)
     ns.language = ns.ResolveLanguage(choice)
     active = translations[ns.language]
 end
 
--- Översättningsfilerna lämnar sina texter här. Medan filerna laddas, innan den sparade datan finns,
--- gäller spelets språk (samma som Automatic).
+-- The translation files hand over their texts here. While the files load, before the saved data
+-- exists, the game's language applies (the same as Automatic).
 function ns.AddTranslation(code, texts)
     translations[code] = texts
     if code == GetLocale() then
