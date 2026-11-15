@@ -1,33 +1,33 @@
 -- TidyPack – QuestLock.lua
--- Låser saker som du behöver: quest-saker, vanliga saker som en pågående quest kräver, och
--- saker i dina utrustningsset. Hos en handlare går låsta saker inte att klicka på
--- (Layout.lua och Gamepad.lua), och de föreslås aldrig för radering (Junk.lua).
--- ⚠️ Vanliga saker som en quest kräver känns igen på namnet i questloggens text, t.ex.
--- "Linen Cloth: 3/10", alltså på spelets språk. Antalet man har och behöver kommer ur
--- questloggens numFulfilled och numRequired och visas på rutan ("3/7"), i tooltipen och i
--- fliken Quests (QuestsView.lua). Har du flera högar av en quest-sak räknas bara så många som
--- behövs som quest-saker; resten går att sälja (UpdateQuestStacks).
--- ⚠️ Spelets egen knapp "Sell All Junk" i handlarfönstret känner inte till låsen.
+-- Locks items you need: quest items, normal items an active quest needs, and items in your
+-- equipment sets. At a merchant locked items can't be clicked (Layout.lua and Gamepad.lua),
+-- and they are never suggested for deletion (Junk.lua).
+-- ⚠️ Normal items a quest needs are recognised by their name in the quest log's text, e.g.
+-- "Linen Cloth: 3/10", so in the game's language. How many you have and need come from the
+-- quest log's numFulfilled and numRequired and show on the button ("3/7"), in the tooltip and in
+-- the Quests tab (QuestsView.lua). With several stacks of a quest item, only as many as are
+-- needed count as quest items; the rest can be sold (UpdateQuestStacks).
+-- ⚠️ The game's own "Sell All Junk" button in the merchant window doesn't know about the locks.
 
 local _, ns = ...
 local L = ns.L
 
--- För varje sak som en pågående quest kräver (på namn): { title, questID, have, need, finished,
--- more }, där have och need är antalet man har och antalet som behövs (3 av 7) och more är hur
--- många fler quests som också behöver saken.
+-- For each item an active quest needs (by name): { title, questID, have, need, finished,
+-- more }, where have and need are how many you have and need (3 of 7) and more is how
+-- many other quests also need the item.
 local neededBy = {}
-local scanned = {}    -- nästa genomgång av questloggen, byts mot neededBy när något ändrats
-local questList = {}  -- quests som kräver saker: { questID, title, level, ready, objectives = { { name, have, need, finished } } }
-local lastSignature   -- sammanfattning av förra genomgången, för att se om något ändrats
-local surplus = {}    -- bagID * 1000 + slot → true för högar som är över det en quest behöver
-local setItems = {}   -- itemID → true, för saker i ett utrustningsset
+local scanned = {}    -- the next pass of the quest log, swapped with neededBy when something changed
+local questList = {}  -- quests that need items: { questID, title, level, ready, objectives = { { name, have, need, finished } } }
+local lastSignature   -- summary of the last pass, to see if something changed
+local surplus = {}    -- bagID * 1000 + slot → true for stacks beyond what a quest needs
+local setItems = {}   -- itemID → true, for items in an equipment set
 
--- Sakens namn i ett mål i questloggen, t.ex. "Linen Cloth: 3/10" eller "3/10 Linen Cloth".
+-- The item's name in a quest log objective, e.g. "Linen Cloth: 3/10" or "3/10 Linen Cloth".
 local function objectiveItemName(text)
     return text:match("^(.-):%s*%d+%s*/%s*%d+") or text:match("^%d+%s*/%s*%d+%s+(.+)$")
 end
 
--- En text som säger allt väskan visar om questerna. Är den lika som förra gången har inget ändrats.
+-- A text that says everything the bags show about quests. If it's the same as last time, nothing changed.
 local function signatureOf(list)
     local parts = {}
     for _, quest in ipairs(list) do
@@ -40,9 +40,9 @@ local function signatureOf(list)
     return table.concat(parts, "|")
 end
 
--- Går igenom questloggen och noterar vilka saker varje pågående quest kräver, och hur många
--- (questloggens numFulfilled och numRequired). Returnerar sant om något ändrades sedan förra
--- gången.
+-- Goes through the quest log and notes which items each active quest needs, and how many
+-- (the quest log's numFulfilled and numRequired). Returns true if something changed since the
+-- last time.
 local function scanQuests()
     wipe(scanned)
     local list = {}
@@ -54,7 +54,7 @@ local function scanQuests()
             local quest
             if objectives then
                 for _, objective in ipairs(objectives) do
-                    -- Även mål som redan är klara: sakerna ska ju lämnas in.
+                    -- Also objectives already done: the items must still be handed in.
                     local name = objective.type == "item" and objective.text and objectiveItemName(objective.text)
                     if name then
                         quest = quest or {
@@ -69,7 +69,7 @@ local function scanQuests()
                         quest.objectives[#quest.objectives + 1] = { name = name, have = have, need = need, finished = finished }
                         local record = scanned[name]
                         if record then
-                            -- Flera quests behöver samma sak: den första visas, och tooltipen nämner de andra.
+                            -- Several quests need the same item: the first shows, and the tooltip names the others.
                             record.more = record.more + 1
                             record.need = math.max(record.need, need)
                         else
@@ -94,17 +94,17 @@ local function scanQuests()
     return true
 end
 
--- Vad en quest kräver av en sak (på namn): { title, questID, have, need, finished, more }, eller nil.
+-- What a quest needs of an item (by name): { title, questID, have, need, finished, more }, or nil.
 function ns.GetQuestRecord(name)
     return neededBy[name]
 end
 
--- Quests som kräver saker, i questloggens ordning (se scanQuests).
+-- Quests that need items, in the quest log's order (see scanQuests).
 function ns.GetQuestList()
     return questList
 end
 
--- Sant om någon quest med saker är klar att lämna in (pricken på fliken Quests).
+-- True if a quest with items is ready to turn in (the dot on the Quests tab).
 function ns.HasReadyQuest()
     for _, quest in ipairs(questList) do
         if quest.ready then
@@ -114,11 +114,11 @@ function ns.HasReadyQuest()
     return false
 end
 
--- Avgör vilka högar av en quest-sak som behövs och vilka som är över: har du flera högar av
--- samma sak tas de största först tills antalet räcker, och resten räknas inte som quest-saker
--- (de ligger bland vanliga saker och går att sälja). En ensam hög är alltid kvar hel, och saker
--- som spelet själv markerat som quest-saker rörs aldrig. Layout.lua anropar den före varje
--- genomgång.
+-- Decides which stacks of a quest item are needed and which are extra: with several stacks of
+-- the same item the biggest are taken first until the count is reached, and the rest don't count
+-- as quest items (they lie among normal items and can be sold). A single stack always stays
+-- whole, and items the game itself marks as quest items are never touched. Layout.lua calls this
+-- before every pass.
 local stacksByName = {}
 
 function ns.UpdateQuestStacks()
@@ -169,7 +169,7 @@ function ns.UpdateQuestStacks()
     end
 end
 
--- Går igenom dina utrustningsset och noterar vilka saker de består av.
+-- Goes through your equipment sets and notes which items they hold.
 local function scanEquipmentSets()
     wipe(setItems)
     if not C_EquipmentSet.CanUseEquipmentSets() then
@@ -178,7 +178,7 @@ local function scanEquipmentSets()
     for _, setID in ipairs(C_EquipmentSet.GetEquipmentSetIDs()) do
         local itemIDs = C_EquipmentSet.GetItemIDs(setID)
         if itemIDs then
-            -- pairs, eftersom tabellen har hål där setet saknar en sak.
+            -- pairs, because the table has holes where the set lacks an item.
             for _, itemID in pairs(itemIDs) do
                 if type(itemID) == "number" and itemID > 0 then
                     setItems[itemID] = true
@@ -194,8 +194,8 @@ local function refresh()
     end
 end
 
--- Sant om saken behövs för en quest: en quest-sak, eller en vanlig sak som en pågående
--- quest kräver.
+-- True if the item is needed for a quest: a quest item, or a normal item an active quest
+-- needs.
 function ns.IsQuestItem(bagID, slot, info)
     local questInfo = C_Container.GetContainerItemQuestInfo(bagID, slot)
     if questInfo and (questInfo.isQuestItem or questInfo.questID) then
@@ -204,17 +204,17 @@ function ns.IsQuestItem(bagID, slot, info)
     return neededBy[ns.GetItemName(info.hyperlink)] ~= nil and not surplus[bagID * 1000 + slot]
 end
 
--- Sant om saken ingår i ett av dina utrustningsset.
+-- True if the item is in one of your equipment sets.
 function ns.IsInEquipmentSet(itemID)
     return setItems[itemID] == true
 end
 
--- Sant om saken är låst: den behövs för en quest eller ingår i ett av spelets utrustningsset.
+-- True if the item is locked: a quest needs it or it is in one of the game's equipment sets.
 function ns.IsLocked(bagID, slot, info)
     return ns.IsInEquipmentSet(info.itemID) or ns.IsQuestItem(bagID, slot, info)
 end
 
--- Sant medan handlarfönstret är öppet.
+-- True while the merchant window is open.
 function ns.IsAtMerchant()
     return MerchantFrame ~= nil and MerchantFrame:IsShown()
 end
@@ -224,9 +224,9 @@ ns.RegisterEvent("PLAYER_LOGIN", function()
     scanEquipmentSets()
 end)
 
--- QUEST_LOG_UPDATE kommer ofta, flera gånger i rad, t.ex. för varje framsteg i en quest.
--- Questloggen gås därför igenom högst en gång per bildruta, och väskfönstret uppdateras bara
--- när någon quest kräver något nytt.
+-- QUEST_LOG_UPDATE comes often, several times in a row, e.g. for every quest progress.
+-- So the quest log is read at most once per frame, and the bag window updates only
+-- when a quest needs something new.
 local scanScheduled = false
 
 ns.RegisterEvent("QUEST_LOG_UPDATE", function()
@@ -247,12 +247,12 @@ ns.RegisterEvent("EQUIPMENT_SETS_CHANGED", function()
     refresh()
 end)
 
--- Låsen gäller bara hos handlaren, så väskfönstret uppdateras när handeln börjar och slutar.
+-- The locks apply only at a merchant, so the bag window updates when trading starts and ends.
 ns.RegisterEvent("MERCHANT_SHOW", refresh)
 ns.RegisterEvent("MERCHANT_CLOSED", refresh)
 
--- Rader i sakens tooltip: "Needed for: The Cloth Collector", och hos en handlare en röd rad
--- på saker som Tidy Pack har låst.
+-- Lines in the item's tooltip: "Needed for: The Cloth Collector", and at a merchant a red line
+-- on items Tidy Pack has locked.
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
     if not data or type(data.id) ~= "number" then
         return
