@@ -1,7 +1,7 @@
-# Provbygge av zip-filen utan att ladda upp något. Startas för hand: Actions → Package check
-# (no upload) → Run workflow. Bygger paketet med BigWigs packager (flaggan -d hoppar över
-# uppladdningen, och ingen nyckel skickas med), skriver ut vad som följer med och lägger
-# zip-filen som en nedladdningsbar fil på körningen.
+# A test build of the zip file without uploading anything. Started by hand: Actions → Package check
+# (no upload) → Run workflow. Builds the package with BigWigs packager (the flag -d skips
+# the upload, and no key is sent along), prints what is included and keeps
+# the zip file as a downloadable file on the run.
 name: Package check (no upload)
 
 on:
@@ -18,7 +18,7 @@ jobs:
       - name: Clone project
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0 # hela historiken, som i det riktiga arbetsflödet
+          fetch-depth: 0 # the whole history, as in the real workflow
 
       - name: Read the version from the TOC file
         id: version
@@ -26,7 +26,7 @@ jobs:
           toc_version=$(grep -m1 '^## Version:' TidyPack.toc | sed 's/^## Version:[[:space:]]*//' | tr -d '\r')
           echo "version=${toc_version}" >> "$GITHUB_OUTPUT"
 
-      # -d: ingen uppladdning, -u: Unix-radslut (LF), -n: samma namn som i releasen.
+      # -d: no upload, -u: Unix line endings (LF), -n: the same name as in the release.
       - name: Build the package without uploading
         uses: BigWigsMods/packager@v2
         with:
@@ -46,5 +46,5 @@ jobs:
           name: TidyPack-package-check
           path: .release/*.zip
           retention-days: 7
-          # .release är en dold mapp, och dolda mappar hoppas annars över
+          # .release is a hidden folder, and hidden folders are skipped otherwise
           include-hidden-files: true
