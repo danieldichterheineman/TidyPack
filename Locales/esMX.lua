@@ -1,7 +1,7 @@
 -- TidyPack – Locales/esMX.lua
--- Español (Latinoamérica). Maskinöversatt 2026-11-15; rättelser från spelare är välkomna. Bygger på
--- Locales/esES.lua (som laddas före) och byter bara de texter där orden skiljer sig: "basura" i
--- stället för "chatarra", "eliminar" i stället för "borrar", "saquear", "agregar" och "tomar".
+-- Español (Latinoamérica). Machine-translated 2026-11-15; corrections from players are welcome.
+-- Builds on Locales/esES.lua (loaded first) and changes only the texts where the words differ:
+-- "basura" instead of "chatarra", "eliminar" instead of "borrar", "saquear", "agregar", "tomar".
 
 local _, ns = ...
 
@@ -45,7 +45,7 @@ local overrides = {
     ["The gear button has your junk list, your own groups and the settings."] = "El engranaje tiene tu lista de basura, tus propios grupos y los ajustes.",
 }
 
--- Den spanska översättningen för Spanien, med ändringarna ovanpå (CopyTable är spelets funktion).
+-- The Spanish translation for Spain with the changes on top (CopyTable is the game's function).
 local texts = CopyTable(ns.translationEsES or {})
 for key, text in pairs(overrides) do
     texts[key] = text
