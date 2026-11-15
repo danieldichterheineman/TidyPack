@@ -1,35 +1,35 @@
 -- TidyPack – Marks.lua
--- Två märken som du sätter själv. De sparas per sorts sak (itemID) och gäller alla dina
--- karaktärer:
---   Favorit (stjärna): saken hamnar i gruppen Favorites överst.
---   Skräplistan: saken hamnar sist i Junk med spelets eget skräpmynt. Tidy Pack frågar om
---   den ska raderas när du lootar den (MakeRoom.lua), och den föreslås först när
---   väskorna är fulla.
--- Så märker du:
---   - Mus: Alt-vänsterklick = favorit, Alt-högerklick = skräplistan. Spelets klick gör
---     ingenting med Alt nedtryckt (i Forever är Alt bara kopplat till besvärjelser och
---     utrustningsmenyer, se Bindings_Camelot.xml i spelets kod).
---   - Mus och handkontroll: släpp saken på kugghjulet uppe till höger. Spelets egen meny
---     frågar då om saken ska bli favorit, hamna på skräplistan eller läggas i en egen grupp.
---   - Skräplistan har också en egen vy i väskan (Panels.lua).
--- Samma sak en gång till tar bort märket. En sak kan inte vara både favorit och på
--- skräplistan.
--- Kugghjulet är den enda knapp Tidy Pack lägger i väskfönstret. Den sitter där spelets
--- sorteringsknapp satt. Utan en sak på markören öppnar den skräplistan, de egna grupperna och
--- inställningarna.
+-- Two marks you set yourself. They are saved per kind of item (itemID) and apply to all your
+-- characters:
+--   Favorite (star): the item goes to the group Favorites at the top.
+--   Junk list: the item goes last in Junk with the game's own junk coin. Tidy Pack asks whether
+--   to delete it when you loot it (MakeRoom.lua), and it is suggested first when the bags
+--   are full.
+-- How to mark:
+--   - Mouse: Alt-click an item for its menu (favorite, junk list, own groups). The game's click
+--     does nothing with Alt held (in Forever Alt is only bound to spells and equipment
+--     menus, see Bindings_Camelot.xml in the game's code).
+--   - Mouse and controller: drop the item on the gear at the top right. The game's own menu
+--     then asks whether it should be a favorite, go on the junk list or into an own group.
+--   - The junk list also has its own view in the bags (Panels.lua).
+-- The same choice again removes the mark. An item can't be both a favorite and on the junk
+-- list.
+-- The gear is the only button Tidy Pack puts in the bag window. It sits where the game's
+-- sort button was. Without an item on the cursor it opens the junk list, the own groups and
+-- the options.
 
 local _, ns = ...
 local L = ns.L
 
--- Knappens bild: spelets kugghjul för inställningar (questlog-icon-setting, samma som
--- spelets UIPanelIconDropdownButtonTemplate).
+-- The button's image: the game's gear for settings (questlog-icon-setting, the same as the
+-- game's UIPanelIconDropdownButtonTemplate).
 local BUTTON_ATLAS = "questlog-icon-setting"
 local BUTTON_SIZE = 20
 local ICON_SIZE = 15
-local GOLD_R, GOLD_G, GOLD_B = 1, 0.82, 0 -- spelets gula textfärg
+local GOLD_R, GOLD_G, GOLD_B = 1, 0.82, 0 -- the game's yellow text color
 
 local gearButton
-local gearHovered = false -- markören (mus eller handkontroll) står på kugghjulet
+local gearHovered = false -- the cursor (mouse or controller) is on the gear
 local hookedButtons = setmetatable({}, { __mode = "k" })
 
 function ns.IsFavorite(itemID)
@@ -40,8 +40,8 @@ function ns.IsJunkMarked(itemID)
     return ns.db ~= nil and ns.db.junk[itemID] == true
 end
 
--- Sätter eller tar bort ett märke. Ett nytt märke tar bort det andra, så att en sak aldrig
--- är både favorit och på skräplistan.
+-- Sets or removes a mark. A new mark removes the other, so an item is never both a favorite
+-- and on the junk list.
 local function toggleMark(list, otherList, itemID)
     if not itemID then
         return
@@ -53,7 +53,7 @@ local function toggleMark(list, otherList, itemID)
         otherList[itemID] = nil
     end
     if ns.JunkListChanged then
-        ns.JunkListChanged(itemID) -- MakeRoom.lua räknar saken från och med nu
+        ns.JunkListChanged(itemID) -- MakeRoom.lua counts the item from now on
     end
     if ns.RefreshJunkListPage then
         ns.RefreshJunkListPage()
@@ -71,18 +71,18 @@ function ns.ToggleJunk(itemID)
     toggleMark(ns.db.junk, ns.db.favorites, itemID)
 end
 
--- Lägger till (true) eller tar bort (false) en sak på skräplistan. Används av
--- inställningarna.
+-- Adds (true) or removes (false) an item on the junk list. Used by the
+-- options.
 function ns.SetJunk(itemID, onList)
     if itemID and (ns.db.junk[itemID] == true) ~= onList then
         ns.ToggleJunk(itemID)
     end
 end
 
-local showItemMenu -- definieras längre ner, efter menyn
+local showItemMenu -- defined further down, after the menu
 
--- Körs efter spelets eget klick på en ruta i väskorna (HookScript). Alt-klick öppnar menyn för saken
--- (favorit, skräplista, grupp). Spelet kan ha plockat upp saken på markören; den läggs då tillbaka.
+-- Runs after the game's own click on an item button (HookScript). Alt-click opens the item's menu
+-- (favorite, junk list, group). The game may have picked the item up; it is then put back.
 local function onItemButtonClick(button, mouseButton)
     if not IsAltKeyDown() or mouseButton ~= "LeftButton" then
         return
@@ -95,8 +95,8 @@ local function onItemButtonClick(button, mouseButton)
     showItemMenu(button, info.itemID)
 end
 
--- Layout.lua anropar den här för varje ruta det visar. Varje ruta får Alt-klicken en gång.
--- Öppnar kugghjulets meny (Options.lua: /tidypack, addonmenyn och loggan).
+-- Layout.lua calls this for every button it shows. Each button gets the Alt-click once.
+-- Opens the gear menu (Options.lua: /tidypack, the addon menu and the logo).
 function ns.OpenGearMenu()
     if gearButton and gearButton:IsVisible() then
         gearButton:OpenMenu()
@@ -110,7 +110,7 @@ function ns.HookItemButton(button)
     end
 end
 
--- Saken som just nu hänger på muspekaren (eller handkontrollens markör), om någon.
+-- The item on the mouse cursor (or the controller's cursor) right now, if any.
 local function cursorItemID()
     local kind, itemID = GetCursorInfo()
     if kind == "item" then
@@ -119,9 +119,9 @@ local function cursorItemID()
     return nil
 end
 
--- Kugghjulet är svagt tills du håller en sak, pekar på den eller har dess meny öppen. När du håller
--- en sak lyser den också upp, eftersom du kan släppa saken där.
-local gearLabel -- "Drop here for options" under kugghjulet medan du håller en sak
+-- The gear is faint until you hold an item, point at it or have its menu open. While you hold
+-- an item it lights up too, because you can drop the item there.
+local gearLabel -- "Drop here for options" under the gear while you hold an item
 
 local function updateGearButton()
     if not gearButton then
@@ -140,9 +140,9 @@ local function updateGearButton()
     end
 end
 
--- Undermenyn Language (Locales.lua): Automatic följer spelets språk, och varje språk står med sitt
--- eget namn. Valet sparas direkt men gäller efter /reload, eftersom flikar och knappar redan har sina
--- texter; knappen längst ned gör /reload (C_UI.Reload) och är bara klickbar när valet ändrar språket.
+-- The Language submenu (Locales.lua): Automatic follows the game's language, and each language has
+-- its own name. The choice is saved at once but applies after /reload, because tabs and buttons
+-- already have their texts; the bottom button does /reload (C_UI.Reload) and is only clickable when the choice changes the language.
 local function languageName(code)
     for _, language in ipairs(ns.LANGUAGES) do
         if language.code == code then
@@ -162,7 +162,7 @@ local function addLanguageMenu(rootDescription)
         if ns.ResolveLanguage(choice) ~= ns.language then
             ns.Print(L["Tidy Pack switches language after a reload of the interface (/reload)."])
         end
-        return MenuResponse.Refresh -- menyn står kvar, så att knappen nedan kan klickas
+        return MenuResponse.Refresh -- the menu stays open, so the button below can be clicked
     end
     menu:CreateRadio(L["Automatic (%s)"]:format(languageName(ns.ResolveLanguage("auto"))),
         isSelected, setSelected, "auto")
@@ -178,41 +178,41 @@ local function addLanguageMenu(rootDescription)
     end)
 end
 
--- Menyn under kugghjulet, byggd av spelets eget menysystem. Med en sak på markören: favorit,
--- skräplistan eller egen grupp. Annars: skräplistan, grupperna och inställningarna.
+-- The menu under the gear, built with the game's own menu system. With an item on the cursor:
+-- favorite, junk list or own group. Otherwise: the junk list, the groups and the options.
 local function buildMenu(_, rootDescription, itemOverride)
     local itemID = itemOverride or cursorItemID()
     if itemID then
         rootDescription:CreateTitle(C_Item.GetItemNameByID(itemID) or L["Item"])
         rootDescription:CreateButton(ns.IsFavorite(itemID) and L["Remove from Favorites"] or L["Add to Favorites"], function()
-            ClearCursor() -- saken går tillbaka till sin plats
+            ClearCursor() -- the item goes back to its place
             ns.ToggleFavorite(itemID)
         end)
         rootDescription:CreateButton(ns.IsJunkMarked(itemID) and L["Remove from Junk List"] or L["Add to Junk List"], function()
             ClearCursor()
             ns.ToggleJunk(itemID)
         end)
-        -- Egna grupper (Groups.lua): den här saken, eller hela typen.
+        -- Own groups (Groups.lua): this item, or the whole type.
         if ns.AddGroupMenus then
             ns.AddGroupMenus(rootDescription, itemID)
         end
     else
         rootDescription:CreateTitle(L["Tidy Pack"])
-        -- Skräplistan och grupperna öppnas i väskan (Panels.lua).
+        -- The junk list and the groups open in the bags (Panels.lua).
         rootDescription:CreateButton(L["Junk List..."], function()
             ns.OpenPanel("junk")
         end)
         rootDescription:CreateButton(L["Groups..."], function()
             ns.OpenPanel("groups")
         end)
-        -- Alla inställningar, i tre undermenyer (ns.optionMenus i Options.lua). Menyn står kvar när
-        -- en kryssruta klickas (spelets MenuResponse.Refresh), så ändringen syns direkt i väskan.
+        -- All options, in three submenus (ns.optionMenus in Options.lua). The menu stays open when
+        -- a checkbox is clicked (the game's MenuResponse.Refresh), so the change shows in the bags at once.
         rootDescription:CreateDivider()
         for _, menu in ipairs(ns.optionMenus or {}) do
             local submenu = rootDescription:CreateButton(menu.title)
             for index, option in ipairs(menu.options) do
                 if option.section then
-                    -- En liten rubrik, med en linje ovanför utom överst.
+                    -- A small heading, with a line above except at the top.
                     if index > 1 then
                         submenu:CreateDivider()
                     end
@@ -252,18 +252,18 @@ local function buildMenu(_, rootDescription, itemOverride)
     end
 end
 
--- Öppnar menyn för en sak vid rutan (Alt-klick).
+-- Opens the item's menu at its button (Alt-click).
 showItemMenu = function(button, itemID)
     MenuUtil.CreateContextMenu(button, function(owner, rootDescription)
         buildMenu(owner, rootDescription, itemID)
     end)
 end
 
--- Tooltipen följer hur du spelar: med handkontroll finns inga Alt-klick, men väl knappen A
--- (spelet visar den symbol som din kontroll har).
+-- The tooltip follows how you play: with a controller there is no Alt-click, but there is the A
+-- button (the game shows the symbol your controller has).
 local function showTooltip(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-    -- Samma stil som Tidy Packs andra knappar: rubrik, en rad om vad knappen är, en rad om hur.
+    -- The same style as Tidy Pack's other buttons: a title, a line about what it is, a line about how.
     GameTooltip_SetTitle(GameTooltip, L["Tidy Pack"])
     GameTooltip_AddNormalLine(GameTooltip, L["Options, your junk list and your own groups."])
     if InputUtil.IsGamepadUIEnabled() then
@@ -276,7 +276,7 @@ local function showTooltip(self)
     GameTooltip:Show()
 end
 
--- En rad i tooltipen på varje sak i Tidy Packs väska om Alt-klick (inte med handkontroll, som saknar Alt).
+-- A line in the tooltip of every item in Tidy Pack's bags about Alt-click (not with a controller, which has no Alt).
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
     if tooltip ~= GameTooltip or not data or ns.db == nil or InputUtil.IsGamepadUIEnabled() then
         return
@@ -293,18 +293,18 @@ ns.OnLoad(function()
         return
     end
 
-    -- Kugghjulet är Tidy Packs enda knapp i fönstret. Det är spelets egen menyknapp (DropdownButton), så menyn öppnas under den och fungerar
-    -- med handkontroll som spelets egna menyer.
+    -- The gear is Tidy Pack's only button in the window. It is the game's own menu button (DropdownButton), so the menu opens under it and works
+    -- with a controller like the game's own menus.
     gearButton = CreateFrame("DropdownButton", nil, bagFrame)
-    ns.gearButton = gearButton -- guiden i Tour.lua pekar på den
+    ns.gearButton = gearButton -- the guide in Tour.lua points at it
     gearButton:SetSize(BUTTON_SIZE, BUTTON_SIZE)
-    -- Fönsterhuvudet (titelraden) är en egen ram ovanpå fönstret; kugghjulet måste ligga över den,
-    -- annars döljs det bakom titelraden.
-    -- Spelets titelrad ritas över en högre nivå än fönstret i övrigt, så kugghjulet läggs i ett
-    -- högre lager (strata) för att säkert synas ovanpå den.
+    -- The window header (title bar) is its own frame on top of the window; the gear must be above it,
+    -- otherwise it hides behind the title bar.
+    -- The game draws its title bar at a higher level than the rest of the window, so the gear goes in a
+    -- higher layer (strata) to be sure to show on top of it.
     gearButton:SetFrameStrata("HIGH")
     gearButton:SetFrameLevel(bagFrame:GetFrameLevel() + 30)
-    -- Sitter i fönsterhuvudet, till vänster om stängknappen (finns den inte: nära hörnet).
+    -- Sits in the window header, left of the close button (if there is none: near the corner).
     if bagFrame.CloseButton then
         gearButton:SetPoint("RIGHT", bagFrame.CloseButton, "LEFT", -2, 0)
     else
@@ -312,8 +312,8 @@ ns.OnLoad(function()
     end
     gearButton:SetNormalAtlas(BUTTON_ATLAS)
     gearButton:SetHighlightAtlas(BUTTON_ATLAS, "ADD")
-    -- Bilden lite mindre än knappen, så att kugghjulet inte blir suddigt.
-    -- Kugghjulet färgas gult (bilden är grå i sig). Ingen ram runt det (användarens önskan 2026-11-11).
+    -- The image a little smaller than the button, so the gear doesn't blur.
+    -- The gear is colored yellow (the image itself is grey). No frame around it (the owner's wish 2026-11-11).
     for _, texture in ipairs({ gearButton:GetNormalTexture(), gearButton:GetHighlightTexture() }) do
         texture:ClearAllPoints()
         texture:SetPoint("CENTER")
@@ -324,7 +324,7 @@ ns.OnLoad(function()
     gearLabel = CreateFrame("Frame", nil, bagFrame)
     gearLabel:SetFrameStrata("HIGH")
     gearLabel:SetFrameLevel(gearButton:GetFrameLevel() + 1)
-    -- Till vänster om kugghjulet, i titelraden (under kugghjulet korsade den fönstrets kant).
+    -- Left of the gear, in the title bar (below the gear it crossed the window's edge).
     gearLabel:SetPoint("RIGHT", gearButton, "LEFT", -4, 0)
     gearLabel.bg = gearLabel:CreateTexture(nil, "BACKGROUND")
     gearLabel.bg:SetAllPoints()
@@ -336,7 +336,7 @@ ns.OnLoad(function()
     gearLabel:Hide()
     gearButton:SetupMenu(buildMenu)
     gearButton:SetMenuAnchor(CreateAnchor("TOPRIGHT", gearButton, "BOTTOMRIGHT", 0, -2))
-    -- En sak som dras och släpps på kugghjulet öppnar menyn (ett klick gör det redan).
+    -- An item dragged and dropped on the gear opens the menu (a click already does).
     gearButton:SetScript("OnReceiveDrag", function(self)
         self:OpenMenu()
     end)
@@ -350,7 +350,7 @@ ns.OnLoad(function()
         updateGearButton()
         GameTooltip_Hide()
     end)
-    -- Spelets menyknapp meddelar när menyn öppnas och stängs (DropdownButton.lua).
+    -- The game's menu button reports when the menu opens and closes (DropdownButton.lua).
     gearButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuOpen, updateGearButton, gearButton)
     gearButton:RegisterCallback(DropdownButtonMixin.Event.OnMenuClose, updateGearButton, gearButton)
 
