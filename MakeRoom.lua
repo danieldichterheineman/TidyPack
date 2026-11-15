@@ -1,52 +1,52 @@
 -- TidyPack – MakeRoom.lua
--- Förslag på saker att radera, i en liten panel. Två tillfällen:
---   1. Du lootar en sak som står på skräplistan (Marks.lua): Tidy Pack frågar direkt om den
---      ska raderas. Varje sak räknas från det att den kom med på listan.
---   2. Något i lootfönstret får inte plats (spelet säger "Inventory is full."): Tidy Pack
---      föreslår en sak från skräplistan, annars den billigaste grå saken – men bara om det
---      du försöker loota är värt mer.
--- Panelen hänger under lootfönstret när det är öppet, i samma sorts panel och lika bred, så
--- att den känns som en del av det. Annars syns den uppe i mitten, där spelets egna frågor
--- visas. Vad som räknas som skräp avgör ns.GetJunkKind (Junk.lua): favoriter och låsta
--- saker, quest-saker och grå saker som en quest behöver senare föreslås aldrig.
--- Du godkänner med ett tryck på Delete. Båda tillfällena går att stänga av i inställningarna.
--- ⚠️ Spelet låter bara ett addon radera en sak när spelaren trycker eller klickar
---    (DeleteCursorItem kräver en hårdvaruhändelse sedan patch 9.0.2, och raderar högst en
---    sak per händelse sedan 9.1.5). Därför raderar Tidy Pack aldrig något av sig själv.
--- ⚠️ I strid väntar frågorna om skräplistan tills striden är över. Med handkontroll kopplas
---    panelen in i spelets styrning (lootfönstrets markör, eller som en fråga uppe i mitten),
---    men bara utanför strid.
--- ⚠️ Panelen använder spelets lootfönster (LootFrame). Byter ett annat addon ut
---    lootfönstret syns panelen uppe i mitten i stället.
+-- Suggestions of items to delete, in a small panel. Two occasions:
+--   1. You loot an item on the junk list (Marks.lua): Tidy Pack asks right away whether to
+--      delete it. Each item counts from when it was added to the list.
+--   2. Something in the loot window doesn't fit (the game says "Inventory is full."): Tidy Pack
+--      suggests an item from the junk list, otherwise the cheapest grey item – but only if what
+--      you are trying to loot is worth more.
+-- The panel hangs under the loot window when it is open, in the same kind of panel and as wide, so
+-- it feels like part of it. Otherwise it shows at the top middle, where the game's own questions
+-- show. What counts as junk is decided by ns.GetJunkKind (Junk.lua): favorites and locked
+-- items, quest items and grey items a quest needs later are never suggested.
+-- You confirm with a press on Delete. Both occasions can be turned off in the options.
+-- ⚠️ The game lets an addon delete an item only when the player presses or clicks
+--    (DeleteCursorItem needs a hardware event since patch 9.0.2, and deletes at most one
+--    item per event since 9.1.5). So Tidy Pack never deletes anything by itself.
+-- ⚠️ In combat the junk-list questions wait until combat is over. With a controller the panel is
+--    hooked into the game's controls (the loot window's cursor, or as a question at the top middle),
+--    but only outside combat.
+-- ⚠️ The panel uses the game's loot window (LootFrame). If another addon replaces the
+--    loot window, the panel shows at the top middle instead.
 
 local _, ns = ...
 local L = ns.L
 
 local NUM_BAGS = Constants.InventoryConstants.NumBagSlots
 local NUM_ALL_BAGS = NUM_BAGS + Constants.InventoryConstants.NumReagentBagSlots
-local LOOT_WIDTH = 220     -- samma bredd som spelets lootfönster (LootFrame i LootFrame.xml)
-local ALONE_WIDTH = 260    -- ensam uppe i mitten
-local ALONE_TOP = -135     -- där spelets egna frågor brukar visas
-local TEXT_TOP = 30        -- under panelens rubrik, som är 20 enheter hög
-local TEXT_INSET = 14      -- bakgrunden börjar 6 enheter in, och texten 8 enheter till
+local LOOT_WIDTH = 220     -- the same width as the game's loot window (LootFrame in LootFrame.xml)
+local ALONE_WIDTH = 260    -- alone at the top middle
+local ALONE_TOP = -135     -- where the game's own questions usually show
+local TEXT_TOP = 30        -- below the panel's title, which is 20 units tall
+local TEXT_INSET = 14      -- the background starts 6 units in, and the text 8 units more
 local BUTTON_WIDTH, BUTTON_HEIGHT = 90, 22
-local BOTTOM_SPACE = 44    -- avstånd till knapparna, knapparna och marginalen under dem
+local BOTTOM_SPACE = 44    -- the gap to the buttons, the buttons and the margin below them
 
 local panel, message
-local suggestion = {}           -- saken som föreslås: kind ("looted" eller "full"), bagID, slot, itemID
-local queue = {}                -- itemID för lootade saker från skräplistan, i tur och ordning
-local seenCount = {}            -- itemID → antal i väskorna senast, för sakerna på skräplistan
+local suggestion = {}           -- the suggested item: kind ("looted" or "full"), bagID, slot, itemID
+local queue = {}                -- itemID of looted junk-list items, in turn
+local seenCount = {}            -- itemID → count in the bags last time, for the junk-list items
 local countsReady = false
-local registeredAsPopup = false -- panelen är kopplad till handkontrollen som en fråga
-local showNext                  -- definieras längre ned
+local registeredAsPopup = false -- the panel is hooked to the controller as a question
+local showNext                  -- defined further down
 
 local function canUseNavigation()
     return SmartNavigation ~= nil and InputUtil.IsGamepadUIEnabled()
         and ns.CanUseNavigation ~= nil and ns.CanUseNavigation()
 end
 
--- Sakens värde hos en handlare: pris × antal. Det andra värdet är falskt om spelet inte har
--- sakens data än.
+-- The item's value at a merchant: price × count. The second value is false if the game doesn't
+-- have the item's data yet.
 local function stackValue(link, count)
     local price = link and select(11, C_Item.GetItemInfo(link))
     return (price or 0) * (count or 1), price ~= nil
@@ -59,7 +59,7 @@ local function moneyText(value)
     return L["no value"]
 end
 
--- Lediga platser i vanliga väskor, där vad som helst får plats.
+-- Free slots in normal bags, where anything fits.
 local function freeNormalSlots()
     local free = 0
     for bagID = 0, NUM_BAGS do
@@ -71,7 +71,7 @@ local function freeNormalSlots()
     return free
 end
 
--- Det dyraste som ligger kvar i lootfönstret: länk, värde och om värdet är känt.
+-- The most valuable thing left in the loot window: link, value and whether the value is known.
 local function bestLoot()
     local bestLink, bestValue, bestKnown
     for slot = 1, GetNumLootItems() do
@@ -89,8 +89,8 @@ local function bestLoot()
     return bestLink, bestValue, bestKnown
 end
 
--- Den sak i väskorna som bäst kan raderas för att det nya ska få plats. Bara vanliga väskor,
--- eftersom det nya inte säkert får plats i en specialväska.
+-- The item in the bags best deleted so the new one fits. Only normal bags, because the
+-- new one won't surely fit in a special bag.
 local function findCandidate(lootValue, lootValueKnown)
     local bestBag, bestSlot, bestInfo, bestMarked, bestValue
     for bagID = 0, NUM_BAGS do
@@ -102,9 +102,9 @@ local function findCandidate(lootValue, lootValueKnown)
                 if kind then
                     local marked = kind == "marked"
                     local value = info.hasNoValue and 0 or stackValue(info.hyperlink, info.stackCount)
-                    -- Skräplistan föreslås alltid, grått bara om det nya är värt mer.
+                    -- The junk list is always suggested, grey only if the new item is worth more.
                     local allowed = marked or (lootValueKnown and value < lootValue)
-                    -- Skräplistan går före grått, och billigast går först.
+                    -- The junk list comes before grey, and the cheapest first.
                     local better = not bestInfo or (marked and not bestMarked)
                         or (marked == bestMarked and value < bestValue)
                     if allowed and better then
@@ -117,7 +117,7 @@ local function findCandidate(lootValue, lootValueKnown)
     return bestBag, bestSlot, bestInfo, bestMarked, bestValue
 end
 
--- Var en sak från skräplistan ligger, om den fortfarande räknas som skräp.
+-- Where an item from the junk list is, if it still counts as junk.
 local function findListedItem(itemID)
     for bagID = 0, NUM_ALL_BAGS do
         for slot = 1, C_Container.GetContainerNumSlots(bagID) do
@@ -131,11 +131,11 @@ local function findListedItem(itemID)
 end
 
 ---------------------------------------------------------------------------
--- Panelen
+-- The panel
 ---------------------------------------------------------------------------
 
--- Lägger panelen under lootfönstret om det är öppet, annars (eller med alone) uppe i mitten.
--- Returnerar sant när den hamnade under lootfönstret.
+-- Puts the panel under the loot window if it is open, otherwise (or with alone) at the top middle.
+-- Returns true when it ended up under the loot window.
 local function placePanel(alone)
     local underLoot = not alone and LootFrame ~= nil and LootFrame:IsShown()
     local width = underLoot and LOOT_WIDTH or ALONE_WIDTH
@@ -152,7 +152,7 @@ local function placePanel(alone)
     return underLoot
 end
 
--- Kopplar ifrån panelen som fråga för handkontrollen. Går inte i strid; då görs det efteråt.
+-- Unhooks the panel as a controller question. Not possible in combat; then it's done afterwards.
 local function releasePopup()
     if registeredAsPopup and canUseNavigation() then
         GamepadMode.FrameControlsManager:HandlePopupHide(panel)
@@ -166,9 +166,9 @@ local function showPanel(kind, text, bagID, slot, itemID, alone)
     message:SetText(text)
     panel:SetHeight(TEXT_TOP + math.ceil(message:GetStringHeight()) + BOTTOM_SPACE)
     panel:Show()
-    -- Med handkontroll: under lootfönstret kopplas knapparna in i lootfönstrets markör (de nås
-    -- med styrkorset, och markören flyttas inte dit, så att ett tryck på A för att loota aldrig
-    -- raderar). Ensam uppe i mitten blir panelen en fråga, som spelets egna frågor.
+    -- With a controller: under the loot window the buttons join the loot window's cursor (reached
+    -- with the D-pad, and the cursor isn't moved there, so pressing A to loot never
+    -- deletes). Alone at the top middle the panel becomes a question, like the game's own.
     if canUseNavigation() then
         if underLoot then
             releasePopup()
@@ -180,9 +180,9 @@ local function showPanel(kind, text, bagID, slot, itemID, alone)
     end
 end
 
--- Döljer panelen och visar nästa fråga om fler saker från skräplistan har lootats. Stod
--- handkontrollens markör på en av panelens knappar under lootfönstret flyttas den tillbaka
--- till lootet.
+-- Hides the panel and shows the next question if more junk-list items were looted. If the
+-- controller's cursor was on one of the panel's buttons under the loot window, it moves back
+-- to the loot.
 local function hidePanel()
     local current = canUseNavigation() and SmartNavigation:GetCurrentButton()
     panel:Hide()
@@ -199,10 +199,10 @@ local function hidePanel()
     end)
 end
 
--- Raderar saken som föreslogs, om den ligger kvar där den låg och fortfarande räknas som
--- skräp. Körs bara när spelaren trycker på Delete – det är trycket som gör att spelet
--- tillåter raderingen. Ingenting annat får köras mellan klicket och DeleteCursorItem, och
--- i strid avbryts raderingen.
+-- Deletes the suggested item, if it is still where it was and still counts as
+-- junk. Runs only when the player presses Delete – the press is what lets the game
+-- allow the deletion. Nothing else may run between the click and DeleteCursorItem, and
+-- in combat the deletion is cancelled.
 local function deleteSuggestion()
     local kind, bagID, slot, itemID = suggestion.kind, suggestion.bagID, suggestion.slot, suggestion.itemID
     if InCombatLockdown() then
@@ -227,7 +227,7 @@ local function deleteSuggestion()
 end
 
 ---------------------------------------------------------------------------
--- När väskorna är fulla
+-- When the bags are full
 ---------------------------------------------------------------------------
 
 local function offerRoom()
@@ -259,11 +259,11 @@ local function offerRoom()
 end
 
 ---------------------------------------------------------------------------
--- När en sak från skräplistan lootas
+-- When an item from the junk list is looted
 ---------------------------------------------------------------------------
 
--- Visar frågan för nästa lootade sak från skräplistan. Väntar i strid och medan panelen
--- redan visar en fråga.
+-- Shows the question for the next looted junk-list item. Waits in combat and while the panel
+-- already shows a question.
 showNext = function()
     if panel:IsShown() or InCombatLockdown() or not ns.db.suggestOnLoot then
         return
@@ -279,7 +279,7 @@ showNext = function()
     end
 end
 
--- Antalet av varje sak på skräplistan just nu, som utgångsläge.
+-- The count of every junk-list item right now, as a starting point.
 local function countListed()
     wipe(seenCount)
     for itemID in pairs(ns.db.junk) do
@@ -288,7 +288,7 @@ local function countListed()
     countsReady = true
 end
 
--- Har någon sak från skräplistan blivit fler sedan sist, har den lootats (eller köpts).
+-- If a junk-list item has become more since last time, it was looted (or bought).
 local function checkLooted()
     if not countsReady then
         countListed()
@@ -309,8 +309,8 @@ local function checkLooted()
     end
 end
 
--- Marks.lua anropar den här när en sak kommer med på listan eller tas bort. En sak räknas
--- från det att den kom med, så det du redan har frågas det inte om.
+-- Marks.lua calls this when an item is added to or removed from the list. An item counts
+-- from when it was added, so you aren't asked about what you already have.
 function ns.JunkListChanged(itemID)
     if ns.db.junk[itemID] then
         seenCount[itemID] = C_Item.GetItemCount(itemID)
@@ -333,9 +333,9 @@ local function createButton(text, onClick)
 end
 
 local function createPanel()
-    -- Samma mall som spelets lootfönster bygger på (ScrollingFlatPanelTemplate ärver
-    -- DefaultPanelFlatTemplate): ram, bakgrund och rubrik ser likadana ut. Namnet gör panelen
-    -- lätt att hitta med /fstack och ger mallens delar egna namn.
+    -- The same template the game's loot window is built on (ScrollingFlatPanelTemplate inherits
+    -- DefaultPanelFlatTemplate): frame, background and title look the same. The name makes the panel
+    -- easy to find with /fstack and gives the template's parts their own names.
     panel = CreateFrame("Frame", "TidyPackMakeRoomPanel", UIParent, "DefaultPanelFlatTemplate")
     panel:SetClampedToScreen(true)
     panel:EnableMouse(true)
@@ -346,7 +346,7 @@ local function createPanel()
     message:SetPoint("TOPLEFT", TEXT_INSET, -TEXT_TOP)
     message:SetJustifyH("LEFT")
 
-    -- Två knappar i mitten under texten, som i spelets egna frågor.
+    -- Two buttons in the middle under the text, as in the game's own questions.
     createButton(L["Delete"], deleteSuggestion):SetPoint("BOTTOMRIGHT", panel, "BOTTOM", -4, 12)
     createButton(L["Not now"], hidePanel):SetPoint("BOTTOMLEFT", panel, "BOTTOM", 4, 12)
 end
@@ -357,10 +357,10 @@ ns.OnLoad(function()
     end
     createPanel()
 
-    -- Spelets eget meddelande när något inte får plats, samma som lootfönstret lyssnar på.
+    -- The game's own message when something doesn't fit, the same the loot window listens to.
     ns.RegisterEvent("UI_ERROR_MESSAGE", function(_, errorMessage)
         if errorMessage == ERR_INV_FULL and LootFrame:IsShown() then
-            C_Timer.After(0, offerRoom) -- när lootfönstret har visat det som är kvar
+            C_Timer.After(0, offerRoom) -- once the loot window has shown what is left
         end
     end)
 
@@ -369,7 +369,7 @@ ns.OnLoad(function()
         if not panel:IsShown() then
             return
         end
-        -- Förslaget kan vara inaktuellt: saken har flyttats, eller det finns plats nu.
+        -- The suggestion may be outdated: the item has moved, or there is room now.
         if suggestion.kind == "full" then
             offerRoom()
         else
@@ -380,8 +380,8 @@ ns.OnLoad(function()
         end
     end)
 
-    -- Lootfönstret stängs: förslaget vid fulla väskor behövs inte längre, men en fråga om
-    -- skräplistan flyttar upp till mitten.
+    -- The loot window closes: the full-bags suggestion is no longer needed, but a junk-list
+    -- question moves up to the middle.
     ns.RegisterEvent("LOOT_CLOSED", function()
         if not panel:IsShown() or panel:GetParent() ~= LootFrame then
             return
@@ -389,8 +389,8 @@ ns.OnLoad(function()
         if suggestion.kind == "looted" then
             local info = C_Container.GetContainerItemInfo(suggestion.bagID, suggestion.slot)
             if info then
-                -- Lootfönstret kan vara kvar en stund medan det tonas bort, så panelen flyttas
-                -- uttryckligen upp till mitten.
+                -- The loot window can stay a moment while it fades, so the panel is
+                -- moved explicitly up to the middle.
                 local alone = true
                 showPanel("looted", message:GetText(), suggestion.bagID, suggestion.slot, suggestion.itemID, alone)
                 return
@@ -403,9 +403,9 @@ ns.OnLoad(function()
 
     ns.RegisterEvent("PLAYER_ENTERING_WORLD", countListed)
 
-    -- Börjar en strid medan panelen är öppen göms den direkt, så att ett klick i strid inte
-    -- stoppas av spelet. Frågan om en lootad sak från skräplistan läggs tillbaka i kön och
-    -- visas när striden är över.
+    -- If combat starts while the panel is open, it hides at once, so a click in combat isn't
+    -- stopped by the game. The question about a looted junk-list item goes back in the queue and
+    -- shows when combat is over.
     ns.RegisterEvent("PLAYER_REGEN_DISABLED", function()
         if not panel:IsShown() then
             return
@@ -417,8 +417,8 @@ ns.OnLoad(function()
         suggestion.kind = nil
     end)
 
-    -- Striden är över: koppla ifrån handkontrollen om det fick vänta, och visa det som har
-    -- lootats.
+    -- Combat is over: unhook the controller if that had to wait, and show what has been
+    -- looted.
     ns.RegisterEvent("PLAYER_REGEN_ENABLED", function()
         if not panel:IsShown() then
             releasePopup()
