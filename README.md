@@ -9,12 +9,13 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 
 ## Features
 
-- **Groups**: Favorites, New, Consumables, Equipment, Trade Goods, Quest Items, Keys, Spare
-  Bags, Miscellaneous and Junk. Empty groups are hidden, and similar items sit side by side.
+- **Groups**: Favorites, New, Consumables, Equipment, crafting materials by type, Recipes & Gems,
+  Quest Items, Keys, Miscellaneous, Spare Bags and Junk. Empty groups are hidden, and similar items
+  sit side by side.
   The groups come in five parts: your own, everyday, crafting, quests and the rest. Your free
   slots are shown at the bottom left.
 - **Your own groups**: make groups like "Potions" or "Food & Drink" – Alt-click an item to put it
-  in one, or add a whole type at once ("Add all Potion items to Group"). Manage them from the
+  in one, or add a whole type at once ("Add All "Potion" Items to Group"). Manage them from the
   gear button, right in the bag window.
 - **Quests**: quest items show how many you have and need ("3/7") and which quest wants them. The
   Quests tab lists your quests with ready ones first – open a quest to see its items and what is
@@ -73,7 +74,7 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 
 - Locks and the controller cursor can't change during combat. They catch up as soon as combat
   ends.
-- Quest locks match item names in English, the game's language.
+- Quest locks match item names in the game's language.
 - The merchant's own "Sell All Junk" button sells every grey item. It doesn't know about
   Tidy Pack's locks or your junk list.
 - Quest hints need Questie, whose data for Forever's new quests isn't complete yet.

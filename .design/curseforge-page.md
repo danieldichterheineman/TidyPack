@@ -9,7 +9,7 @@ Copy the fields below into the project in the Authors Console (authors.curseforg
 | Game | World of Warcraft |
 | Project class | Addons |
 | Name | Tidy Pack |
-| Summary | Sorts the game's own bag window into clear groups, with item sets, quest item locks, a junk list and your own groups. |
+| Summary | Sorts the game's own bag window into clear groups, with a sorted bank, quest item locks, a junk list and your own groups – in the game's eleven languages. |
 | Main category | Bags & Inventory |
 | Additional categories | none |
 | License | MIT License |
@@ -19,9 +19,9 @@ Copy the fields below into the project in the Authors Console (authors.curseforg
 | Experimental | **off** |
 | Logo | `.design/logo.png` (1024×1024, own drawing) |
 
-The summary above is what was entered for 1.0.0. Tidy Pack no longer has item sets (removed
-2026-11-14), so update the summary on CurseForge with the next release, e.g.: "Sorts the game's own
-bag window into clear groups, with a sorted bank, quest item locks, a junk list and your own groups."
+The summary above is the one for 1.2.0. Until then it said "with item sets, quest item locks, a junk
+list and your own groups"; the Sets tab was removed 2026-11-14. The upload doesn't change the summary,
+the description or the images: paste them by hand on CurseForge after a release.
 
 Never turn on Premium, early access or any other paid feature.
 

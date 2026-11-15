@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 (2026-11-15)
 
 ### New
 - Tidy Pack speaks the game's languages: English, Deutsch, Español (España and Latinoamérica),

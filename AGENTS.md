@@ -386,10 +386,15 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 - Released: **1.0.1** (2026-11-10) and **1.1.0** (2026-11-11), both through the release workflow.
   **1.0.0** was uploaded by hand as "publish manually once approved" and has the special-bag crash:
   never publish it.
-- Next: **1.2.0** after the owner has tried the Unreleased changes (Bank tab, languages, reagent bag,
-  search box, Show by bag, removed Sets tab). Steps: set `## Version: 1.2.0`, rename `## Unreleased`
-  to `## 1.2.0 (date)`, run `check-addon.mjs --release`, commit, ask, push, ask, then push the tag
-  `v1.2.0`. Afterwards the owner updates the CurseForge description from `README.md` by hand.
+- **1.2.0** (2026-11-15) is prepared: `## Version: 1.2.0`, `## 1.2.0 (2026-11-15)` in the changelog,
+  localized `## Notes-<code>` in the TOC. Released with the tag `v1.2.0` once the owner says yes.
+  Afterwards the owner pastes the new Summary (`.design/curseforge-page.md`) and Description
+  (`README.md`) on CurseForge by hand, with new images.
+- Steps for every release: set `## Version:`, rename `## Unreleased` to `## <version> (date)`, run
+  `check-addon.mjs --release`, commit, ask, push, ask, then push the tag `v<version>`, and read the
+  run's log for `Success!`.
+- CurseForge has no field for an addon's languages in the upload API; the project's Localization
+  tool is only for translating phrases. The languages are listed in `README.md` (the description).
 - `.github/workflows/release.yml` runs only for clean version tags (`vN.N.N`): it checks the tag
   against `## Version:` in the TOC, builds the zip with BigWigs packager v2 from `.pkgmeta` (`-u` for
   Unix line endings, `-n "TidyPack-<version>:TidyPack-<version>"`), uploads it to CurseForge as a
