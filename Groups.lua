@@ -1,17 +1,17 @@
 -- TidyPack – Groups.lua
--- Egna grupper: grupper med ett namn som spelaren skapar själv, t.ex. "Potions". Högst
--- MAX_GROUPS stycken, sparade per konto i TidyPackDB.groups (som favoriter och skräplistan).
--- Vad som hamnar i en grupp bestäms på två sätt:
---   - enskilda saker (itemID), via kugghjulets meny "Add to Group"
---   - hela typer (klass och undertyp, t.ex. alla drycker), via "Add all ... items to Group"
--- En sak eller typ ligger i högst en grupp, så att det alltid är tydligt var den hör hemma.
--- Går före spelets vanliga typer (Categories.lua), men efter Favorites, New, Quest Items och
--- Junk. Bland de egna grupperna går en enskild sak före en typregel, och därefter den grupp
--- som står högst upp. Grupperna står efter Favorites och "Add to bag" (Layout.lua läser
--- ns.groupOrder, som RebuildGroupOrder bygger om).
--- Grupperna sköts i väskan (Panels.lua), som kugghjulets meny öppnar.
--- Spelets frågerutor (StaticPopup) används inte; namnet frågas i Tidy Packs egen ruta
--- (ns.ShowDialog nedan).
+-- Own groups: groups with a name the player creates, e.g. "Potions". At most MAX_GROUPS,
+-- saved per account in TidyPackDB.groups (like favorites and the junk list).
+-- What goes into a group is decided two ways:
+--   - single items (itemID), through the gear menu "Add to Group"
+--   - whole kinds (class and subclass, e.g. all potions), through "Add All ... Items to Group"
+-- An item or kind is in at most one group, so it is always clear where it belongs.
+-- Comes before the game's normal kinds (Categories.lua), but after Favorites, New, Quest Items and
+-- Junk. Among the own groups a single item comes before a kind rule, and then the group
+-- highest up. The groups come after Favorites and "Add to bag" (Layout.lua reads
+-- ns.groupOrder, which RebuildGroupOrder rebuilds).
+-- The groups are managed in the bags (Panels.lua), which the gear menu opens.
+-- The game's dialogs (StaticPopup) aren't used; the name is asked in Tidy Pack's own dialog
+-- (ns.ShowDialog below).
 
 local _, ns = ...
 local L = ns.L
@@ -20,7 +20,7 @@ local MAX_GROUPS = 8
 ns.MAX_GROUPS = MAX_GROUPS
 
 -- { { id = 1, name = "Potions", items = { [itemID] = true }, types = { ["0:1"] = true } }, ... }
--- id ändras aldrig (den ger gruppens nyckel i Layout.lua), medan namn och ordning kan ändras.
+-- id never changes (it gives the group's key in Layout.lua), while name and order can change.
 local function groups()
     return ns.db and ns.db.groups or {}
 end
@@ -33,7 +33,7 @@ local function keyOf(group)
     return "custom" .. group.id
 end
 
--- En typs nyckel: "klass:undertyp", t.ex. "0:1" för drycker.
+-- A kind's key: "class:subclass", e.g. "0:1" for potions.
 local function typeKey(classID, subClassID)
     return classID .. ":" .. subClassID
 end
@@ -43,8 +43,8 @@ function ns.ParseTypeKey(key)
     return tonumber(classID), tonumber(subClassID)
 end
 
--- Typens namn i spelet (på spelets språk), t.ex. "Potion": undertypen om den har ett namn,
--- annars klassen.
+-- The kind's name in the game (in the game's language), e.g. "Potion": the subclass if it has a
+-- name, otherwise the class.
 function ns.GetTypeName(classID, subClassID)
     local name = C_Item.GetItemSubClassInfo(classID, subClassID)
     if not name or name == "" then
@@ -54,13 +54,13 @@ function ns.GetTypeName(classID, subClassID)
 end
 
 ---------------------------------------------------------------------------
--- Ordning och rubriker
+-- Order and headings
 ---------------------------------------------------------------------------
 
-local customKeys = {} -- nycklarna som lagts i ns.groupNames, så att de kan tas bort igen
+local customKeys = {} -- the keys put into ns.groupNames, so they can be removed again
 
--- Bygger om ns.groupOrder (spelets grupper med de egna efter "Empty", alltså "Add to bag")
--- och rubrikerna. Körs när addonet laddats och efter varje ändring.
+-- Rebuilds ns.groupOrder (the game's groups with the own ones after "Empty", that is "Add to bag")
+-- and the headings. Runs when the addon has loaded and after every change.
 function ns.RebuildGroupOrder()
     for key in pairs(customKeys) do
         ns.groupNames[key] = nil
@@ -68,7 +68,7 @@ function ns.RebuildGroupOrder()
     wipe(customKeys)
     local order = {}
     for _, key in ipairs(ns.baseGroupOrder) do
-        -- Råvarorna per undertyp, dina yrken först, före övriga Trade Goods (Categories.lua).
+        -- The crafting materials per subclass, your professions first, before other Trade Goods (Categories.lua).
         if key == "TradeGoods" and ns.GetTradeGroupKeys then
             for _, tradeKey in ipairs(ns.GetTradeGroupKeys()) do
                 order[#order + 1] = tradeKey
@@ -87,7 +87,7 @@ function ns.RebuildGroupOrder()
     ns.groupOrder = order
 end
 
--- Alla ändringar går hit: bygg om ordningen, lägg ut väskan och rita om panelen i väskan (Panels.lua).
+-- Every change comes here: rebuild the order, lay out the bags and redraw the panel in the bags (Panels.lua).
 local function changed()
     ns.RebuildGroupOrder()
     if ns.Refresh then
@@ -99,10 +99,10 @@ local function changed()
 end
 
 ---------------------------------------------------------------------------
--- Grupperna
+-- The groups
 ---------------------------------------------------------------------------
 
--- Namnet utan tecken som spelet läser som formatering (|), och utan blanksteg i kanterna.
+-- The name without characters the game reads as formatting (|), and without spaces at the edges.
 local function cleanName(name)
     name = (name or ""):gsub("|", "")
     return strtrim(name)
@@ -118,7 +118,7 @@ local function findByName(name, exceptIndex)
     return nil
 end
 
--- Skapar en grupp. Returnerar dess plats i listan, eller nil och en förklaring.
+-- Creates a group. Returns its index in the list, or nil and an explanation.
 function ns.CreateGroup(name)
     name = cleanName(name)
     if name == "" then
@@ -138,7 +138,7 @@ function ns.CreateGroup(name)
     return #list
 end
 
--- Byter namn. Returnerar sant, eller falskt och en förklaring.
+-- Renames. Returns true, or false and an explanation.
 function ns.RenameGroup(index, name)
     local group = groups()[index]
     if not group then
@@ -156,7 +156,7 @@ function ns.RenameGroup(index, name)
     return true
 end
 
--- Tar bort en grupp. Sakerna går tillbaka till sina vanliga grupper.
+-- Removes a group. The items go back to their normal groups.
 function ns.DeleteGroup(index)
     if groups()[index] then
         table.remove(groups(), index)
@@ -164,7 +164,7 @@ function ns.DeleteGroup(index)
     end
 end
 
--- Flyttar en grupp ett steg upp (delta = -1) eller ned (1). Returnerar nya platsen.
+-- Moves a group one step up (delta = -1) or down (1). Returns the new index.
 function ns.MoveGroup(index, delta)
     local list = groups()
     local target = index + delta
@@ -177,7 +177,7 @@ function ns.MoveGroup(index, delta)
 end
 
 ---------------------------------------------------------------------------
--- Vad som ingår
+-- What is included
 ---------------------------------------------------------------------------
 
 function ns.IsItemInGroup(index, itemID)
@@ -185,8 +185,8 @@ function ns.IsItemInGroup(index, itemID)
     return group ~= nil and group.items[itemID] == true
 end
 
--- Lägger en sak i en grupp (inGroup = true) eller tar bort den. En sak ligger i högst en
--- grupp, så den tas först bort ur de andra.
+-- Puts an item in a group (inGroup = true) or removes it. An item is in at most one
+-- group, so it is first removed from the others.
 function ns.SetItemInGroup(index, itemID, inGroup)
     local group = groups()[index]
     if not group or not itemID then
@@ -208,7 +208,7 @@ function ns.IsTypeInGroup(index, classID, subClassID)
     return group ~= nil and group.types[typeKey(classID, subClassID)] == true
 end
 
--- Samma för en hel typ (alla saker med samma klass och undertyp).
+-- The same for a whole kind (all items with the same class and subclass).
 function ns.SetTypeInGroup(index, classID, subClassID, inGroup)
     local group = groups()[index]
     if not group or not classID or not subClassID then
@@ -226,8 +226,8 @@ function ns.SetTypeInGroup(index, classID, subClassID, inGroup)
     changed()
 end
 
--- Gruppens nyckel (för ns.groupOrder) för en sak, eller nil om ingen egen grupp vill ha den.
--- Categories.lua frågar en gång per sak. classID och subClassID kommer från
+-- The group's key (for ns.groupOrder) for an item, or nil if no own group wants it.
+-- Categories.lua asks once per item. classID and subClassID come from
 -- C_Item.GetItemInfoInstant.
 function ns.GetCustomGroupFor(itemID, classID, subClassID)
     local list = groups()
@@ -251,11 +251,11 @@ function ns.GetCustomGroupFor(itemID, classID, subClassID)
 end
 
 ---------------------------------------------------------------------------
--- Frågor
+-- Dialogs
 ---------------------------------------------------------------------------
--- Spelets egna frågerutor (StaticPopup) används inte, eftersom ett addon som visar sin
--- fråga i dem kan smitta spelets egna frågor (taint). Rutan är en egen ram byggd av
--- spelets mallar, samma som Tidy Packs panel för fulla väskor.
+-- The game's own dialogs (StaticPopup) aren't used, because an addon that shows its
+-- question in them can taint the game's own questions. The dialog is an own frame built from
+-- the game's templates, the same as Tidy Pack's panel for full bags.
 
 local MAX_NAME_LENGTH = 20
 local dialog
@@ -312,8 +312,8 @@ local function createDialog()
     end)
 end
 
--- Visar frågan. withInput = true ger en textruta med defaultText. onAccept(text) körs vid
--- klick på knappen och kan returnera false och en förklaring för att hålla rutan öppen.
+-- Shows the question. withInput = true gives an input box with defaultText. onAccept(text) runs on
+-- a click on the button and can return false and an explanation to keep the dialog open.
 local function showDialog(text, acceptLabel, withInput, defaultText, onAccept)
     if not dialog then
         createDialog()
@@ -333,7 +333,7 @@ local function showDialog(text, acceptLabel, withInput, defaultText, onAccept)
 end
 ns.ShowDialog = showDialog
 
--- Skapar en grupp efter att ha frågat efter namnet. onCreated(index) körs efteråt.
+-- Creates a group after asking for the name. onCreated(index) runs afterwards.
 function ns.AskNewGroup(onCreated)
     ns.ShowDialog(L["Name the new group:"], L["Create"], true, "", function(text)
         local index, problem = ns.CreateGroup(text)
@@ -374,18 +374,18 @@ function ns.AskDeleteGroup(index)
 end
 
 ---------------------------------------------------------------------------
--- Kugghjulets meny (Marks.lua anropar den med en sak på markören)
+-- The gear menu (Marks.lua calls it with an item on the cursor)
 ---------------------------------------------------------------------------
 
--- En undermeny med en bockruta per grupp och "New Group...". isSelected(index) och
--- setSelected(index, vilken) skiljer "den här saken" från "hela typen".
+-- A submenu with a checkbox per group and "New Group...". isSelected(index) and
+-- setSelected(index, which) tell "this item" from "the whole kind" apart.
 local function addGroupChoices(parent, isSelected, setSelected)
     local list = groups()
     for index, group in ipairs(list) do
         parent:CreateCheckbox(group.name, function()
             return isSelected(index)
         end, function()
-            ClearCursor() -- saken går tillbaka till sin plats
+            ClearCursor() -- the item goes back to its place
             setSelected(index, not isSelected(index))
             return MenuResponse.CloseAll
         end)
@@ -404,7 +404,7 @@ function ns.AddGroupMenus(rootDescription, itemID)
     local _, _, _, _, _, classID, subClassID = C_Item.GetItemInfoInstant(itemID)
 
     local single = rootDescription:CreateButton(L["Add to Group"])
-    -- Favoriter och skräp går före de egna grupperna.
+    -- Favorites and junk come before the own groups.
     if ns.IsFavorite(itemID) then
         single:CreateTitle(L["It stays in %s for now."]:format(ns.groupNames.Favorites))
     elseif ns.IsJunkMarked(itemID) then
@@ -428,17 +428,17 @@ function ns.AddGroupMenus(rootDescription, itemID)
 end
 
 ---------------------------------------------------------------------------
--- Tooltip och start
+-- Tooltip and start
 ---------------------------------------------------------------------------
 
--- En rad i sakens tooltip med den egna gruppen, om saken ligger i en.
+-- A line in the item's tooltip with the own group, if the item is in one.
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-    -- Inställningen "Group line in tooltips" (kugghjulets Show ▸).
+    -- The option "Group line" (the gear menu's Show ▸ In tooltips).
     if not data or type(data.id) ~= "number" or ns.db == nil or ns.db.tooltipLines == false then
         return
     end
     if ns.IsFavorite(data.id) or ns.IsJunkMarked(data.id) then
-        return -- ligger kvar i Favorites eller Junk
+        return -- stays in Favorites or Junk
     end
     local _, _, _, _, _, classID, subClassID = C_Item.GetItemInfoInstant(data.id)
     local key = ns.GetCustomGroupFor(data.id, classID, subClassID)
@@ -452,7 +452,7 @@ ns.OnLoad(function()
     ns.RebuildGroupOrder()
 end)
 
--- Yrkena är kända först efter inloggningen och ändras när du lär dig eller glömmer ett yrke.
+-- The professions are known only after login and change when you learn or forget a profession.
 local function professionsChanged()
     ns.RebuildGroupOrder()
     if ns.Refresh then
