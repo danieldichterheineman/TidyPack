@@ -36,7 +36,11 @@ ns.defaults = {
     lockAtMerchant = true,    -- lock quest and equipment-set items at a merchant (Layout.lua)
     showQuestItemsInBags = true, -- quest items in the Bags tab (otherwise only in Quests, Layout.lua)
     bankTab = true,           -- the bank in the Bank tab instead of the game's bank window (Bank.lua)
-    showCounts = true,        -- bag and bank counts in the item's tooltip (Bank.lua)
+    showCounts = true,        -- bag and bank counts in the item's tooltip (Characters.lua)
+    showOtherCharacters = true, -- the counts on your other characters too (Characters.lua)
+    -- itemID counts per character, shared by the account (new 2026-11-15, Characters.lua):
+    -- ["Name-Realm"] = { name, realm, class, time, bags = { [itemID] = count }, bank = { [itemID] = count } }
+    characters = {},
     tooltipLines = true,      -- the line "Tidy Pack group: …" in the item's tooltip (Groups.lua)
     junkValue = true,         -- the junk's value at the Junk heading (Layout.lua)
     questHints = true,        -- items that later quests need (QuestHints.lua)

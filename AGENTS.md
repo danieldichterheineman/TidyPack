@@ -193,7 +193,17 @@ Status: ✅ tried in the game · ⚠️ built, not tried in the game yet.
   bought and filled, the next price, and how old the saved bank is. The bank's first part is called
   Bank (it was "Tab 1" with a "?"), bank bags have their item's name, and "Show by bag" headings add
   "· N free".
-- ⚠️ Tooltip counts (`showCounts`): "Bags 12 · Bank 40 · Total 52", this character only.
+- ⚠️ Tooltip counts (`showCounts`, `Characters.lua`): "Bags 12 · Bank 40 · Total 52" for this
+  character, only when the item is in the bank.
+- ⚠️ Counts on other characters (`showOtherCharacters`, `Characters.lua`; owner's wish 2026-11-15,
+  sketch `.design/sketch-characters.html`): each character saves itemID counts for its bags
+  (backpack, bags, reagent bag) and its saved bank in `TidyPackDB.characters` – 2 seconds after
+  `BAG_UPDATE_DELAYED`, at `BANKFRAME_CLOSED` and at `PLAYER_LOGOUT` (skipped when the backpack has 0
+  slots, so a logout without bags never wipes the counts). When another character on this realm or a
+  connected one (`GetAutoCompleteRealms`) has the item, the tooltip lists: you first, then the
+  others with the most first, names in class color (`C_ClassColor.GetClassColor`), at most 8 lines,
+  "+N more characters", Total. Gear → Bag and bank → Forget a Character (newest first, other realms
+  with " - Realm") asks with `ns.ShowDialog`. Not counted: mail, worn items, the account bank.
 - Not built: the account (warband) bank, buying a slot right from the "+", controller.
 
 **Quests tab**
@@ -227,9 +237,12 @@ with a default need no migration; a key that is removed or changes meaning needs
   `{ id, name, items = { [itemID] = true }, types = { ["class:subclass"] = true } }`) and
   `nextGroupID`; `questOpen` (open headings in the Quests tab); `tourDone`; `questieNoticeShown`;
   `combinedBagsTurnedOn`; `language` (`"auto"` or a language code); the options `itemLevelAndBoE`,
-  `upgradeArrows`, `questHints`, `showCounts`, `tooltipLines`, `showQuestItemsInBags`, `junkValue`,
+  `upgradeArrows`, `questHints`, `showCounts`, `showOtherCharacters`, `tooltipLines`,
+  `showQuestItemsInBags`, `junkValue`,
   `showSearchBox` (false), `groupByBag` (false), `lockAtMerchant`, `suggestOnLoot`, `suggestWhenFull`,
-  `replaceBagBar`, `bankTab`; `dataVersion`.
+  `replaceBagBar`, `bankTab`; `characters` (`["Name-Realm"] = { name, realm, class, time, bags =
+  { [itemID] = count }, bank = { [itemID] = count } }`, `bank` nil before a visit to a banker);
+  `dataVersion`.
 - `TidyPackCharDB` (character): `bank` = `{ time, free, maxTabs, nextCost, tabs = { { id, index, name,
   icon, link, slots, free } }, items = { { link, count, quality, icon, bag, slot, quest, bound,
   noValue } } }`, saved at every change at a banker; `dataVersion`. Banks saved before 1.2.0 lack
@@ -252,7 +265,9 @@ with a default need no migration; a key that is removed or changes meaning needs
 - `Layout.lua` – rearranges the bag window: groups, parts, headings, marks, locks, special and
   reagent bags, money, bag row and the bank's row, search, tabs, views, drop glow, fade. (2,583 lines – a candidate
   for splitting, section 10.)
-- `Bank.lua` – the Bank tab, saved bank, the bank's slots and bags, tooltip counts, the game's bank window.
+- `Bank.lua` – the Bank tab, saved bank, the bank's slots and bags, the game's bank window.
+- `Characters.lua` – counts in item tooltips, for this character and your other characters; Forget a
+  Character.
 - `QuestsView.lua` – the Quests tab.
 - `Marks.lua` – favorites, junk list marks, Alt-click, the gear button and its menu, Language ▸.
 - `Panels.lua` – the junk list and own groups in the bag window.
@@ -358,7 +373,12 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
     that never visited: "Visit a banker once …". "Use the Bank tab at bankers" off: the game's window.
     The bottom row and the "N free" tooltip as last time, with "Last seen today".
 24. Tooltip counts: "Bags N · Bank N · Total N" for an item in both; none for an item only in the
-    bags; counts follow changes at the banker.
+    bags; counts follow changes at the banker. Other characters: log in with a second character on
+    the same realm (visit a banker with it), then back – the tooltip of an item both have lists the
+    two, names in class colors, the most first, and Total; an item only the other one has shows only
+    that line. Gear → Show → Other characters off: only this character's line; "Bag and bank counts"
+    off greys it out. Gear → Bag and bank → Forget a Character → the other one with "today" → the
+    question; Cancel keeps it, Forget removes its line.
 
 **Quests**
 25. Take a quest that needs items (e.g. 3 of 7): "3/7" on the item, green when done; tooltip "Needed
@@ -454,11 +474,12 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 - 2026-11-12: All options in the gear menu; the game's options page only informs.
 - 2026-11-14: Solid window background; the Sets tab removed; the window opens on Bags.
 - 2026-11-15: Languages (section 7); Show ▸ with headings; the guide shows the Bank tab; the Bank
-  tab's bottom row shows the bank's slots, and "+" sends you to the game's bank window to buy.
+  tab's bottom row shows the bank's slots, and "+" sends you to the game's bank window to buy; counts
+  on your other characters in item tooltips, with an option and Forget a Character (still no
+  browsing of other characters' bags).
 
 **Open ideas** (proposed, not decided)
-- Counts for all your characters in the tooltip (needs bags and bank saved per character in
-  `TidyPackDB`). Browsing other characters' bags was rejected 2026-11-09.
+- Counts on other characters: mail, worn items and the account bank too.
 - The account (warband) bank in the Bank tab – Forever has it (`Enum.BankType.Account` in
   `Camelot/BankFrame.lua`).
 - Controller access to the Bank tab and the panels (issue #6).

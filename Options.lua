@@ -49,7 +49,12 @@ local function buildOptionMenus()
                     end },
                 { section = L["In tooltips"] },
                 { key = "showCounts", name = L["Bag and bank counts"],
-                    tooltip = L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank, and only for this character."] },
+                    tooltip = L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank or on your other characters."] },
+                { key = "showOtherCharacters", name = L["Other characters"],
+                    tooltip = L["Item tooltips also show what your other characters on this realm have, as it was when you last played them. A character shows up after you log in with it once, and its bank after a visit to a banker."],
+                    enabled = function()
+                        return ns.db.showCounts ~= false
+                    end },
                 { key = "tooltipLines", name = L["Group line"],
                     tooltip = L["The line \"Tidy Pack group: ...\" in the tooltip of items in your own groups. Lines about quests and locks always show."] },
                 { section = L["In the window"] },
@@ -97,11 +102,15 @@ local function buildOptionMenus()
                         refresh()
                     end },
             },
-            -- At a banker: the game's own bank window, e.g. to buy a bank slot (Bank.lua).
+            -- At a banker: the game's own bank window, e.g. to buy a bank slot (Bank.lua). Always:
+            -- Forget a Character, for the counts on your other characters (Characters.lua).
             extra = function(submenu)
                 if ns.IsAtBank and ns.IsAtBank() and ns.TakesOverBank and ns.TakesOverBank() then
                     submenu:CreateCheckbox(L["Show the game's bank window"], ns.IsGameBankFrameShown,
                         ns.ToggleGameBankFrame)
+                end
+                if ns.AddForgetCharacterMenu then
+                    ns.AddForgetCharacterMenu(submenu)
                 end
             end,
         },

@@ -41,6 +41,7 @@ QuestHints.lua
 BagSwap.lua
 Layout.lua
 Bank.lua
+Characters.lua
 QuestsView.lua
 Marks.lua
 Panels.lua

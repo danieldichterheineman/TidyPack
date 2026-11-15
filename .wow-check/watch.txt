@@ -52,3 +52,4 @@ ignore CONTAINER_SLOTS -- a game text ("%d Slot Bag") that the game's own Lua ne
 # A tooltip method that the game's documentation doesn't list but the game's own bank uses
 # (Camelot/BankFrame.lua, BankItemButtonBagMixin:OnEnter) for its bank bag slots.
 ignore SetBagItem -- GameTooltip:SetBagItem(Enum.BagIndex.Characterbanktab, index) shows a bank bag, as in the game's bank window
+ignore AddDoubleLine -- GameTooltip:AddDoubleLine (two columns in a tooltip), used by the game itself, e.g. Blizzard_GroupFinder/Shared/LFGFrame.lua

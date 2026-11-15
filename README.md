@@ -26,7 +26,9 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   The bottom row shows your bank's bag slots: your bank bags and their size, empty slots, "+" for
   the next slot to buy (with its price), and how much room is left – point at "N free" for each bag.
 - **Bag and bank counts**: item tooltips show how many you have in your bags and in your bank
-  ("Bags 12 · Bank 40 · Total 52").
+  ("Bags 12 · Bank 40 · Total 52"), and what your other characters on the same realm have – each
+  name in its class color. Gear button → Bag and bank → Forget a Character removes one you no
+  longer play.
 - **Crafting materials** are grouped by type (Cloth, Herb, Leather …), with the ones your
   professions use first.
 - **Your bags at a glance**: the Tidy Pack logo replaces the game's bag buttons, and your bags
@@ -85,6 +87,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   groups.
 - The Bank tab shows your character's bank, not the account-wide bank. With a controller, the
   game's own bank window is used.
+- Counts on your other characters are from the last time you played them (their bank: their last
+  visit to a banker). Mail, worn items and the account-wide bank aren't counted.
 - The translations are machine-made. Corrections are very welcome – leave a comment or open an
   issue. Item names, item types and the game's own buttons stay in the game's language.
 

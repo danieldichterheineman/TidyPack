@@ -440,7 +440,12 @@ function ns.SavedBankAge()
     if not (saved and saved.time) then
         return nil
     end
-    local days = math.floor((time() - saved.time) / 86400)
+    return ns.AgeText(saved.time)
+end
+
+-- "today", "yesterday" or "3 days ago" for a time saved with time() (also Characters.lua).
+function ns.AgeText(timestamp)
+    local days = math.floor((time() - timestamp) / 86400)
     if days < 1 then
         return L["today"]
     elseif days == 1 then
@@ -448,46 +453,6 @@ function ns.SavedBankAge()
     end
     return L["%d days ago"]:format(days)
 end
-
----------------------------------------------------------------------------
--- Bag and bank counts in the item's tooltip
----------------------------------------------------------------------------
--- A line "Bags 12 · Bank 40 · Total 52" (a colleague's idea 2026-11-12, sketch
--- .design/sketch-settings-in-bag.html, variant 1c). Only when the item is in the bank. The bags are
--- counted by the game; the bank from the saved bank, so the count shows far from the banker too. Only
--- this character. The option showCounts.
-
-local countsFor     -- the saved bank bankCounts was counted from
-local bankCounts = {} -- itemID → count in the bank
-
-local function bankCountOf(itemID)
-    local saved = ns.GetSavedBank()
-    if saved ~= countsFor then
-        countsFor = saved
-        wipe(bankCounts)
-        for _, item in ipairs(saved and saved.items or {}) do
-            local id = item.link and C_Item.GetItemInfoInstant(item.link)
-            if id then
-                bankCounts[id] = (bankCounts[id] or 0) + (item.count or 1)
-            end
-        end
-    end
-    return bankCounts[itemID] or 0
-end
-
-local COUNT_COLOR = CreateColor(0.44, 0.71, 1) -- light blue, like Tidy Pack's other lines about slots
-
-TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-    if not data or type(data.id) ~= "number" or ns.db == nil or ns.db.showCounts == false then
-        return
-    end
-    local bank = bankCountOf(data.id)
-    if bank == 0 then
-        return
-    end
-    local bags = C_Item.GetItemCount(data.id) or 0
-    tooltip:AddLine(L["Bags %d · Bank %d · Total %d"]:format(bags, bank, bags + bank), COUNT_COLOR:GetRGB())
-end)
 
 ---------------------------------------------------------------------------
 -- The game's bank window
