@@ -1,25 +1,25 @@
 -- TidyPack – Bank.lua
--- Fliken Bank (issue #1, skissen .design/sketch-bank-tab.html): banken sorterad i samma grupper
--- och avsnitt som väskan. Layout.lua lägger ut rutorna; den här filen äger dem.
+-- The Bank tab (issue #1, sketch .design/sketch-bank-tab.html): the bank sorted in the same groups
+-- and parts as the bags. Layout.lua lays out the buttons; this file owns them.
 --
--- Hos bankiren: egna rutor av spelets mall för väskrutor (ContainerFrameItemButtonTemplate), en per
--- plats i varje bankflik. Spelets bankfönster visar bara en sida åt gången, därför egna rutor.
--- Mallens klick är spelets eget och läser väskans nummer med föräldraramens GetID() och platsen med
--- rutans GetID() (ContainerFrameItemButtonMixin:GetBagID, ContainerFrame.lua i grenen forever). Tidy
--- Pack sätter båda med SetID och skriver aldrig fältet bagID, så klicket är spelets: högerklick
--- flyttar saken till väskorna, dra och släpp fungerar, och högerklick på en sak i Bags lägger den i
--- banken (spelet läser då BankFrame:GetActiveBankType()).
+-- At a banker: own buttons from the game's bag-button template (ContainerFrameItemButtonTemplate), one
+-- per slot in each bank tab. The game's bank window shows only one page at a time, hence own buttons.
+-- The template's click is the game's own and reads the bag number with the parent frame's GetID() and
+-- the slot with the button's GetID() (ContainerFrameItemButtonMixin:GetBagID, ContainerFrame.lua in the
+-- forever branch). Tidy Pack sets both with SetID and never writes the field bagID, so the click is the
+-- game's: right-click moves the item to the bags, drag and drop work, and right-click on an item in
+-- Bags puts it in the bank (the game then reads BankFrame:GetActiveBankType()).
 --
--- Spelets bankfönster (BankFrame) får inte döljas: dess OnHide stänger banken (BankFrameBaseMixin:
--- OnHide → C_Bank.CloseBankFrame, Mainline/BankFrameTemplates.lua). Det görs i stället osynligt och
--- mycket litet (SetAlpha och SetScale) medan Tidy Pack visar banken, och återställs när banken stängs.
--- Kugghjulets meny kan visa spelets fönster igen, t.ex. för att köpa en bankplats.
+-- The game's bank window (BankFrame) must not be hidden: its OnHide closes the bank (BankFrameBaseMixin:
+-- OnHide → C_Bank.CloseBankFrame, Mainline/BankFrameTemplates.lua). Instead it is made invisible and
+-- very small (SetAlpha and SetScale) while Tidy Pack shows the bank, and restored when the bank closes.
+-- The gear menu can show the game's window again, e.g. to buy a bank slot.
 --
--- Borta från banken: det du hade senast, sparat per karaktär (TidyPackCharDB.bank). Bara bilder och
--- tooltips; inget går att flytta.
+-- Away from the bank: what you had last, saved per character (TidyPackCharDB.bank). Only images and
+-- tooltips; nothing can be moved.
 --
--- ⚠️ Inte provat i spelet. Med handkontroll tar Tidy Pack inte över spelets bankfönster (rutorna är
--- inte inkopplade i handkontrollens markör), och kontogemensam bank (Warband) visas inte än.
+-- ⚠️ Not tried in the game. With a controller Tidy Pack doesn't take over the game's bank window (the
+-- buttons aren't hooked into the controller's cursor), and the account (warband) bank isn't shown yet.
 
 local _, ns = ...
 local L = ns.L
@@ -27,29 +27,29 @@ local L = ns.L
 local BANK_TYPE = Enum.BankType and Enum.BankType.Character
 
 local atBank = false
-local gameFrameHidden = false  -- spelets bankfönster är osynligt (Tidy Pack visar banken)
-local showGameFrame = false    -- spelaren har bett om spelets fönster (kugghjulets meny)
-local holders = {}             -- bankflikens nummer → osynlig ram med SetID(nummer)
-local liveButtons = {}         -- bankflikens nummer → plats → ruta
-local offlineButtons = {}      -- ruta för sparade saker, i ordning
-local allButtons = {}          -- alla bankens rutor, för Layout.lua (dölj det som inte används)
-local freeSlots = 0            -- lediga platser i banken vid senaste genomgången
-local bankTabShown = false     -- fliken Bank har visats sedan banken öppnades
-local bankLaidOut = false      -- skyddsnät: dölj inte spelets bankfönster förrän fliken lagts ut utan fel
+local gameFrameHidden = false  -- the game's bank window is invisible (Tidy Pack shows the bank)
+local showGameFrame = false    -- the player asked for the game's window (the gear menu)
+local holders = {}             -- bank tab number → invisible frame with SetID(number)
+local liveButtons = {}         -- bank tab number → slot → button
+local offlineButtons = {}      -- buttons for saved items, in order
+local allButtons = {}          -- all the bank's buttons, for Layout.lua (hide what isn't used)
+local freeSlots = 0            -- free bank slots at the last pass
+local bankTabShown = false     -- the Bank tab has shown since the bank opened
+local bankLaidOut = false      -- safety net: don't hide the game's bank window until the tab laid out without errors
 
--- Sant mellan BANKFRAME_OPENED och BANKFRAME_CLOSED.
+-- True between BANKFRAME_OPENED and BANKFRAME_CLOSED.
 function ns.IsAtBank()
     return atBank
 end
 
--- Tidy Pack visar banken i sin flik, i stället för spelets fönster: bara med mus, och bara när
--- inställningen är på.
+-- Tidy Pack shows the bank in its tab instead of the game's window: only with the mouse, and only when
+-- the option is on.
 local function takesOverBank()
     return ns.db.bankTab ~= false and not InputUtil.IsGamepadUIEnabled()
 end
-ns.TakesOverBank = takesOverBank -- kugghjulets meny (Marks.lua)
+ns.TakesOverBank = takesOverBank -- the gear menu (Marks.lua)
 
--- Bankflikarna (behållarnas nummer, namn, ikon och storlek) som karaktären har köpt.
+-- The bank tabs (containers' numbers, names, icons and sizes) the character has bought.
 local function bankTabInfos()
     local result = {}
     if not (BANK_TYPE and C_Bank) then
@@ -79,7 +79,7 @@ local function bankTabInfos()
 end
 
 ---------------------------------------------------------------------------
--- Rutorna hos bankiren
+-- The buttons at a banker
 ---------------------------------------------------------------------------
 
 local function holderFor(containerID)
@@ -106,15 +106,15 @@ local function liveButtonFor(containerID, slot)
     return button
 end
 
--- Samma steg som spelets väskfönster gör för varje ruta (Layout.lua).
+-- The same steps the game's bag window does for each button (Layout.lua).
 local function updateLiveButton(button, containerID, slot, info)
     ns.UpdateLiveSlotButton(button, containerID, slot, info, false)
 end
 
 ---------------------------------------------------------------------------
--- Rutorna borta från banken
+-- The buttons away from the bank
 ---------------------------------------------------------------------------
--- Vanliga rutor (typen ItemButton) som bara visar bild, antal, kvalitet och tooltip.
+-- Plain buttons (the type ItemButton) that only show image, count, quality and tooltip.
 
 local function showOfflineTooltip(self)
     if not self.link then
@@ -128,14 +128,14 @@ end
 local function offlineButtonFor(index)
     local button = offlineButtons[index]
     if not button then
-        -- Typen ItemButton har själv bild, antal och kvalitetsram (Blizzard_ItemButton/Shared).
+        -- The type ItemButton has image, count and quality border itself (Blizzard_ItemButton/Shared).
         button = CreateFrame("ItemButton", nil, ns.bagFrame)
         button:SetSize(ns.ITEM_BUTTON_SIZE or 37, ns.ITEM_BUTTON_SIZE or 37)
-        button:SetFrameLevel(10) -- som spelets väskrutor
+        button:SetFrameLevel(10) -- like the game's bag buttons
         button:RegisterForClicks("LeftButtonUp")
         button:SetScript("OnEnter", showOfflineTooltip)
         button:SetScript("OnLeave", GameTooltip_Hide)
-        -- Shift-klick länkar saken i chatten, som vanligt.
+        -- Shift-click links the item in the chat, as usual.
         button:SetScript("OnClick", function(self)
             if self.link then
                 HandleModifiedItemClick(self.link)
@@ -156,16 +156,16 @@ local function updateOfflineButton(button, item)
 end
 
 ---------------------------------------------------------------------------
--- För Layout.lua
+-- For Layout.lua
 ---------------------------------------------------------------------------
 
--- Alla bankens rutor (också de som inte används just nu), så att Layout.lua kan dölja dem.
+-- All the bank's buttons (also those not used right now), so Layout.lua can hide them.
 function ns.EnumerateBankButtons()
     return ipairs(allButtons)
 end
 
--- Sparad bank för den här karaktären: { time, free, items = { { link, count, quality, icon, bag,
--- slot, quest, bound, noValue }, ... } }. Nil om karaktären inte har varit hos en bankir.
+-- Saved bank for this character: { time, free, tabs, items = { { link, count, quality, icon, bag,
+-- slot, quest, bound, noValue }, ... } }. Nil if the character hasn't been at a banker.
 function ns.GetSavedBank()
     return ns.charDb and ns.charDb.bank
 end
@@ -178,7 +178,7 @@ function ns.GetBankFreeSlots()
     return saved and saved.free or 0
 end
 
--- Bankflikarna i ordning (hos bankiren direkt från spelet, borta ur det som sparades senast).
+-- The bank tabs in order (at a banker straight from the game, away from what was saved last).
 function ns.GetBankTabs()
     if atBank then
         return bankTabInfos()
@@ -190,7 +190,7 @@ function ns.GetBankTabs()
     if saved.tabs then
         return saved.tabs
     end
-    -- Gammal sparad bank före flikinfo: gissa ordning utifrån behållarnas nummer.
+    -- An old saved bank without tab info: guess the order from the containers' numbers.
     local seen, tabs = {}, {}
     for _, item in ipairs(saved.items or {}) do
         if item.bag and not seen[item.bag] then
@@ -205,8 +205,8 @@ function ns.GetBankTabs()
     return tabs
 end
 
--- Går igenom och sparar bankens innehåll hos bankiren. onSlot(containerID, slot, info, isQuestItem)
--- är frivillig (används av ForEachBankSlot för att också uppdatera rutorna).
+-- Goes through and saves the bank's content at a banker. onSlot(containerID, slot, info, isQuestItem)
+-- is optional (used by ForEachBankSlot to also update the buttons).
 local function scanLiveBank(onSlot)
     if not atBank or not ns.charDb then
         return
@@ -239,8 +239,8 @@ local function saveBank()
     scanLiveBank(nil)
 end
 
--- Går igenom bankens platser. Hos bankiren: varje plats, med spelets data (info nil för en tom
--- plats), och banken sparas för senare. Borta: de sparade sakerna (offline = true).
+-- Goes through the bank's slots. At a banker: every slot, with the game's data (info nil for an empty
+-- slot), and the bank is saved for later. Away: the saved items (offline = true).
 -- callback(button, bagID, slot, info, offline, isQuestItem)
 function ns.ForEachBankSlot(callback)
     if atBank then
@@ -290,7 +290,7 @@ function ns.ForEachBankSlot(callback)
     end
 end
 
--- Lägger saken på markören på första lediga plats i banken (släpp var som helst i fliken Bank).
+-- Puts the item on the cursor in the first free bank slot (drop anywhere in the Bank tab).
 function ns.PutCursorItemInBank()
     if not atBank or GetCursorInfo() ~= "item" then
         return
@@ -306,7 +306,7 @@ function ns.PutCursorItemInBank()
     UIErrorsFrame:AddMessage(L["Your bank is full."], 1.0, 0.1, 0.1, 1.0)
 end
 
--- Hur länge sedan banken sparades, för raden borta från banken.
+-- How long ago the bank was saved, for the line away from the bank.
 function ns.SavedBankAge()
     local saved = ns.GetSavedBank()
     if not (saved and saved.time) then
@@ -322,15 +322,15 @@ function ns.SavedBankAge()
 end
 
 ---------------------------------------------------------------------------
--- Antal i väskan och banken i sakens tooltip
+-- Bag and bank counts in the item's tooltip
 ---------------------------------------------------------------------------
--- En rad "Bags 12 · Bank 40 · Total 52" (kollegans förslag 2026-11-12, skissen
--- .design/sketch-settings-in-bag.html, variant 1c). Bara när saken finns i banken. Väskan räknas av
--- spelet; banken ur den sparade banken, så att antalet syns också långt från bankiren. Bara den här
--- karaktären. Inställningen showCounts.
+-- A line "Bags 12 · Bank 40 · Total 52" (a colleague's idea 2026-11-12, sketch
+-- .design/sketch-settings-in-bag.html, variant 1c). Only when the item is in the bank. The bags are
+-- counted by the game; the bank from the saved bank, so the count shows far from the banker too. Only
+-- this character. The option showCounts.
 
-local countsFor     -- den sparade bank som bankCounts räknades ur
-local bankCounts = {} -- itemID → antal i banken
+local countsFor     -- the saved bank bankCounts was counted from
+local bankCounts = {} -- itemID → count in the bank
 
 local function bankCountOf(itemID)
     local saved = ns.GetSavedBank()
@@ -347,7 +347,7 @@ local function bankCountOf(itemID)
     return bankCounts[itemID] or 0
 end
 
-local COUNT_COLOR = CreateColor(0.44, 0.71, 1) -- ljusblått, som Tidy Packs andra rader om platser
+local COUNT_COLOR = CreateColor(0.44, 0.71, 1) -- light blue, like Tidy Pack's other lines about slots
 
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
     if not data or type(data.id) ~= "number" or ns.db == nil or ns.db.showCounts == false then
@@ -362,13 +362,13 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tool
 end)
 
 ---------------------------------------------------------------------------
--- Spelets bankfönster
+-- The game's bank window
 ---------------------------------------------------------------------------
 
 local originalScale
 
--- Osynligt och mycket litet, men fortfarande öppet (se överst i filen). Görs osynligt först när
--- fliken Bank har lagts ut utan fel, och återställs direkt om ett fel stoppar utläggningen.
+-- Invisible and very small, but still open (see the top of the file). Made invisible only when the
+-- Bank tab has been laid out without errors, and restored at once if an error stops the layout.
 local function updateGameBankFrame()
     if not BankFrame then
         return
@@ -385,7 +385,7 @@ local function updateGameBankFrame()
     gameFrameHidden = hide
 end
 
--- Skyddsnät från Layout.lua: tala om när fliken Bank ritats färdigt (eller om utläggningen föll).
+-- Safety net from Layout.lua: says when the Bank tab finished drawing (or when the layout failed).
 function ns.SetBankLayoutOk(ok)
     bankLaidOut = ok == true
     if ok and atBank then
@@ -394,8 +394,8 @@ function ns.SetBankLayoutOk(ok)
     updateGameBankFrame()
 end
 
--- Kugghjulets meny: visa spelets bankfönster igen (t.ex. för att köpa en bankplats eller byta en
--- väska i banken), eller dölj det.
+-- The gear menu: show the game's bank window again (e.g. to buy a bank slot or swap a bag in the
+-- bank), or hide it.
 function ns.IsGameBankFrameShown()
     return not gameFrameHidden
 end
@@ -405,15 +405,15 @@ function ns.ToggleGameBankFrame()
     updateGameBankFrame()
 end
 
--- Inställningen "Use the Bank tab at bankers" ändrades (Options.lua).
+-- The option "Use the Bank tab at bankers" changed (Options.lua).
 ns.ApplyBankSetting = updateGameBankFrame
 
--- Byter till fliken Bank när spelet har öppnat väskorna vid bankiren.
+-- Switches to the Bank tab when the game has opened the bags at a banker.
 local function showBankTab()
     if not atBank or not ns.bagFrame then
         return
     end
-    -- Spelet öppnar själv väskan vid bankiren. Tidy Pack öppnar den aldrig från sin egen kod (se
+    -- The game opens the bags itself at a banker. Tidy Pack never opens them from its own code (see
     -- LogoButton.lua).
     if ns.SetView then
         ns.SetView("bank")
@@ -429,7 +429,7 @@ ns.RegisterEvent("BANKFRAME_OPENED", function()
     saveBank()
     updateGameBankFrame()
     if takesOverBank() then
-        -- En bildruta senare: spelet öppnar själv väskorna när banken öppnas.
+        -- One frame later: the game opens the bags itself when the bank opens.
         C_Timer.After(0, showBankTab)
     elseif ns.Refresh then
         ns.Refresh()
@@ -443,11 +443,11 @@ ns.RegisterEvent("BANKFRAME_CLOSED", function()
     bankLaidOut = false
     updateGameBankFrame()
     if ns.Refresh then
-        ns.Refresh() -- fliken Bank visar nu det sparade
+        ns.Refresh() -- the Bank tab now shows what was saved
     end
 end)
 
--- Bankens innehåll ändras: spara det alltid hos bankiren, och lägg ut igen när banken syns.
+-- The bank's content changes: always save it at a banker, and lay out again when the bank shows.
 local function refreshIfBankShown()
     if not atBank then
         return
@@ -466,12 +466,12 @@ ns.OnLoad(function()
     if not ns.bagFrame then
         return
     end
-    -- Spelet visar sitt bankfönster efter BANKFRAME_OPENED; det görs osynligt varje gång det visas.
+    -- The game shows its bank window after BANKFRAME_OPENED; it is made invisible every time it shows.
     if BankFrame then
         BankFrame:HookScript("OnShow", updateGameBankFrame)
     end
-    -- Stänger du väskan hos bankiren stängs banken också, eftersom spelets fönster inte syns. Bara
-    -- efter att fliken Bank har visats: spelet kan stänga och öppna väskan medan banken öppnas.
+    -- If you close the bags at a banker the bank closes too, since the game's window isn't shown. Only
+    -- after the Bank tab has shown: the game may close and reopen the bags while the bank opens.
     ns.bagFrame:HookScript("OnHide", function()
         if atBank and bankTabShown and gameFrameHidden and C_Bank and C_Bank.CloseBankFrame then
             C_Bank.CloseBankFrame()
