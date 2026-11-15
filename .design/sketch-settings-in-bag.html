@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv"><head><meta charset="utf-8"><title>Inställningar i väskan</title>
+<html lang="en"><head><meta charset="utf-8"><title>Options in the bags</title>
 <style>
 *{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1600px}
 h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1500px}
@@ -38,13 +38,13 @@ h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max
 .alt{font:11px Arial;color:#aaa;margin-top:10px}
 table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px solid #333;padding:4px 8px;text-align:left;vertical-align:top}th{color:#ffd100;font-weight:normal;background:#15130f}
 </style></head><body>
-<h1>Tidy Pack – skiss: antal i tooltipen, kugghjulets meny och inställningar i väskan</h1>
-<p class="n">Skiss, inte spelet. Tre förslag. 1: kollegans idé – tooltipen visar hur många du har i väskan och i banken, och totalen. 2: kugghjulets meny samlar alla "Show …"-val i en undermeny. 3: skräplistan och grupperna öppnas i väskans eget fönster, som ikonvalet i Sets, så att Tidy Pack inte behöver någon egen sida i spelets inställningar.</p>
+<h1>Tidy Pack – sketch: counts in the tooltip, the gear menu and options in the bags</h1>
+<p class="n">A sketch, not the game. Three proposals. 1: a colleague's idea – the tooltip shows how many you have in the bags and in the bank, and the total. 2: the gear menu gathers all "Show …" options in a submenu. 3: the junk list and the groups open in the bag window itself, like the icon choice in Sets, so Tidy Pack needs no page of its own in the game's options.</p>
 
 <!-- 1. Tooltip -->
 <div class="row">
  <div class="col">
-  <h2>1a. Kollegans förslag: antal i väskan och banken i tooltipen</h2>
+  <h2>1a. A colleague's proposal: counts in the bags and the bank in the tooltip</h2>
   <div class="tt">
    <div class="w">Linen Cloth</div>
    <div class="gr">Trade Goods</div>
@@ -55,10 +55,10 @@ table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px s
    <div class="cnt"><span>Bank</span><span>40</span></div>
    <div class="cnt"><span>Total</span><span>52</span></div>
   </div>
-  <div class="call">Visas bara när saken finns i banken – annars säger raderna inget nytt. Väskan räknas av spelet (<code>C_Item.GetItemCount</code>). Banken räknas ur Tidy Packs egen sparade bank, så antalet syns också långt från bankiren.</div>
+  <div class="call">Shown only when the item is in the bank – otherwise the lines say nothing new. The bags are counted by the game (<code>C_Item.GetItemCount</code>). The bank is counted from Tidy Pack's own saved bank, so the count shows far from the banker too.</div>
  </div>
  <div class="col">
-  <h2>1b. Borta från banken: hur gammalt antalet är</h2>
+  <h2>1b. Away from the bank: how old the count is</h2>
   <div class="tt">
    <div class="w">Linen Cloth</div>
    <div class="gr">Trade Goods</div>
@@ -67,24 +67,24 @@ table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px s
    <div class="cnt"><span>Bank (2 days ago)</span><span>40</span></div>
    <div class="cnt"><span>Total</span><span>52</span></div>
   </div>
-  <div class="call">Hos bankiren står bara "Bank". Längre bort står när banken sparades, samma ord som fliken Bank använder. Bara den här karaktären: andra karaktärers väskor är bortvalt (AGENTS.md).</div>
+  <div class="call">At a banker it just says "Bank". Further away it says when the bank was saved, the same words the Bank tab uses. Only this character: other characters' bags were rejected (AGENTS.md).</div>
  </div>
  <div class="col">
-  <h2>1c. Kortare variant, en rad (vald)</h2>
+  <h2>1c. Shorter variant, one line (chosen)</h2>
   <div class="tt">
    <div class="w">Linen Cloth</div>
    <div class="gr">Trade Goods</div>
    <div class="sep"></div>
    <div class="bl">Bags 12 · Bank 40 · Total 52</div>
   </div>
-  <div class="call">Tar mindre plats i en tooltip som redan har rader från Tidy Pack (set, grupp, quest). 1a är lättare att läsa på en tv; 1c tar en rad i stället för tre. Jag föreslår 1c.</div>
+  <div class="call">Takes less room in a tooltip that already has lines from Tidy Pack (set, group, quest). 1a is easier to read on a TV; 1c takes one line instead of three. I propose 1c.</div>
  </div>
 </div>
 
 <!-- 2. Gear menu -->
 <div class="row">
  <div class="col">
-  <h2>2a. I dag: kugghjulets meny</h2>
+  <h2>2a. Today: the gear menu</h2>
   <div class="bag" style="height:250px">
    <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
    <div class="t">Backpack<span class="g hl">⚙</span><span class="x"></span></div>
@@ -96,10 +96,10 @@ table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px s
     <div class="ck on">Lock items at merchants</div>
    </div>
   </div>
-  <div class="call">Resten av valen finns bara på sidan i spelets inställningar (Esc → Options → AddOns → Tidy Pack), som öppnas i ett eget fönster.</div>
+  <div class="call">The rest of the options are only on the page in the game's options (Esc → Options → AddOns → Tidy Pack), which opens in a window of its own.</div>
  </div>
  <div class="col">
-  <h2>2b. Förslag: "Show ▸" med alla val om vad som syns</h2>
+  <h2>2b. Proposal: "Show ▸" with all options about what shows</h2>
   <div class="bag" style="height:250px">
    <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
    <div class="t">Backpack<span class="g hl">⚙</span><span class="x"></span></div>
@@ -125,21 +125,21 @@ table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px s
   </div>
  </div>
  <div class="col">
-  <h2>2c. De andra undermenyerna</h2>
+  <h2>2c. The other submenus</h2>
   <table>
-   <tr><th>Undermeny</th><th>Val (dagens namn i inställningarna)</th></tr>
-   <tr><td>Show</td><td>Item level and BoE · Upgrade arrows · Quest items in Bags · Marks for later quests (grå utan Questie) · <b class="bl">nya:</b> Bag and bank counts (1), Tidy Pack lines in tooltips ("Tidy Pack set/group: …"), Junk value in the header</td></tr>
+   <tr><th>Submenu</th><th>Options (today's names in the options)</th></tr>
+   <tr><td>Show</td><td>Item level and BoE · Upgrade arrows · Quest items in Bags · Marks for later quests (grey without Questie) · <b class="bl">new:</b> Bag and bank counts (1), Tidy Pack lines in tooltips ("Tidy Pack set/group: …"), Junk value in the header</td></tr>
    <tr><td>Merchants and loot</td><td>Lock items at merchants · Ask to delete junk list loot · Suggest a deletion when full</td></tr>
-   <tr><td>Bag and bank</td><td>Replace the game's bag buttons · Use the Bank tab at bankers · (hos bankiren) Show the game's bank window</td></tr>
+   <tr><td>Bag and bank</td><td>Replace the game's bag buttons · Use the Bank tab at bankers · (at a banker) Show the game's bank window</td></tr>
   </table>
-  <div class="call">Varje val har en tooltip i menyn, som raderna i spelets inställningar har i dag. Menyn stängs inte när du klickar i en kryssruta, så du ser ändringen direkt i väskan bakom. Mina tre nya "Show"-förslag är valfria; antalet (1) är det enda jag tycker behövs.</div>
+  <div class="call">Each option has a tooltip in the menu, as the lines in the game's options have today. The menu doesn't close when you click a checkbox, so you see the change right away in the bags behind. My three new "Show" proposals are optional; the count (1) is the only one I think is needed.</div>
  </div>
 </div>
 
 <!-- 3. Junk + groups in bag -->
 <div class="row">
  <div class="col">
-  <h2>3a. Junk List… öppnas i väskan (i stället för ett eget fönster)</h2>
+  <h2>3a. Junk List… opens in the bags (instead of a window of its own)</h2>
   <div class="bag">
    <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
    <div class="t">Backpack<span class="g">⚙</span><span class="x"></span></div>
@@ -160,10 +160,10 @@ table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px s
    </div>
    <div class="foot"><span>17 free</span><span style="margin-left:auto">12g 40s 5c</span></div>
   </div>
-  <div class="call">Samma rutor som i väskan, med sakens bild också när du inte har den. ✕ syns på rutan musen står på. Släpp en sak på "+" eller var som helst. Shift-klicka en länk medan rutan är aktiv. Done (eller en flik) går tillbaka.</div>
+  <div class="call">The same slots as in the bags, with the item's image even when you don't have it. ✕ shows on the slot the mouse is on. Drop an item on "+" or anywhere. Shift-click a link while the box is active. Done (or a tab) goes back.</div>
  </div>
  <div class="col">
-  <h2>3b. Groups… öppnas i väskan, en rad per grupp</h2>
+  <h2>3b. Groups… opens in the bags, one line per group</h2>
   <div class="bag">
    <div class="tabs"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Sets</div><div class="tab">Quests</div></div>
    <div class="t">Backpack<span class="g">⚙</span><span class="x"></span></div>
@@ -182,10 +182,10 @@ table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px s
    </div>
    <div class="foot"><span>17 free</span><span style="margin-left:auto">12g 40s 5c</span></div>
   </div>
-  <div class="call">Som raderna i Sets: klick på namnet byter namn på raden (Enter/Esc), klick på raden fäller ut den. En sak som släpps på en rad läggs i gruppen. ✕ frågar först, med Tidy Packs egen fråga (inte spelets StaticPopup).</div>
+  <div class="call">Like the lines in Sets: a click on the name renames on the line (Enter/Esc), a click on the line opens it. An item dropped on a line goes into the group. ✕ asks first, with Tidy Pack's own question (not the game's StaticPopup).</div>
  </div>
  <div class="col">
-  <h2>3c. Spelets inställningar: om Tidy Pack, länk och kort hjälp (vald)</h2>
+  <h2>3c. The game's options: about Tidy Pack, link and short help (chosen)</h2>
   <div class="bag" style="height:330px;background:#111">
    <div class="t">Options – AddOns – Tidy Pack</div>
    <div style="padding:12px 14px;font:12px/1.5 Arial;color:#ddd">
@@ -203,12 +203,12 @@ table{border-collapse:collapse;font:12px Arial;margin-top:6px}td,th{border:1px s
     <div style="margin-top:10px"><span class="btn">Open Bags</span> <span class="btn">Show Tips Again</span></div>
    </div>
   </div>
-  <div class="call">Inga val här: allt finns under kugghjulet. Namn och version läses ur TOC-filen (<code>## Author</code>, <code>## Version</code>). Länken står i en ruta där den redan är markerad, eftersom ett addon inte kan öppna webbläsaren; på Windows står det Ctrl+C. Adressen kan också läggas som <code>## X-Website</code> i TOC-filen.</div>
-  <h2 style="margin-top:14px">Att tänka på</h2>
+  <div class="call">No options here: everything is under the gear. Name and version are read from the TOC file (<code>## Author</code>, <code>## Version</code>). The link stands in a box where it is already selected, because an addon can't open the browser; on Windows it says Ctrl+C. The address can also be put as <code>## X-Website</code> in the TOC file.</div>
+  <h2 style="margin-top:14px">Things to consider</h2>
   <table>
-   <tr><td>Handkontroll</td><td>Att skriva ett namn går trögt både här och på dagens sida. Släppa en sak fungerar.</td></tr>
-   <tr><td>Långa listor</td><td>Rullas med mushjulet, som fliken Quests. Fönstret byter inte storlek.</td></tr>
-   <tr><td>Kod</td><td>Junk-sidan (Options.lua) och GroupsPage.lua (410 rader) flyttas in i väskan; logiken i Marks.lua och Groups.lua är densamma.</td></tr>
+   <tr><td>Controller</td><td>Typing a name is slow both here and on today's page. Dropping an item works.</td></tr>
+   <tr><td>Long lists</td><td>Scroll with the mouse wheel, like the Quests tab. The window keeps its size.</td></tr>
+   <tr><td>Code</td><td>The junk page (Options.lua) and GroupsPage.lua (410 lines) move into the bags; the logic in Marks.lua and Groups.lua stays the same.</td></tr>
   </table>
  </div>
 </div>
