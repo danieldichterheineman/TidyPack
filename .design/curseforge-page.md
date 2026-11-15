@@ -1,38 +1,42 @@
-# Tidy Pack – texter till CurseForge
+# Tidy Pack – texts for CurseForge
 
-Kopiera fälten nedan till projektet i Authors Console (authors.curseforge.com).
+Copy the fields below into the project in the Authors Console (authors.curseforge.com).
 
-## Projektet (Create Project)
+## The project (Create Project)
 
-| Fält | Värde |
+| Field | Value |
 |---|---|
 | Game | World of Warcraft |
 | Project class | Addons |
 | Name | Tidy Pack |
 | Summary | Sorts the game's own bag window into clear groups, with item sets, quest item locks, a junk list and your own groups. |
 | Main category | Bags & Inventory |
-| Additional categories | inga |
+| Additional categories | none |
 | License | MIT License |
 | Text editor | Markdown |
-| Description | hela innehållet i `README.md` |
-| Allow Comments | på |
-| Experimental | **av** |
-| Logo | `.design/logo.png` (1024×1024, egen teckning) |
+| Description | the whole content of `README.md` |
+| Allow Comments | on |
+| Experimental | **off** |
+| Logo | `.design/logo.png` (1024×1024, own drawing) |
 
-Slå aldrig på Premium, early access eller andra betalfunktioner.
+The summary above is what was entered for 1.0.0. Tidy Pack no longer has item sets (removed
+2026-11-14), so update the summary on CurseForge with the next release, e.g.: "Sorts the game's own
+bag window into clear groups, with a sorted bank, quest item locks, a junk list and your own groups."
 
-## Första filen (Files → Upload File)
+Never turn on Premium, early access or any other paid feature.
 
-| Fält | Värde |
+## The first file (Files → Upload File)
+
+| Field | Value |
 |---|---|
 | File | `TidyPack-1.0.0.zip` |
 | Display name | TidyPack 1.0.0 |
 | Release type | Release |
 | Game version | WoW Forever 1.60.1 |
 | Changelog type | Markdown |
-| Changelog | avsnittet `## 1.0.0` i `CHANGELOG.md` (se nedan) |
+| Changelog | the section `## 1.0.0` in `CHANGELOG.md` (see below) |
 | Related projects | Questie – Optional Dependency |
 
-### Changelog att klistra in
+### Changelog to paste
 
-Se `CHANGELOG.md`, från "First public release." till slutet av listan.
+See `CHANGELOG.md`, from "First public release." to the end of the list.
