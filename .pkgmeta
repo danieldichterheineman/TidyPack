@@ -1,13 +1,13 @@
-# Styr hur BigWigs packager bygger zip-filen.
-# Dolda filer och mappar (som .github och .release) utesluts alltid.
+# Controls how BigWigs packager builds the zip file.
+# Hidden files and folders (like .github and .release) are always left out.
 package-as: TidyPack
 
-# Ändringsloggen som laddas upp med varje fil.
+# The changelog uploaded with every file.
 manual-changelog:
   filename: CHANGELOG.md
   markup-type: markdown
 
-# Utvecklingsfiler som inte ska följa med till spelarna.
+# Development files that must not go to the players.
 ignore:
   - AGENTS.md
   - CLAUDE.md
