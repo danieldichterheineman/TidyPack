@@ -1,7 +1,7 @@
 -- TidyPack – Locales/frFR.lua
--- Français. Maskinöversatt 2026-11-15; rättelser från spelare är välkomna. Nyckeln är den engelska
--- texten i koden, och en text som saknas här visas på engelska. %s och %d står i samma ordning som
--- i engelskan, och "Alt-" står före ordet för klick (Mac visar "Option-", Core.lua).
+-- Français. Machine-translated 2026-11-15; corrections from players are welcome. The key is
+-- the English text in the code; a text missing here shows in English. %s and %d keep the English
+-- order, and "Alt-" comes before the word for click (a Mac shows "Option-", Core.lua).
 
 local _, ns = ...
 
