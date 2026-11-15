@@ -1,23 +1,17 @@
 <!doctype html>
-<html lang="sv">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tidy Pack – skiss</title>
+<title>Tidy Pack – sketch</title>
 <!--
-  Skiss av hur Tidy Pack ungefär ser ut i spelet. Ingen kod körs mot spelet och inget laddas från nätet.
-  Skärmen är 1366 × 768 enheter, som spelets gränssnitt vid skala 1 (UI Scale 1) på en
-  bred skärm. Måtten i enheter är därför samma som i SetSize och SetPoint i koden.
-  Typsnitt, bilder och exakt storlek blir annorlunda i spelet – finjustera där.
-
-  Fönstret är spelets eget väskfönster (ContainerFrameCombinedBags). Tidy Pack ordnar bara om
-  rutorna i det. Måtten nedan (BUTTON, SPACING, COLUMNS osv.) ska vara samma som i Layout.lua.
+  A sketch of roughly how Tidy Pack looks in the game. No code runs against the game and nothing loads from the net. The screen is 1366 × 768 units, like the game's interface at scale 1 (UI Scale 1) on a wide screen. The sizes in units are therefore the same as in SetSize and SetPoint in the code. Fonts, images and exact size differ in the game – fine-tune there. The window is the game's own bag window (ContainerFrameCombinedBags). Tidy Pack only rearranges the buttons in it. The sizes below (BUTTON, SPACING, COLUMNS etc.) should be the same as in Layout.lua.
 -->
 <style>
   :root {
-    --wow-gold: #ffd100;       /* NORMAL_FONT_COLOR: rubriker och vanlig text */
-    --wow-white: #ffffff;      /* HIGHLIGHT_FONT_COLOR: framhävd text */
-    --wow-gray: #808080;       /* GRAY_FONT_COLOR: avstängt */
+    --wow-gold: #ffd100;       /* NORMAL_FONT_COLOR: headings and normal text */
+    --wow-white: #ffffff;      /* HIGHLIGHT_FONT_COLOR: highlighted text */
+    --wow-gray: #808080;       /* GRAY_FONT_COLOR: disabled */
     --title-font: "Friz Quadrata", "Friz Quadrata TT", Georgia, "Times New Roman", serif;
     --text-font: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   }
@@ -33,18 +27,18 @@
   .controls legend { color: #a8a8a8; padding: 0 4px; }
   .controls label { margin-right: 12px; cursor: pointer; white-space: nowrap; }
 
-  /* Skärmen: 1366 × 768 enheter, skalas ned för att få plats i webbläsaren. */
+  /* The screen: 1366 × 768 units, scaled down to fit in the browser. */
   .viewport { width: 100%; max-width: 1366px; aspect-ratio: 1366 / 768; position: relative; overflow: hidden;
     border-radius: 6px; box-shadow: 0 0 0 1px #2a2f3a; }
   .screen { position: absolute; left: 0; top: 0; width: 1366px; height: 768px; transform-origin: 0 0;
     background: radial-gradient(ellipse at 50% 35%, #3d4a3a 0%, #222a22 45%, #111511 100%); }
 
-  /* Spelets standardgränssnitt, ungefär där det ligger från början. */
+  /* The game's default interface, roughly where it starts. */
   .blizz { position: absolute; border: 1px dashed rgba(255,255,255,.28); border-radius: 4px;
     color: rgba(255,255,255,.45); font: 12px var(--text-font); display: flex; align-items: center;
     justify-content: center; text-align: center; background: rgba(0,0,0,.18); }
 
-  /* Spelets väskfönster: ram med porträtt, titelrad och stängknapp. */
+  /* The game's bag window: frame with portrait, title bar and close button. */
   .bagframe { position: absolute; background: linear-gradient(160deg, #24221f 0%, #171614 60%, #100f0e 100%);
     border: 2px solid #6e6252; border-radius: 6px; box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6); }
   .bagframe .titlebar { position: absolute; left: 0; right: 0; top: 0; height: 24px; border-bottom: 1px solid #000;
@@ -60,7 +54,7 @@
     background: radial-gradient(#b22219, #5b0d08); border: 1px solid #d4af37; color: #ffd9a0;
     font: bold 12px/18px Arial, sans-serif; text-align: center; }
 
-  /* Innehållet. Alla lägen räknas från fönstrets övre vänstra hörn. */
+  /* The content. All positions count from the window's top left corner. */
   .abs { position: absolute; }
   .search { height: 20px; border: 1px solid #5a5a5a; border-radius: 3px; background: #050505;
     font: 12px var(--text-font); color: var(--wow-gray); padding: 1px 6px 0 22px; line-height: 17px; }
@@ -68,17 +62,17 @@
     border: 2px solid #9a9a9a; border-radius: 50%; }
   .search::after { content: ""; position: absolute; left: 15px; top: 13px; width: 5px; height: 2px;
     background: #9a9a9a; transform: rotate(45deg); }
-  /* ★-knappen: svag tills du håller en sak. */
+  /* The ★ button: faint until you hold an item. */
   .starbutton { width: 26px; height: 26px; color: var(--wow-gold); font: 22px/26px Arial, sans-serif;
     text-align: center; text-shadow: 0 0 4px #ffb000, 1px 1px 0 #000; }
   .starbutton.idle { opacity: .35; }
   .header { font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
   .header .star { color: var(--wow-gold); }
-  /* Förslag: flikar ovanför fönstret (spelets PanelTopTabButtonTemplate) och fliken Sets. */
+  /* Proposal: tabs above the window (the game's PanelTopTabButtonTemplate) and the Sets tab. */
   .toptab { position: absolute; height: 26px; width: 84px; display: flex; align-items: center; justify-content: center;
     font: 12px var(--text-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; border: 2px solid #5a4a2a;
     border-bottom: none; border-radius: 6px 6px 0 0; background: linear-gradient(#2a2620, #15130f); }
-  /* Flikarna som i Forevers trollbok, men ovanpå fönstrets kant; den valda högre och ljusare. */
+  /* The tabs as in Forever's spellbook, but on top of the window's edge; the chosen one taller and lighter. */
   .toptab { height: 27px; width: 88px; font-size: 13px; filter: brightness(0.75); z-index: 3; }
   .toptab.active { height: 31px; color: #fff; background: linear-gradient(#3a342a, #1e1c18); border-color: #c8a040; filter: none; }
   .setrow { position: absolute; height: 44px; border-radius: 3px; }
@@ -93,7 +87,7 @@
   .setrow .mini.gone { background: #222; box-shadow: inset 0 0 0 1px #555; }
   .setrow .worn.warnright { color: #ff9a2a; }
   .setshint { position: absolute; font: 11px var(--text-font); color: #9a9a9a; }
-  /* Förslag: specialväskorna längst ned, under en skiljelinje som i spelets egna fönster. */
+  /* Proposal: the special bags at the bottom, under a divider as in the game's own windows. */
   .divider { height: 1px; background: linear-gradient(90deg, transparent, #8a7440 15%, #8a7440 85%, transparent); }
   .header .bagicon { display: inline-block; width: 12px; height: 12px; margin-right: 4px; vertical-align: -2px;
     border-radius: 2px; background: linear-gradient(135deg, #a07040, #4a2a10); box-shadow: 0 0 0 1px #000; }
@@ -104,8 +98,8 @@
   .slot .count { right: 2px; bottom: 0; font-size: 12px; }
   .slot .ilvl { left: 2px; top: 0; }
   .slot .boe { left: 2px; bottom: 0; }
-  .slot.q2 { box-shadow: inset 0 0 0 2px #1eff00; }   /* ovanlig: grön ram */
-  .slot.q3 { box-shadow: inset 0 0 0 2px #0070dd; }   /* sällsynt: blå ram */
+  .slot.q2 { box-shadow: inset 0 0 0 2px #1eff00; }   /* uncommon: green border */
+  .slot.q3 { box-shadow: inset 0 0 0 2px #0070dd; }   /* rare: blue border */
   .slot.junk::after { content: ""; position: absolute; left: 2px; top: 2px; width: 9px; height: 9px;
     border-radius: 50%; background: radial-gradient(#e8d070, #8a6a10); box-shadow: 0 0 0 1px #000; }
   .slot.quest::after { content: "!"; position: absolute; left: 3px; top: 0; font: bold 14px Arial, sans-serif;
@@ -117,7 +111,7 @@
   .slot.empty { background: #141414; box-shadow: inset 0 0 0 1px #2a2a2a; }
   .slot.cursor { outline: 3px solid #4fc3ff; outline-offset: 2px; }
   .slot.disabled { filter: grayscale(.8) brightness(.55); }
-  /* Låset: en liten bygel och kropp uppe till höger. Syns bara hos en handlare. */
+  /* The lock: a small shackle and body at the top right. Shows only at a merchant. */
   .lock { position: absolute; right: 1px; top: 1px; width: 11px; height: 13px; }
   .lock::before { content: ""; position: absolute; left: 2px; top: 0; width: 7px; height: 7px;
     border: 2px solid #e8d070; border-bottom: none; border-radius: 4px 4px 0 0; }
@@ -129,14 +123,12 @@
   .coin.gold { background: radial-gradient(#fff2a0, #c9a227); }
   .coin.silver { background: radial-gradient(#ffffff, #9a9a9a); }
   .coin.copper { background: radial-gradient(#ffc090, #a0522d); }
-  /* Spelets röda knapp (UIPanelButtonTemplate). */
+  /* The game's red button (UIPanelButtonTemplate). */
   .redbutton { position: absolute; height: 22px; padding: 0 12px; border-radius: 3px; border: 1px solid #000;
     background: linear-gradient(#a8261a, #5a0c06); box-shadow: inset 0 0 0 1px #d4af37;
     font: 12px/20px var(--title-font); color: var(--wow-gold); text-shadow: 1px 1px 0 #000; white-space: nowrap; }
 
-  /* Förslag: spelets ruta för tips (mallen HelpTipTemplate, som ärver GlowBoxTemplate). Mörk ruta
-     med gul glöd, vit text och en gul pil mot det tipset handlar om. 226 enheter bred, som
-     HelpTip.width i spelets kod. */
+  /* Proposal: the game's tip box (the template HelpTipTemplate, which inherits GlowBoxTemplate). A dark box with a yellow glow, white text and a yellow arrow towards what the tip is about. 226 units wide, like HelpTip.width in the game's code. */
   .helptip { position: absolute; width: 226px; padding: 14px 16px 12px; background: rgba(0,0,0,.9);
     border: 1px solid #ffd100; border-radius: 3px; color: var(--wow-white); font: 13px/1.35 var(--text-font);
     box-shadow: 0 0 7px 2px rgba(255,190,0,.8), inset 0 0 8px rgba(255,190,0,.3); z-index: 5; }
@@ -145,8 +137,7 @@
   .tiparrow { position: absolute; width: 0; height: 0; z-index: 6; filter: drop-shadow(0 0 3px #ffb000); }
   .tiparrow.down { border-left: 11px solid transparent; border-right: 11px solid transparent; border-top: 16px solid #ffd100; }
   .tiparrow.right { border-top: 11px solid transparent; border-bottom: 11px solid transparent; border-left: 16px solid #ffd100; }
-  /* Handkontrollens knappar. Spelet visar symbolerna för just den kontroll man har (Xbox,
-     PlayStation eller Switch); här ritas Xbox-varianten ungefär. */
+  /* The controller's buttons. The game shows the symbols for the controller you have (Xbox, PlayStation or Switch); here the Xbox variant is drawn roughly. */
   .pad { display: inline-block; min-width: 17px; height: 17px; padding: 0 3px; border-radius: 9px; margin: 0 1px;
     font: bold 10px/17px Arial, sans-serif; color: #fff; text-align: center; vertical-align: -3px;
     box-shadow: 0 0 0 1px #000; text-shadow: none; }
@@ -155,9 +146,7 @@
   .pad.lb, .pad.rb { background: #3c3c3c; border-radius: 4px; }
   #tipNote { min-height: 0; }
 
-  /* Förslag: skräpknappen bredvid ★ och märket på saker du markerat som skräp är spelets eget
-     skräpmynt (bags-junkcoin, som spelet visar på grå saker hos en handlare). Saker som en quest
-     behöver senare får kartans gula utropstecken för quests du kan ta (QuestNormal). */
+  /* Proposal: the junk button next to ★ and the mark on items you marked as junk are the game's own junk coin (bags-junkcoin, which the game shows on grey items at a merchant). Items a quest needs later get the map's yellow exclamation mark for quests you can take (QuestNormal). */
   .trashbutton { width: 26px; height: 26px; }
   .trashbutton.idle { opacity: .35; }
   .trashbutton::before { content: ""; position: absolute; left: 4px; top: 4px; width: 18px; height: 18px; border-radius: 50%;
@@ -167,12 +156,12 @@
   .slot .later { position: absolute; right: 3px; top: -1px; font: bold 14px Arial, sans-serif; color: #ffd100;
     text-shadow: 1px 1px 0 #000, -1px 0 0 #000; }
   .slot .later::before { content: "!"; }
-  /* Spelets tooltip, ungefär. */
+  /* The game's tooltip, roughly. */
   .gametip { position: absolute; max-width: 280px; padding: 6px 9px; background: rgba(6,8,22,.95);
     border: 1px solid #9a9a9a; border-radius: 4px; font: 12px/1.45 var(--text-font); color: #fff; z-index: 7; }
   .gametip .gold { color: var(--wow-gold); }
   .gametip .white { font-size: 13px; }
-  /* Spelets lootfönster, ungefär, och Tidy Packs fråga under det. */
+  /* The game's loot window, roughly, and Tidy Pack's question under it. */
   .lootframe { position: absolute; width: 200px; background: linear-gradient(#2a2723, #151412);
     border: 2px solid #6e6252; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6); }
   .lootframe .ltitle { font: 13px/24px var(--title-font); color: var(--wow-gold); text-align: center;
@@ -180,7 +169,7 @@
   .lootrow { display: flex; align-items: center; gap: 7px; padding: 5px 7px; font: 12px var(--text-font); color: #fff; }
   .lootrow .licon { width: 30px; height: 30px; border-radius: 3px; border: 1px solid #000; flex: none; }
   .lootrow.cursor .licon { outline: 3px solid #4fc3ff; outline-offset: 1px; }
-  /* Samma panel som spelets lootfönster (DefaultPanelFlatTemplate), lika bred och direkt under det. */
+  /* The same panel as the game's loot window (DefaultPanelFlatTemplate), as wide and right under it. */
   .makeroom { position: absolute; width: 200px; background: linear-gradient(#2a2723, #151412);
     border: 2px solid #6e6252; border-radius: 5px; box-shadow: 0 0 0 1px #000, 0 6px 18px rgba(0,0,0,.6);
     font: 12px/1.4 var(--text-font); color: #fff; z-index: 6; }
@@ -194,7 +183,7 @@
   .errortext { position: absolute; left: 0; right: 0; top: 150px; text-align: center; color: #ff2a2a;
     font: bold 17px var(--title-font); text-shadow: 1px 1px 0 #000, 0 0 4px #000; }
 
-  /* Förslag: spelets egen meny (Menu-systemet, MenuUtil.CreateContextMenu), ungefär. */
+  /* Proposal: the game's own menu (the Menu system, MenuUtil.CreateContextMenu), roughly. */
   .gamemenu { position: absolute; min-width: 190px; padding: 6px 0; background: rgba(8,8,8,.96);
     border: 1px solid #6e6252; border-radius: 4px; box-shadow: 0 0 0 1px #000, 0 4px 12px rgba(0,0,0,.6);
     font: 13px/1.7 var(--text-font); color: #fff; z-index: 8; }
@@ -202,7 +191,7 @@
   .gamemenu .mitem { padding: 0 14px; }
   .gamemenu .mitem.focus { background: rgba(255,209,0,.18); }
   .gamemenu .sep { height: 1px; margin: 4px 10px; background: #444; }
-  /* Förslag: spelets inställningsfönster (Options → AddOns), ungefär. */
+  /* Proposal: the game's options window (Options → AddOns), roughly. */
   .options { position: absolute; left: 233px; top: 70px; width: 900px; height: 610px; z-index: 9;
     background: linear-gradient(#1c1b19, #0e0d0c); border: 2px solid #6e6252; border-radius: 6px;
     box-shadow: 0 0 0 1px #000, 0 8px 24px rgba(0,0,0,.7); font: 13px var(--text-font); color: #fff; }
@@ -232,7 +221,7 @@
     color: #8a8a8a; font-size: 12px; line-height: 16px; }
   .options .redbutton { position: relative; }
 
-  /* Förklaringar till skissen. */
+  /* Explanations for the sketch. */
   .callout { position: absolute; font: 12px -apple-system, "Segoe UI", sans-serif; color: #fff;
     background: #2563eb; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
   ul { max-width: 900px; padding-left: 20px; }
@@ -241,62 +230,59 @@
 </head>
 <body>
   <div style="background:#5a1a1a; color:#fff; padding:8px 12px; margin:0 0 12px; border-radius:6px; max-width: 900px;">
-    <b>Gammal skiss (2026-11-09).</b> Den visar bland annat knappen Sell Junk, 12 kolumner, ★-knappen och rutan
-    "Free" längst ned, som inte stämmer längre. Se <code>sketch-groups.html</code> och AGENTS.md för hur det ser ut nu.</div>
-  <h1>Tidy Pack – skiss</h1>
-  <p class="note">Ungefär så här ser spelets väskfönster ut med Tidy Pack, vid standardskalan. Fönstret,
-    sökrutan och pengarna är spelets egna – Tidy Pack ordnar bara sakerna i grupper. Typsnitt och bilder
-    blir lite annorlunda i spelet. Håll musen över en ruta för att se vad det är för sak.</p>
+    <b>Old sketch (2026-11-09).</b> Among other things it shows the Sell Junk button, 12 columns, the ★ button and the slot "Free" at the bottom, which no longer match. See <code>sketch-groups.html</code> and AGENTS.md for how it looks now.</div>
+  <h1>Tidy Pack – sketch</h1>
+  <p class="note">Roughly how the game's bag window looks with Tidy Pack, at the default scale. The window, the search box and the money are the game's own – Tidy Pack only orders the items in groups. Fonts and images differ a little in the game. Hover a slot to see what item it is.</p>
 
   <div class="controls">
     <fieldset>
-      <legend>Prova</legend>
-      <label><input type="checkbox" id="gamepadToggle"> Med handkontroll</label>
-      <label><input type="checkbox" id="merchantToggle"> Hos en handlare</label>
-      <label><input type="checkbox" id="holdingToggle"> Håller en sak</label>
+      <legend>Try</legend>
+      <label><input type="checkbox" id="gamepadToggle"> With a controller</label>
+      <label><input type="checkbox" id="merchantToggle"> At a merchant</label>
+      <label><input type="checkbox" id="holdingToggle"> Holding an item</label>
     </fieldset>
     <fieldset>
-      <legend>Introduktion (förslag)</legend>
+      <legend>Introduction (proposal)</legend>
       <label>Tips: <select id="tipSelect">
-        <option value="0">Inget</option>
-        <option value="1">1. Första gången väskan öppnas</option>
-        <option value="2">2. Stjärnan</option>
-        <option value="3">3. Hoppa mellan grupper (handkontroll)</option>
-        <option value="4">4. Första gången hos en handlare</option>
-        <option value="5">5. Första låsta saken</option>
-        <option value="6">6. Första större väskan</option>
+        <option value="0">None</option>
+        <option value="1">1. The first time the bags open</option>
+        <option value="2">2. The star</option>
+        <option value="3">3. Jump between groups (controller)</option>
+        <option value="4">4. The first time at a merchant</option>
+        <option value="5">5. The first locked item</option>
+        <option value="6">6. The first bigger bag</option>
       </select></label>
     </fieldset>
     <fieldset>
-      <legend>Nya funktioner (förslag)</legend>
-      <label><input type="checkbox" id="fullToggle"> Fulla väskor när du flår</label>
-      <label><input type="checkbox" id="laterToggle"> Quests i förväg</label>
-      <label><input type="checkbox" id="junkToggle"> Markerat som skräp</label>
+      <legend>New features (proposal)</legend>
+      <label><input type="checkbox" id="fullToggle"> Full bags while skinning</label>
+      <label><input type="checkbox" id="laterToggle"> Quests ahead</label>
+      <label><input type="checkbox" id="junkToggle"> Marked as junk</label>
     </fieldset>
     <fieldset>
-      <legend>Knapp, inställningar och skräplista</legend>
-      <label><input type="checkbox" id="menuToggle"> En knapp med meny</label>
-      <label><input type="checkbox" id="optionsToggle"> Inställningssidan</label>
-      <label><input type="checkbox" id="lootedToggle"> Lootat från skräplistan</label>
-      <label><input type="checkbox" id="specialToggle"> Specialväskor i egna grupper</label>
-      <label><input type="checkbox" id="tabsToggle"> Flikar</label>
-      <label><input type="checkbox" id="setsToggle"> Fliken Sets</label>
+      <legend>Button, options and junk list</legend>
+      <label><input type="checkbox" id="menuToggle"> One button with a menu</label>
+      <label><input type="checkbox" id="optionsToggle"> The options page</label>
+      <label><input type="checkbox" id="lootedToggle"> Looted from the junk list</label>
+      <label><input type="checkbox" id="specialToggle"> Special bags in their own groups</label>
+      <label><input type="checkbox" id="tabsToggle"> Tabs</label>
+      <label><input type="checkbox" id="setsToggle"> The Sets tab</label>
     </fieldset>
   </div>
   <p class="note" id="tipNote"></p>
 
   <div class="viewport" id="viewport">
     <div class="screen" id="screen">
-      <!-- Spelets standardgränssnitt (ungefärligt) -->
-      <div class="blizz" style="left:20px; top:20px; width:230px; height:80px;">Spelarram</div>
-      <div class="blizz" style="left:270px; top:20px; width:230px; height:80px;">Målram</div>
-      <div class="blizz" style="right:16px; top:16px; width:180px; height:180px; border-radius:50%;">Minikarta</div>
-      <div class="blizz" style="left:16px; bottom:16px; width:430px; height:180px;">Chatt</div>
-      <div class="blizz" style="left:458px; bottom:16px; width:450px; height:90px;">Aktionsfält</div>
-      <div class="blizz" style="right:16px; bottom:16px; width:240px; height:40px;">Väskknappar och menyer</div>
-      <div class="blizz" id="merchant" style="left:20px; top:120px; width:340px; height:440px; display:none;">Spelets handlarfönster<br>(med spelets egen knapp "Sell All Junk")</div>
+      <!-- The game's default interface (approximate) -->
+      <div class="blizz" style="left:20px; top:20px; width:230px; height:80px;">Player frame</div>
+      <div class="blizz" style="left:270px; top:20px; width:230px; height:80px;">Target frame</div>
+      <div class="blizz" style="right:16px; top:16px; width:180px; height:180px; border-radius:50%;">Minimap</div>
+      <div class="blizz" style="left:16px; bottom:16px; width:430px; height:180px;">Chat</div>
+      <div class="blizz" style="left:458px; bottom:16px; width:450px; height:90px;">Action bars</div>
+      <div class="blizz" style="right:16px; bottom:16px; width:240px; height:40px;">Bag buttons and menus</div>
+      <div class="blizz" id="merchant" style="left:20px; top:120px; width:340px; height:440px; display:none;">The game's merchant window<br>(with the game's own button "Sell All Junk")</div>
 
-      <!-- Spelets väskfönster. Spelet lägger det nere till höger, ovanför väskknapparna. -->
+      <!-- The game's bag window. The game places it at the bottom right, above the bag buttons. -->
       <div class="bagframe" id="window"></div>
       <div id="outside"></div>
       <div id="callouts"></div>
@@ -306,69 +292,46 @@
   </div>
 
   <ul>
-    <li><b>Fönstret är spelets eget</b> väskfönster (alla väskor i ett). Spelet bestämmer var det ligger: nere
-      till höger, ovanför väskknapparna. Det är 12 rutor brett (514 enheter) och höjden följer innehållet.
-      Väskikonen uppe till vänster öppnar inte längre spelets väskmeny.</li>
-    <li><b>Elva grupper</b> i fast ordning, utan sektioner och linjer: Favorites, New, Consumables, Equipment,
-      Trade Goods, Quest Items, Keys, Bags, Miscellaneous, Junk och Empty. Tomma grupper visas inte. Inom en grupp
-      ligger lika saker bredvid varandra (drycker före mat, vapen före rustning, recept sist i Trade Goods), och
-      sedan efter kvalitet, namn och storlek på högen. Små grupper delar rad.</li>
-    <li><b>New</b> samlar det du har fått sedan du senast öppnade väskan (här Emberglow Ring och Gnoll Paw).
-      De ligger kvar där tills du stänger fönstret.</li>
-    <li><b>Stjärnmärkt</b> (här Hearthstone) hamnar i Favorites överst. Med mus: Alt-klicka på saken. Med
-      handkontroll: plocka upp saken och lägg den på ★ uppe till höger. ★ är svag tills du håller en sak – kryssa
-      i "Håller en sak". Stjärnorna gäller alla dina karaktärer.</li>
-    <li><b>Lås</b>: quest-saker, vanliga saker som en quest kräver (här Linen Cloth) och saker i dina
-      utrustningsset. Låset syns bara hos en handlare, och då går sakerna inte att klicka på. Tooltipen
-      säger varför, med en röd rad.</li>
-    <li><b>Sell Junk</b> syns ovanför väskfönstret när du handlar och det finns skräp. Den säljer gråa saker utom
-      låsta och stjärnmärkta, högst 12 per klick. Rubriken Junk visar vad skräpet är värt.</li>
-    <li><b>På rutorna</b>: nivå och <b>BoE</b> bara på gröna och bättre vapen och rustningar, och antalet nere
-      till höger. Gråa saker får spelets skräpmynt hos en handlare.</li>
-    <li><b>Lediga platser</b> visas som en ruta med antalet. Siffran blir röd vid 5 eller färre, och när väskorna
-      blir helt fulla visas "Your bags are full." mitt på skärmen.</li>
-    <li><b>Väskor</b>: de du har på dig syns inte bland sakerna. Grön pil i Bags = större än din minsta väska;
-      högerklicka (eller Equip med handkontrollen) för att byta.</li>
-    <li><b>Introduktion (förslag)</b>: korta tips i spelets egen tipsruta, ett i taget och aldrig i strid. Varje
-      tips visas en gång (sparas för hela kontot). Med mus stängs rutan med knappen. Med handkontroll har
-      rutan ingen knapp och försvinner när väskan stängs, och texten visar knapparna på just din kontroll.
-      Välj ett tips under "Introduktion" ovanför.</li>
-    <li><b>Fulla väskor</b>: när loot eller flåning misslyckas för att väskorna är fulla visas en fråga direkt
-      under lootfönstret, i samma sorts panel och lika bred: vilken sak som kan raderas för att det nya ska få plats.
-      Ett tryck raderar. Välj "Fulla väskor när du flår" ovanför.</li>
-    <li><b>Quests i förväg</b>: med Questie installerat får saker som en quest behöver senare kartans gula
-      utropstecken uppe till höger och en rad i tooltipen. Välj "Quests i förväg" ovanför.</li>
-    <li><b>Skräp</b>: Alt-högerklick eller skräpmyntet bredvid ★ markerar en sak som skräp. Den får spelets eget
-      skräpmynt uppe till vänster. Välj "Markerat som skräp" ovanför.</li>
-    <li><b>Handkontroll</b>: markören börjar på det du nyss fått (annars överst), LB och RB hoppar till förra
-      eller nästa grupp, och styrkorset går till närmaste ruta åt det håll du trycker. Hos en handlare gör A och X
-      ingenting på låsta saker.</li>
+    <li><b>The window is the game's own</b> bag window (all bags in one). The game decides where it is: at the bottom right, above the bag buttons. It is 12 slots wide (514 units) and the height follows the content. The bag icon at the top left no longer opens the game's bag menu.</li>
+    <li><b>Eleven groups</b> in a fixed order, without parts and lines: Favorites, New, Consumables, Equipment, Trade Goods, Quest Items, Keys, Bags, Miscellaneous, Junk and Empty. Empty groups don't show. Within a group similar items sit side by side (potions before food, weapons before armor, recipes last in Trade Goods), then by quality, name and stack size. Small groups share a line.</li>
+    <li><b>New</b> gathers what you got since you last opened the bags (here Emberglow Ring and Gnoll Paw). They stay there until you close the window.</li>
+    <li><b>Starred</b> (here Hearthstone) goes to Favorites at the top. With the mouse: Alt-click the item. With a controller: pick up the item and put it on ★ at the top right. ★ is faint until you hold an item – tick "Holding an item". The stars apply to all your characters.</li>
+    <li><b>Locks</b>: quest items, normal items a quest needs (here Linen Cloth) and items in your equipment sets. The lock shows only at a merchant, and then the items can't be clicked. The tooltip says why, with a red line.</li>
+    <li><b>Sell Junk</b> shows above the bag window while you trade and there is junk. It sells grey items except locked and starred ones, at most 12 per click. The heading Junk shows what the junk is worth.</li>
+    <li><b>On the slots</b>: level and <b>BoE</b> only on uncommon or better weapons and armor, and the count at the bottom right. Grey items get the game's junk coin at a merchant.</li>
+    <li><b>Free slots</b> show as a slot with the count. The number turns red at 5 or fewer, and when the bags get completely full, "Your bags are full." shows in the middle of the screen.</li>
+    <li><b>Bags</b>: those you wear don't show among the items. Green arrow in Bags = bigger than your smallest bag; right-click (or Equip with the controller) to swap.</li>
+    <li><b>Introduction (proposal)</b>: short tips in the game's own tip box, one at a time and never in combat. Each tip shows once (saved for the whole account). With the mouse the box closes with the button. With a controller the box has no button and disappears when the bags close, and the text shows the buttons of your controller. Pick a tip under "Introduction" above.</li>
+    <li><b>Full bags</b>: when looting or skinning fails because the bags are full, a question shows right under the loot window, in the same kind of panel and as wide: which item can be deleted so the new one fits. One press deletes. Pick "Full bags while skinning" above.</li>
+    <li><b>Quests ahead</b>: with Questie installed, items a quest needs later get the map's yellow exclamation mark at the top right and a line in the tooltip. Pick "Quests ahead" above.</li>
+    <li><b>Junk</b>: Alt-right-click or the junk coin next to ★ marks an item as junk. It gets the game's own junk coin at the top left. Pick "Marked as junk" above.</li>
+    <li><b>Controller</b>: the cursor starts on what you just got (otherwise at the top), LB and RB jump to the previous or next group, and the D-pad goes to the nearest slot in the direction you press. At a merchant A and X do nothing on locked items.</li>
   </ul>
 
 <script>
   // ---------------------------------------------------------------------------------
-  // Samma mått som i Layout.lua (enheter i spelet vid skala 1).
+  // The same sizes as in Layout.lua (units in the game at scale 1).
   const BUTTON = 37, SPACING = 5, COLUMNS = 12;
   const CELL = BUTTON + SPACING;
   const GRID_WIDTH = COLUMNS * BUTTON + (COLUMNS - 1) * SPACING;   // 499
-  const FRAME_WIDTH = GRID_WIDTH + 15 + 12;                         // 526: spelets marginal + 6 på var sida
-  const LEFT = 14;              // rutornas vänsterkant i fönstret (spelets 8 + 6)
-  const TOP = 68;               // där grupperna börjar (under titelraden och sökrutan, + 4)
-  const HEADER = 18;            // gruppens rubrik, inklusive luft under den
-  const GROUP_GAP = 12;         // avstånd mellan grupper som delar rad
-  const SHELF_GAP = 6;          // avstånd mellan rader av grupper
-  const BOTTOM = 39;            // spelets rad med pengar längst ned (+ 5 extra luft ovanför)
-  const ANCHOR_X = -4, ANCHOR_Y = 85;   // spelet lägger fönstret så här från nedre högra hörnet
-  const SELL_HEIGHT = 22;       // Sell Junk, ovanför fönstret när du handlar
+  const FRAME_WIDTH = GRID_WIDTH + 15 + 12;                         // 526: the game's margin + 6 on each side
+  const LEFT = 14;              // the slots' left edge in the window (the game's 8 + 6)
+  const TOP = 68;               // where the groups start (under the title bar and the search box, + 4)
+  const HEADER = 18;            // the group's heading, including the space under it
+  const GROUP_GAP = 12;         // the gap between groups sharing a line
+  const SHELF_GAP = 6;          // the gap between lines of groups
+  const BOTTOM = 39;            // the game's money row at the bottom (+ 5 extra space above)
+  const ANCHOR_X = -4, ANCHOR_Y = 85;   // the game places the window this far from the bottom right corner
+  const SELL_HEIGHT = 22;       // Sell Junk, above the window while you trade
 
-  // Grupperna i fast ordning.
+  // The groups in a fixed order.
   const GROUPS = ["Favorites", "New", "Consumables", "Equipment", "Trade Goods", "Quest Items",
     "Keys", "Bags", "Miscellaneous", "Junk", "Empty"];
-  // Förslag 5: rubrikerna "Bags" och "Empty" heter "Spare Bags" och "Free" i spelet.
+  // Proposal 5: the headings "Bags" and "Empty" are called "Spare Bags" and "Free" in the game.
   const LABEL = { "Bags": "Spare Bags", "Empty": "Free" };
 
-  // Exempel på vad en karaktär i nivå 30 kan bära. q = kvalitet: 0 grå, 1 vit, 2 grön, 3 blå.
-  // sub = plats inom gruppen (drycker 1, mat 2, förband 3, skriftrullar 4; vapen 1, rustning 2; recept 4).
+  // An example of what a level 30 character may carry. q = quality: 0 grey, 1 white, 2 green, 3 blue.
+  // sub = place within the group (potions 1, food 2, bandages 3, scrolls 4; weapons 1, armor 2; recipes 4).
   const items = [
     ["Favorites", "Hearthstone", 1, 1],
     ["New", "Emberglow Ring", 3, 1, { ilvl: 30, isNew: true, cursor: true }],
@@ -412,8 +375,8 @@
     ["Junk", "Tattered Cloth Vest", 0, 1, { junk: true }],
     ["Junk", "Torn Wing", 0, 4, { junk: true }],
     ["Empty", "19 free slots", -1, 19, { empty: true }],
-    // Specialväskor (förslag): en koger och en väska för själsskärvor. Utan förslaget ligger
-    // pilarna i Equipment, skärvorna i Miscellaneous och de tomma platserna i Empty.
+    // Special bags (proposal): a quiver and a soul shard bag. Without the proposal the arrows
+    // are in Equipment, the shards in Miscellaneous and the empty slots in Empty.
     ["Light Quiver", "Rough Arrow", 1, 200, { special: "Equipment", sub: 3 }],
     ["Light Quiver", "Rough Arrow", 1, 200, { special: "Equipment", sub: 3 }],
     ["Light Quiver", "Rough Arrow", 1, 143, { special: "Equipment", sub: 3 }],
@@ -424,7 +387,7 @@
     ["Small Soul Pouch", "9 free slots", -1, 9, { special: "Empty", empty: true, sub: 9 }],
   ].map(([group, name, quality, count, extra]) => ({ group, name, quality, count, sub: 0, ...(extra || {}) }));
 
-  // Färger för "ikonerna" – bara för att rutorna ska gå att skilja åt i skissen.
+  // Colors for the "icons" – only so the slots can be told apart in the sketch.
   const ICON = {
     "Favorites": ["#6a8ab0", "#1a2a3a"], "New": ["#7a6a5a", "#2e2620"], "Consumables": ["#a0384a", "#3a1018"],
     "Equipment": ["#7a6a5a", "#2e2620"], "Trade Goods": ["#6a7a4a", "#222a14"], "Quest Items": ["#8a7040", "#2a2010"],
@@ -433,35 +396,35 @@
   };
   const SPECIAL_BAGS = ["Light Quiver", "Small Soul Pouch"];
 
-  // Förslag: tipsen i introduktionen. Texten i spelet är på engelska och följer hur du spelar
-  // (mouse = mus, pad = handkontroll). needs = vad som måste vara sant för att tipset ska visas.
+  // Proposal: the tips in the introduction. The text in the game is in English and follows how you play
+  // (mouse = mouse, pad = controller). needs = what must be true for the tip to show.
   const pad = key => `<span class="pad ${key.toLowerCase()}">${key}</span>`;
   const TIPS = {
     1: { target: "window", button: "Next",
       mouse: "Tidy Pack sorts your bags into groups for you. New loot waits near the top until you close your bags.",
       pad: "Tidy Pack sorts your bags into groups for you. New loot waits near the top until you close your bags.",
-      note: "Tips 1 visas första gången väskan öppnas. Med mus går du vidare till tips 2 med Next. Med handkontroll försvinner rutan när väskan stängs, och nästa tips kommer nästa gång du öppnar den." },
+      note: "Tip 1 shows the first time the bags open. With the mouse you go on to tip 2 with Next. With a controller the box disappears when the bags close, and the next tip comes the next time you open them." },
     2: { target: "star", button: "Got it",
       mouse: "Alt-click an item to star it. Starred items stay at the top. Alt-click it again to remove the star.",
       pad: `Pick up an item with ${pad("A")} and drop it here to star it. Starred items stay at the top.`,
-      note: "Tips 2: stjärnan. Texten följer hur du spelar – Alt-klick med mus, plocka upp och släpp med handkontroll." },
+      note: "Tip 2: the star. The text follows how you play – Alt-click with the mouse, pick up and drop with a controller." },
     3: { target: "groups", gamepadOnly: true,
       pad: `${pad("LB")} ${pad("RB")} Jump to the previous or next group.`,
-      note: "Tips 3 visas bara med handkontroll: LB och RB hoppar mellan grupperna (förslag). Spelet visar symbolerna för just din kontroll – Xbox, PlayStation eller Switch." },
+      note: "Tip 3 shows only with a controller: LB and RB jump between the groups (proposal). The game shows the symbols for your controller – Xbox, PlayStation or Switch." },
     4: { target: "sell", merchant: true, mouseOnly: true, button: "Got it",
       mouse: "Sells your grey items, 12 at a time, so you can buy them back. Starred and locked items are never sold.",
-      note: "Tips 4 visas första gången du handlar och har skräp. Bara med mus, eftersom knappen inte nås med handkontroll." },
+      note: "Tip 4 shows the first time you trade and have junk. Only with the mouse, since the button can't be reached with a controller." },
     5: { target: "locked", merchant: true, button: "Got it",
       mouse: "Locked while you shop: one of your quests or equipment sets needs it, so it can't be sold.",
       pad: "Locked while you shop: one of your quests or equipment sets needs it, so it can't be sold.",
-      note: "Tips 5 visas första gången en låst sak syns hos en handlare." },
+      note: "Tip 5 shows the first time a locked item shows at a merchant." },
     6: { target: "upgrade", button: "Got it",
       mouse: "Bigger than your smallest bag. Right-click it to swap them.",
       pad: `Bigger than your smallest bag. Press ${pad("X")} Equip to swap them.`,
-      note: "Tips 6 visas första gången du bär på en väska som är större än din minsta." },
+      note: "Tip 6 shows the first time you carry a bag bigger than your smallest." },
   };
 
-  // Ordningen inom en grupp: plats inom gruppen, kvalitet (bäst först), namn, storlek på högen.
+  // The order within a group: place within the group, quality (best first), name, stack size.
   function compareItems(a, b) {
     if (a.sub !== b.sub) return a.sub - b.sub;
     if (a.quality !== b.quality) return b.quality - a.quality;
@@ -469,20 +432,20 @@
     return b.count - a.count;
   }
 
-  // Lägger ut grupperna rad för rad: en grupp delar rad med föregående om den får plats,
-  // annars börjar en ny rad. En grupp är minst lika bred som sin rubrik.
+  // Lays out the groups line by line: a group shares the line with the previous one if it fits,
+  // otherwise a new line starts. A group is at least as wide as its heading.
   function layout(gamepad, options = {}) {
     const placed = [];
     let x = 0, y = TOP, shelfHeight = 0;
-    // Förslag: saker du markerat som skräp ligger i Junk, och med fulla väskor finns inga tomma platser.
+    // Proposal: items you marked as junk are in Junk, and with full bags there are no empty slots.
     const groupOf = i => (options.junk && i.junkMark) ? "Junk" : (i.special && !options.special) ? i.special : i.group;
-    // Förslag: varje specialväska blir en egen grupp längst ned, under en skiljelinje,
-    // med väskans ikon och namn.
+    // Proposal: each special bag becomes its own group at the bottom, under a divider,
+    // with the bag's icon and name.
     const order = options.special ? [...GROUPS, ...SPECIAL_BAGS] : GROUPS;
     for (const name of order) {
       if (name === "Empty" && options.full) continue;
       let list = items.filter(i => groupOf(i) === name && (gamepad || !i.gamepadOnly)).sort(compareItems);
-      // Utan förslaget räknas specialväskornas tomma platser in i en enda ruta i Empty.
+      // Without the proposal the special bags' empty slots count into a single slot in Empty.
       if (name === "Empty" && !options.special) {
         const free = list.reduce((sum, i) => sum + i.count, 0);
         list = [{ ...list[0], count: free, name: free + " free slots" }];
@@ -495,13 +458,13 @@
       const width = Math.max(cols * BUTTON + (cols - 1) * SPACING, label.length * 6);
       const height = HEADER + rows * BUTTON + (rows - 1) * SPACING;
       let left = x === 0 ? 0 : x + GROUP_GAP;
-      if (name === SPECIAL_BAGS[0] && options.special) {   // ny rad, linje och lite mer luft
+      if (name === SPECIAL_BAGS[0] && options.special) {   // new line, a divider and a little more space
         y += shelfHeight + 10;
         placed.push({ divider: true, y });
         y += 9;
         x = 0; left = 0; shelfHeight = 0;
       }
-      if (x > 0 && left + width > GRID_WIDTH) {          // får inte plats: ny rad
+      if (x > 0 && left + width > GRID_WIDTH) {          // doesn't fit: new line
         y += shelfHeight + SHELF_GAP;
         left = 0; shelfHeight = 0;
       }
@@ -514,7 +477,7 @@
   }
 
   function render() {
-    // Ett tips kan kräva ett visst läge, t.ex. att du handlar.
+    // A tip can need a certain state, e.g. that you are trading.
     const tip = TIPS[Number(document.getElementById("tipSelect").value)];
     if (tip && tip.gamepadOnly) document.getElementById("gamepadToggle").checked = true;
     if (tip && tip.mouseOnly) document.getElementById("gamepadToggle").checked = false;
@@ -531,13 +494,13 @@
     const special = document.getElementById("specialToggle").checked;
     const setsTab = document.getElementById("setsToggle").checked;
     const tabs = setsTab || document.getElementById("tabsToggle").checked;
-    // Skräpmyntsknappen togs bort 2026-11-09: ★ har en meny i stället. Raden finns kvar för
-    // att kunna jämföra.
+    // The junk-coin button was removed 2026-11-09: ★ has a menu instead. The line stays for
+    // comparison.
     const junkButtonShown = false && junk && !menu;
     document.getElementById("merchant").style.display = merchant ? "flex" : "none";
     const result = layout(gamepad, { full, junk, special });
-    // Fliken Sets: en lista med dina set i stället för sakerna.
-    // Förslag: setets saker som små rutor på raden; grå = saknas.
+    // The Sets tab: a list of your sets instead of the items.
+    // Proposal: the set's items as small slots on the line; grey = missing.
     const SETS = [
       { name: "Fishing", c: ["#4a8ab0", "#10283a"], items: ["#4a6a8a", "#8a7040", "#6a7a4a"], worn: true },
       { name: "Herbalism", c: ["#6a9a4a", "#1a2a10"], items: ["#6a9a4a", "#7a6a5a"] },
@@ -556,14 +519,14 @@
     let html = `<div class="titlebar">Backpack${gamepad ? `<span class="free">(${full ? 0 : 19})</span>` : ""}</div>`;
     html += `<div class="portrait"></div>`;
     if (!gamepad) html += `<div class="close">×</div>`;
-    // Spelets sökruta: med handkontroll kortas den av så att ★-knappen får plats.
+    // The game's search box: with a controller it is shortened so the ★ button fits.
     if (!setsTab) html += `<div class="abs search" style="left:62px; top:35px; width:${FRAME_WIDTH - 62 - 44}px;">Search</div>`;
     html += `<div class="abs starbutton ${holding ? "" : "idle"}" style="right:9px; top:33px;" title="Drop an item here: Favorites, Junk List or a set. Click for the menu.">⚙</div>`;
-    // Förslag: skräpknappen bredvid ★, svag tills du håller en sak.
+    // Proposal: the junk button next to ★, faint until you hold an item.
     if (junkButtonShown) html += `<div class="abs trashbutton ${holding ? "" : "idle"}" style="right:39px; top:33px;" title="Drop an item here to mark it as junk"></div>`;
 
     if (setsTab) {
-      // New Set där sökrutan står; läget efter namnet; Equip till höger; "+" sist bland sakerna.
+      // New Set where the search box is; the state after the name; Equip on the right; "+" last among the items.
       html += `<div class="abs redbutton" style="left:62px; top:35px;">New Set</div>`;
       SETS.forEach((set, i) => {
         const minis = set.items.map((c, k) => `<div class="mini ${c ? "" : "gone"}" style="left:${50 + k * 25}px; ${c ? `background: linear-gradient(135deg, ${c}, #111);` : ""}"></div>`).join("")
@@ -594,7 +557,7 @@
         if (it.quest) classes.push("quest");
         if (it.upgrade) classes.push("upgrade");
         if (it.isNew) classes.push("new");
-        if (gamepad && it.cursor && !full) classes.push("cursor"); // med fulla väskor står markören i frågan
+        if (gamepad && it.cursor && !full) classes.push("cursor"); // with full bags the cursor is in the question
         if (merchant && it.locked) classes.push("disabled");
         const bg = it.empty ? "" : `background: linear-gradient(135deg, ${c1}, ${c2});`;
         let inner = "";
@@ -609,18 +572,18 @@
       }
     }
 
-    // Spelets egen rad med pengar, nere till höger.
+    // The game's own money row, at the bottom right.
     html += `<div class="abs money" style="right:10px; top:${height - 26}px;">` +
       `123<span class="coin gold"></span> 45<span class="coin silver"></span> 67<span class="coin copper"></span></div>`;
     win.innerHTML = html;
 
-    // Sell Junk ligger utanför spelets fönster (en säker knapp får inte ligga i det), ovanför
-    // fönstrets vänstra del, och syns bara när du handlar och det finns skräp.
+    // Sell Junk is outside the game's window (a secure button may not be in it), above
+    // the window's left part, and shows only while you trade and there is junk.
     document.getElementById("outside").innerHTML = merchant
       ? `<div class="redbutton" style="left:${left + 60}px; top:${top - SELL_HEIGHT - 6}px;">Sell Junk&nbsp; 2<span class="coin silver"></span>14<span class="coin copper"></span></div>`
       : "";
-    // Flikarna ovanför fönstret, till höger om porträttet. Hos en handlare flyttas Sell Junk
-    // till högerkanten, så att de inte krockar.
+    // The tabs above the window, right of the portrait. At a merchant Sell Junk moves
+    // to the right edge, so they don't collide.
     if (tabs) {
       document.getElementById("outside").innerHTML =
         `<div class="toptab ${setsTab ? "" : "active"}" style="left:${left + 62}px; top:${top + 2 - (setsTab ? 27 : 31)}px;">Bags</div>` +
@@ -628,30 +591,30 @@
         (merchant ? `<div class="redbutton" style="left:${left + FRAME_WIDTH - 150}px; top:${top - SELL_HEIGHT - 6}px;">Sell Junk&nbsp; 2<span class="coin silver"></span>14<span class="coin copper"></span></div>` : "");
     }
 
-    // Förklaringar till vänster om fönstret.
+    // Explanations left of the window.
     const find = pred => result.placed.find(p => p.item && pred(p.item));
-    const callouts = [["Spelets eget väskfönster – Tidy Pack ordnar bara sakerna →", top + 2]];
-    callouts.push([holding ? "★ lyser: släpp saken här för att stjärnmärka →" : "★ är svag tills du håller en sak →", top + 35]);
+    const callouts = [["The game's own bag window – Tidy Pack only orders the items →", top + 2]];
+    callouts.push([holding ? "★ lights up: drop the item here to star it →" : "★ is faint until you hold an item →", top + 35]);
     const fav = find(i => i.group === "Favorites");
-    if (fav) callouts.push(["Stjärnmärkt överst, sedan det du nyss fått →", top + fav.y + 10]);
+    if (fav) callouts.push(["Starred first, then what you just got →", top + fav.y + 10]);
     const cloth = find(i => i.locked && !i.quest);
-    if (cloth && merchant) callouts.push(["Låst hos handlaren: går inte att sälja →", top + cloth.y + 10]);
+    if (cloth && merchant) callouts.push(["Locked at the merchant: can't be sold →", top + cloth.y + 10]);
     const bag = find(i => i.upgrade);
-    if (bag && !merchant) callouts.push(["Grön pil: större än din minsta väska →", top + bag.y + 10]);
+    if (bag && !merchant) callouts.push(["Green arrow: bigger than your smallest bag →", top + bag.y + 10]);
     const empty = find(i => i.empty);
-    if (empty) callouts.push(["Lediga platser: släpp en sak här →", top + empty.y + 10]);
-    callouts.push(["Spelets egen rad med pengar →", top + height - 28]);
-    if (merchant) callouts.push(["Sell Junk: gråa saker utom låsta och stjärnmärkta →", top - SELL_HEIGHT - 4]);
+    if (empty) callouts.push(["Free slots: drop an item here →", top + empty.y + 10]);
+    callouts.push(["The game's own money row →", top + height - 28]);
+    if (merchant) callouts.push(["Sell Junk: grey items except locked and starred →", top - SELL_HEIGHT - 4]);
     if (gamepad) {
       const start = find(i => i.cursor);
-      callouts.push(["Markören börjar på det du nyss fått →", top + start.y + 22]);
-      callouts.push(["LB/RB: förra eller nästa grupp →", top + TOP + 2]);
+      callouts.push(["The cursor starts on what you just got →", top + start.y + 22]);
+      callouts.push(["LB/RB: previous or next group →", top + TOP + 2]);
     }
     callouts.sort((a, b) => a[1] - b[1]);
-    for (let i = 1; i < callouts.length; i++) {           // håll isär förklaringar som hamnar för nära
+    for (let i = 1; i < callouts.length; i++) {           // keep explanations apart that end up too close
       callouts[i][1] = Math.max(callouts[i][1], callouts[i - 1][1] + 24);
     }
-    // Med ett tips eller ett förslag framme döljs förklaringarna, så att de inte hamnar under det.
+    // With a tip or a proposal showing, the explanations hide so they don't end up under it.
     const showingProposal = full || later || junk || menu || options || looted || tabs;
     document.getElementById("callouts").innerHTML = (tip || showingProposal) ? "" : callouts
       .map(([text, y]) => `<div class="callout" style="right:${1366 - left + 14}px; top:${y}px;">${text}</div>`)
@@ -660,8 +623,8 @@
     renderProposals({ full, later, junk, gamepad, tip, menu, options, looted, holding }, result, left, top);
   }
 
-  // Förslagen: lootfönstret med Tidy Packs fråga när väskorna är fulla, och tooltipen för en
-  // sak som en quest behöver senare. Texten i spelet är på engelska.
+  // The proposals: the loot window with Tidy Pack's question when the bags are full, and the tooltip
+  // for an item a quest needs later. The text in the game is in English.
   const coin = (amount, kind) => `${amount}<span class="coin ${kind}"></span>`;
   function renderProposals(state, result, left, top) {
     const { full, later, junk, gamepad, tip, menu, options, looted, holding } = state;
@@ -670,8 +633,8 @@
     if (full) {
       const lootLeft = 470, lootTop = 250;
       html += `<div class="errortext">Inventory is full.</div>`;
-      // Med handkontroll står markören kvar på lootet (spelet flyttar den dit); knapparna nås
-      // med styrkorset nedåt.
+      // With a controller the cursor stays on the loot (the game moves it there); the buttons are
+      // reached with the D-pad down.
       html += `<div class="lootframe" style="left:${lootLeft}px; top:${lootTop}px;"><div class="ltitle">Loot</div>` +
         `<div class="lootrow${gamepad ? " cursor" : ""}"><span class="licon" style="background: linear-gradient(135deg, #9a7a50, #3a2810);"></span>Light Leather</div></div>`;
       const victim = junk ? `<span>[Box of Spare Parts]</span> (marked as junk)`
@@ -679,10 +642,10 @@
       html += `<div class="makeroom" style="left:${lootLeft}px; top:${lootTop + 72}px;"><div class="ltitle">Tidy Pack</div>` +
         `<div class="body">Your bags are full. Delete ${victim} to make room for [Light Leather] (${coin(5, "copper")})?` +
         `<div class="buttons"><div class="redbutton">Delete</div><div class="redbutton">Not now</div></div></div></div>`;
-      notes.push("Fulla väskor: när loot eller flåning misslyckas för att väskorna är fulla föreslår Tidy Pack vad " +
-        "som kan raderas – först saker du markerat som skräp, sedan den billigaste grå saken, men bara om det nya är " +
-        "värt mer. Ett tryck raderar, och sedan tar du lädret som vanligt. Stjärnmärkta, låsta och quest-saker " +
-        "föreslås aldrig.");
+      notes.push("Full bags: when looting or skinning fails because the bags are full, Tidy Pack suggests what " +
+        "can be deleted – first items you marked as junk, then the cheapest grey item, but only if the new one is " +
+        "worth more. One press deletes, and then you take the leather as usual. Starred, locked and quest items " +
+        "are never suggested.");
     }
     if (later) {
       const p = result.placed.find(q => q.item && q.item.later);
@@ -691,17 +654,17 @@
         html += `<div class="gametip" style="right:${1366 - left + 10}px; top:${y - 4}px;">` +
           `<div class="white">${p.item.name}</div><div class="gold">Needed later for: ${p.item.later}</div></div>`;
       }
-      notes.push("Quests i förväg: med Questie installerat märks saker som en quest behöver senare – quests du inte " +
-        "har gjort, för din fraktion, upp till 5 nivåer över din nivå. Märket sitter uppe till höger, och tooltipen " +
-        "säger vilken quest. Sell Junk och förslagen vid fulla väskor rör dem aldrig.");
+      notes.push("Quests ahead: with Questie installed, items a quest needs later are marked – quests you haven't " +
+        "done, for your faction, up to 5 levels above yours. The mark sits at the top right, and the tooltip " +
+        "says which quest. Sell Junk and the full-bags suggestions never touch them.");
     }
     if (junk) {
-      notes.push("Skräp: Alt-högerklicka på en sak, eller plocka upp den och släpp den på skräpmyntet bredvid ★, " +
-        "så markeras den som skräp. Samma sak igen tar bort markeringen. Den hamnar i Junk med spelets skräpmynt, " +
-        "säljs av Sell Junk och föreslås först när väskorna är fulla.");
+      notes.push("Junk: Alt-right-click an item, or pick it up and drop it on the junk coin next to ★, " +
+        "and it is marked as junk. The same again removes the mark. It goes to Junk with the game's junk coin, " +
+        "is sold by Sell Junk and is suggested first when the bags are full.");
     }
     if (menu) {
-      // Spelets menyer öppnas under knappen de hör till.
+      // The game's menus open under the button they belong to.
       const starRight = 1366 - (left + 2 + FRAME_WIDTH - 4 - 9);
       const starBottom = top + 2 + 33 + 26;
       const entries = holding
@@ -710,9 +673,9 @@
         : `<div class="mtitle">Tidy Pack</div><div class="mitem${gamepad ? " focus" : ""}">Junk List…</div>` +
           `<div class="mitem">Settings…</div>`;
       html += `<div class="gamemenu" style="right:${starRight}px; top:${starBottom + 2}px;">${entries}</div>`;
-      notes.push("En knapp: bara ★ finns kvar uppe till höger, på spelets egen plats för sorteringsknappen. Släpper " +
-        "du en sak på ★ öppnas spelets egen meny: lägg till som favorit eller i skräplistan. Klickar du på ★ utan " +
-        "sak kommer du till skräplistan och inställningarna. Menyn fungerar med handkontroll som spelets egna.");
+      notes.push("One button: only ★ remains at the top right, in the game's own place for the sort button. Drop " +
+        "an item on ★ and the game's own menu opens: add as a favorite or to the junk list. Click ★ without " +
+        "an item to reach the junk list and the options. The menu works with a controller like the game's own.");
     }
     if (looted) {
       const width = 260;
@@ -720,9 +683,9 @@
         `<div class="ltitle">Tidy Pack</div><div class="body">You looted <span class="grey">[Ruined Pelt]</span>, ` +
         `which is on your junk list. Delete it?<div class="buttons"><div class="redbutton">Delete</div>` +
         `<div class="redbutton">Not now</div></div></div></div>`;
-      notes.push("Lootat från skräplistan: varje gång en sak från listan hamnar i väskan kommer frågan direkt – under " +
-        "lootfönstret om det är öppet, annars uppe i mitten där spelets egna frågor visas. Aldrig i strid; då kommer " +
-        "den när striden är över.");
+      notes.push("Looted from the junk list: every time an item from the list lands in the bags, the question comes at once – under " +
+        "the loot window if it is open, otherwise at the top middle where the game's own questions show. Never in combat; then it comes " +
+        "when combat is over.");
     }
     if (options) {
       const check = (label, on = true) =>
@@ -751,24 +714,24 @@
         `<div class="left"><div${showListPage ? "" : ' class="on"'}>Tidy Pack</div>` +
         `<div class="sub${showListPage ? " on" : ""}">Junk List</div><div>Questie</div></div>` +
         `<div class="right">${page}</div></div>`;
-      notes.push("Inställningar: i spelets eget fönster, Options → AddOns → Tidy Pack. Öppnas också från addonmenyn " +
-        "vid minikartan, med /tidypack och från ★. Skräplistan har en egen sida, där du ser listan, tar bort saker och " +
-        "lägger till saker du inte har genom att shift-klicka på deras länk, t.ex. i lootfönstret eller chatten.");
+      notes.push("Options: in the game's own window, Options → AddOns → Tidy Pack. Also opened from the addon menu " +
+        "at the minimap, with /tidypack and from ★. The junk list has its own page, where you see the list, remove items and " +
+        "add items you don't have by shift-clicking their link, e.g. in the loot window or the chat.");
     }
     document.getElementById("proposals").innerHTML = html;
     if (!tip) document.getElementById("tipNote").textContent = notes.join(" ");
   }
 
-  // Ritar tipset med en pil mot det det handlar om. Rutan hamnar ovanför målet (pilen nedåt) eller
-  // till vänster om fönstret (pilen åt höger), som HelpTip.Point i spelets kod.
+  // Draws the tip with an arrow towards what it is about. The box goes above the target (arrow down) or
+  // left of the window (arrow right), like HelpTip.Point in the game's code.
   function renderTip(tip, gamepad, result, left, top) {
     const note = document.getElementById("tipNote");
     const tips = document.getElementById("tips");
     if (!tip) { note.textContent = ""; tips.innerHTML = ""; return; }
-    note.textContent = tip.note + " Varje tips visas en gång, ett i taget och aldrig i strid. Rutan är " +
-      "spelets egen mall för tips. Tidy Pack visar den själv, eftersom spelet stänger av sina egna tips med handkontroll.";
+    note.textContent = tip.note + " Each tip shows once, one at a time and never in combat. The box is " +
+      "the game's own tip template. Tidy Pack shows it itself, because the game turns off its own tips with a controller.";
 
-    const inner = left + 2, innerTop = top + 2;   // fönstrets innerkant (ramen är 2 enheter)
+    const inner = left + 2, innerTop = top + 2;   // the window's inner edge (the frame is 2 units)
     const itemRect = pred => {
       const p = result.placed.find(q => q.item && pred(q.item));
       return p && { x: inner + LEFT + p.x, y: innerTop + p.y, w: BUTTON, h: BUTTON };
@@ -782,8 +745,8 @@
     if (tip.target === "upgrade") rect = itemRect(i => i.upgrade);
     if (!rect) { tips.innerHTML = ""; return; }
 
-    // Med mus stängs rutan med knappen. Med handkontroll har den ingen knapp: den försvinner när
-    // väskan stängs.
+    // With the mouse the box closes with the button. With a controller it has no button: it disappears when
+    // the bags close.
     const body = gamepad ? tip.pad : `${tip.mouse}<div class="redbutton">${tip.button}</div>`;
     const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
     let box, arrow;
@@ -798,9 +761,9 @@
     tips.innerHTML = `<div class="helptip" style="${box}">${body}</div><div ${arrow}></div>`;
   }
 
-  let showListPage = false; // inställningssidan för skräplistan i stället för huvudsidan
+  let showListPage = false; // the junk list's options page instead of the main page
 
-  // Läget kan anges i adressen, t.ex. sketch.html#gamepad&tip=3 (för skärmbilder).
+  // The state can be given in the address, e.g. sketch.html#gamepad&tip=3 (for screenshots).
   for (const part of location.hash.slice(1).split("&")) {
     const [key, value] = part.split("=");
     if (["gamepad", "merchant", "holding", "full", "later", "junk", "menu", "options", "looted", "special", "tabs", "sets"].includes(key)) document.getElementById(key + "Toggle").checked = true;
@@ -810,7 +773,7 @@
   document.querySelectorAll("input, select").forEach(input => input.addEventListener("change", render));
   render();
 
-  // Skalar ned skärmen så att hela den syns i webbläsarfönstret.
+  // Scales down the screen so all of it shows in the browser window.
   function fit() {
     const viewport = document.getElementById("viewport");
     document.getElementById("screen").style.transform = `scale(${viewport.clientWidth / 1366})`;
