@@ -318,7 +318,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 
 **Bags window**
 11. Drop anywhere: gold glow and text; dropping fills the first free normal slot.
-12. Bag row: "N free" red at 5 or fewer; point at a bag icon – its items light up; drop a bigger bag
+12. Bag row: "N free" red at 5 or fewer, at the same height as the money; point at "N free" – the
+    total in gold and each bag (special bags grey); point at a bag icon – its items light up; drop a bigger bag
     on one – it swaps; right-click a bigger spare bag – replaces the smallest (in combat: a message).
 13. Special bags (quiver, profession bag) at the bottom under a line, also right after `/reload`;
     the reagent bag's items in their own part; its separate window never shows.
@@ -343,7 +344,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
     grey item; Delete deletes it. No blocked-action message.
 
 **Bank**
-22. At a banker: the bags open on the Bank tab, sorted; the game's bank window is invisible.
+22. At a banker: the bags open on the Bank tab, sorted, with no blue frame on the slots (also the
+    first time after `/reload`); the game's bank window is invisible.
     Right-click an item in Bank → bags, and in Bags → bank; drag between the tabs; drop on empty
     space in Bank → bank; "N free" shows the bank's free slots. Gear → "Show the game's bank window"
     and back. Closing the bags closes the bank. Open the character window (C) at the banker.

@@ -117,6 +117,11 @@ function ns.CreateLiveSlotButton(holder, slot)
     local button = CreateFrame("ItemButton", nil, holder, "ContainerFrameItemButtonTemplate")
     button:SetFrameLevel(math.max(10, holder:GetFrameLevel() + 1))
     button:SetID(slot)
+    -- The template shows the shop's blue highlight (BattlepayItemTexture) from the start, and only the
+    -- game's UpdateNewItem or pointing at the button hides it (ContainerFrame.lua). The bank's buttons
+    -- don't mark new items, so without this every slot had a blue frame the first time (seen 2026-11-15).
+    button.BattlepayItemTexture:Hide()
+    button.NewItemTexture:Hide()
     return button
 end
 
@@ -1913,7 +1918,9 @@ ns.OnLoad(function()
         hooksecurefunc(bagFrame, "UpdateCurrencyFrames", placeMoney)
     end
     placeMoney()
-    freeText:SetPoint("LEFT", bar, "LEFT", 10, 0)
+    -- 2 lower than the row's middle: the money's digits are bigger and reach further down, and this
+    -- puts the two at the same height (the owner's screenshot 2026-11-15: the money looked lower).
+    freeText:SetPoint("LEFT", bar, "LEFT", 10, -2)
     freeText:Hide()
 
     -- The bag row: the backpack and the four bag slots as small icons after the free-slot count
@@ -2211,14 +2218,26 @@ ns.OnLoad(function()
                 GameTooltip:AddLine(L["Last seen %s"]:format(age), grey:GetRGB())
             end
         else
+            -- The same shape as the bank's: the total in gold (the same count as "N free", which only
+            -- counts normal bags), then each bag. Special bags (e.g. a mining bag) are grey.
             GameTooltip_SetTitle(GameTooltip, L["Bags"])
+            local lines, total = {}, 0
             for bagID = 0, LAST_BAG do
                 local size = C_Container.GetContainerNumSlots(bagID)
                 if size > 0 then
+                    local bagFree, family = C_Container.GetContainerNumFreeSlots(bagID)
+                    local special = family ~= nil and family ~= 0
+                    if not special then
+                        total = total + size
+                    end
                     local name = C_Container.GetBagName(bagID) or (bagID == 0 and BACKPACK_TOOLTIP) or ""
-                    GameTooltip:AddLine(L["%s: %d free of %d"]:format(name,
-                        C_Container.GetContainerNumFreeSlots(bagID) or 0, size), white:GetRGB())
+                    lines[#lines + 1] = { L["%s: %d free of %d"]:format(name, bagFree or 0, size), special }
                 end
+            end
+            GameTooltip:AddLine(L["%d free of %d"]:format(C_Container.CalculateTotalNumberOfFreeBagSlots(), total),
+                gold:GetRGB())
+            for _, line in ipairs(lines) do
+                GameTooltip:AddLine(line[1], (line[2] and grey or white):GetRGB())
             end
         end
         GameTooltip:Show()
