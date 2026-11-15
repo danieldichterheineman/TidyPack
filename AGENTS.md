@@ -452,13 +452,14 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 
 ## 9. Publishing
 
-- Released: **1.0.1** (2026-11-10) and **1.1.0** (2026-11-11), both through the release workflow.
+- Released: **1.0.1** (2026-11-10), **1.1.0** (2026-11-11) and **1.2.0** (2026-11-15), all through the
+  release workflow.
   **1.0.0** was uploaded by hand as "publish manually once approved" and has the special-bag crash:
   never publish it.
-- **1.2.0** (2026-11-15) is prepared: `## Version: 1.2.0`, `## 1.2.0 (2026-11-15)` in the changelog,
-  localized `## Notes-<code>` in the TOC. Released with the tag `v1.2.0` once the owner says yes.
-  Afterwards the owner pastes the new Summary (`.design/curseforge-page.md`) and Description
-  (`README.md`) on CurseForge by hand, with new images.
+- **1.2.0** was released 2026-11-15 with the tag `v1.2.0` (run 43742598575: "Success!" for
+  CurseForge and the GitHub release). Left for the owner on CurseForge: paste the new Summary
+  (`.design/curseforge-page.md`) and Description (`README.md`), add new images, and see the file
+  approved.
 - Steps for every release: set `## Version:`, rename `## Unreleased` to `## <version> (date)`, run
   `check-addon.mjs --release`, commit, ask, push, ask, then push the tag `v<version>`, and read the
   run's log for `Success!`.
