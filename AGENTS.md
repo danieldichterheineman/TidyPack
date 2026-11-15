@@ -352,6 +352,8 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
   i dem skriver nu en rad om Equipment Manager (`Options.lua`).
 - `TidyPackDB.showSearchBox` och `groupByBag` (nya 2026-11-14, falska från början). Nya nycklar,
   ingen migrering.
+- `TidyPackDB.language` (ny 2026-11-15, `"auto"` från början, annars en språkkod som `"deDE"`). Ny nyckel,
+  ingen migrering.
 - `TidyPackCharDB.bank` (ny 2026-11-12, inget standardvärde): `{ time, free, items = { { link, count,
   quality, icon, bag, slot, quest, bound, noValue } } }`, sparas vid varje genomgång hos bankiren.
   `TidyPackDB.bankTab` och `showCounts` (sanna från början). Nya nycklar, ingen migrering.
@@ -381,7 +383,10 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
 
 ## Filer
 - `TidyPack.toc`: namn och laddordning
-- `Locales.lua`: all text som visas i spelet (engelska)
+- `Locales.lua`: språkvalet (`ns.L`, `ns.LANGUAGES`, `ns.SetLanguage`, `ns.AddTranslation`); engelskan är
+  nyckeln i koden
+- `Locales/*.lua`: en översättning per språk (deDE, esES, esMX, frFR, itIT, koKR, ptBR, ruRU, zhCN, zhTW);
+  `esMX.lua` är ändringar ovanpå `esES.lua`, som laddas före
 - `Core.lua`: sparad data, events och att "Combined Bags" slås på första gången
 - `Categories.lua`: grupperna, vilken grupp en sak hör till och ordningen inom en grupp
 - `LogoButton.lua`: loggan i stället för spelets väskrad nere till höger
@@ -557,6 +562,12 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     syns i en egen grupp sist bland råvarorna. (b) Loggan: efter ett högerklick med öppen väska, eller en
     släppt sak, var knappens klick avstängt tills nästa klick utanför strid; `PostClick` slår nu på det igen.
     Prova: högerklicka på loggan med öppen väska, gå in i strid, klicka på loggan – väskan öppnas.
+55. Språk (2026-11-15): kugghjulet → Language ▸ visar Automatic (med spelets språk inom parentes) och elva
+    språk. Välj Deutsch: en rad i chatten om /reload, och Reload Now blir klickbar. Klicka den: flikarna,
+    kugghjulets meny, gruppernas rubriker, tooltipar och skräplistans panel är på tyska. Prova också Русский,
+    한국어 och 简体中文 – syns tecknen, eller rutor? – och en knapp med lång text (Rename och Add i panelerna,
+    Delete/Not now under lootfönstret, Show Tips Again på inställningssidan) klipps inte. På Mac: tooltip-raden
+    säger "Option-Klick". Tillbaka till Automatic och Reload Now: engelska igen.
 54. Granskning (2026-11-15): slå på Search box och sök med en reagens i reagensväskan och en sak i
     banken hos bankiren: träffarna lyser, resten tonas ner, och sakerna i spelets egna rutor tonas
     som förut (spelet sätter deras sökläge själv; Tidy Pack anropar `SetMatchesSearch` bara på sina
@@ -946,6 +957,21 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
   (användarens önskan efter skissen `.design/sketch-settings-in-bag.html`). Spelets inställningssida behålls,
   men bara med information: vem som gjort Tidy Pack, en kort hjälp och länken till CurseForge (användarens
   förslag). Antalet i tooltipen är den korta varianten på en rad (1c, användarens val).
+
+- 2026-11-15: Språkval (användarens val: "Alla spelets språk"). Tidy Pack följer spelets språk
+  (`GetLocale`) och kugghjulets Language ▸ kan välja vilket som helst av spelets elva språk (WowLocale i
+  `LFGListInfoDocumentation.lua`: enUS, deDE, esES, esMX, frFR, itIT, koKR, ptBR, ruRU, zhCN, zhTW; enGB
+  visas som enUS och ptPT som ptBR). Ingen svenska: spelet finns inte på svenska. Bytet gäller efter
+  `/reload` (knappen Reload Now, `C_UI.Reload`), eftersom flikar och knappar redan har sina texter. `L`
+  slår upp översättningen varje gång en text används; de två listor som läses när filerna laddas
+  (`ns.groupNames` i `Categories.lua`, `ns.optionMenus` i `Options.lua`) byggs om i `ns.OnLoad`, och
+  `ns.SetLanguage` körs i `Core.lua` före alla `ns.OnLoad`. Spelets typsnitt (`FontFamily` med alfabeten
+  roman, korean, simplifiedchinese, traditionalchinese och russian i `Blizzard_Fonts_Shared/Shared/Fonts.xml`)
+  ska kunna visa alla språk oavsett spelets språk – inte provat i spelet. Översättningarna är
+  maskinöversatta (Claude), med spelets egna ord där de är kända (t.ex. "Plunder", "Camelote", "Хлам",
+  "잡동사니", "装绑"). "Alt-" står före ordet för klick i alla språk, så att `ns.KeyText` kan byta till
+  "Option-" på Mac. Knappar med fast bredd växer med texten (`ns.FitButtonText`). Rättelser från spelare
+  kan senare tas in via CurseForges översättningsverktyg.
 
 ## Källor
 - WoW Forever: https://warcraft.wiki.gg/wiki/Patch_1.60.1

@@ -327,6 +327,7 @@ local function createButton(text, onClick)
     local button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     button:SetSize(BUTTON_WIDTH, BUTTON_HEIGHT)
     button:SetText(text)
+    ns.FitButtonText(button, BUTTON_WIDTH)
     button:SetScript("OnClick", onClick)
     return button
 end

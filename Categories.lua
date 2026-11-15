@@ -35,20 +35,26 @@ end
 -- bag"). Groups.lua bygger om den när grupperna ändras (ns.RebuildGroupOrder).
 ns.groupOrder = ns.baseGroupOrder
 
--- Gruppernas rubriker i spelet.
-ns.groupNames = {
-    Favorites = L["Favorites"],
-    New = L["New"],
-    Consumables = L["Consumables"],
-    Equipment = L["Equipment"],
-    TradeGoods = L["Recipes & Gems"], -- råvarorna har egna grupper; här står recept, ädelstenar och förbättringar
-    QuestItems = L["Quest Items"],
-    Keys = L["Keys"],
-    Bags = L["Spare Bags"], -- inte "Bags", som fliken ovanför fönstret heter
-    Miscellaneous = L["Miscellaneous"],
-    Junk = L["Junk"],
-    Empty = L["Add to bag"], -- rutan visar antalet lediga platser, och en sak som släpps dit hamnar i väskorna
-}
+-- Gruppernas rubriker i spelet. Fylls i igen när språket är valt (ns.OnLoad nedan), eftersom
+-- filen laddas innan Tidy Pack vet vilket språk spelaren valt (Locales.lua).
+ns.groupNames = {}
+
+local function setBaseGroupNames()
+    local names = ns.groupNames
+    names.Favorites = L["Favorites"]
+    names.New = L["New"]
+    names.Consumables = L["Consumables"]
+    names.Equipment = L["Equipment"]
+    names.TradeGoods = L["Recipes & Gems"] -- råvarorna har egna grupper; här står recept, ädelstenar och förbättringar
+    names.QuestItems = L["Quest Items"]
+    names.Keys = L["Keys"]
+    names.Bags = L["Spare Bags"] -- inte "Bags", som fliken ovanför fönstret heter
+    names.Miscellaneous = L["Miscellaneous"]
+    names.Junk = L["Junk"]
+    names.Empty = L["Add to bag"] -- rutan visar antalet lediga platser, och en sak som släpps dit hamnar i väskorna
+end
+setBaseGroupNames()
+ns.OnLoad(setBaseGroupNames)
 
 local ItemClass = Enum.ItemClass
 local ConsumableSubclass = Enum.ItemConsumableSubclass

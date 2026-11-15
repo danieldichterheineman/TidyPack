@@ -37,6 +37,8 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
 - **Your bags at a glance:** the Tidy Pack logo replaces the game's bag buttons, and your bags
   are shown at the bottom of the bag window – drop a bigger bag on one to swap it.
 - **Favorites, upgrade arrows, item level and BoE, Questie hints and full controller support.**
+- **In the game's eleven languages**, following the game or picked in the gear button's menu
+  (machine-translated – corrections welcome).
 
 The complete list, usage and known limitations are in [README.md](../README.md), which is also
 the CurseForge description.

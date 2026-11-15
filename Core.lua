@@ -21,6 +21,7 @@ ns.defaults = {
     showSearchBox = false,    -- sökrutan i titelraden i flikarna Bags och Bank (Layout.lua)
     groupByBag = false,       -- visa en grupp per väska (och bankflik) i stället för efter typ (Layout.lua, Bank.lua)
     tourDone = false,         -- guiden med spelets tipsrutor är visad (Tour.lua)
+    language = "auto",        -- språket: "auto" (spelets) eller en språkkod som "deDE" (Locales.lua)
     questOpen = {},           -- vilka avsnitt i fliken Quests som är öppna (QuestsView.lua)
     groups = {},
     nextGroupID = 1,
@@ -126,9 +127,18 @@ local eventHandlers = {}
 -- hit, så att de säger "Option-click" på en Mac (IsMacClient, BuildDocumentation i Forever).
 function ns.KeyText(text)
     if IsMacClient and IsMacClient() then
-        return (text:gsub("Alt%-click", "Option-click"))
+        -- Översättningarna skriver också "Alt-" före sitt ord för klick (t.ex. "Alt-Klick").
+        return (text:gsub("Alt%-", "Option-"))
     end
     return text
+end
+
+-- Gör en knapp bred nog för sin text, men aldrig smalare än minWidth. Översättningarna är ofta
+-- längre än engelskan (t.ex. "Umbenennen" eller "Переименовать"), och en fast bredd klipper texten.
+function ns.FitButtonText(button, minWidth)
+    local text = button:GetFontString()
+    local width = text and math.ceil(text:GetStringWidth()) + 24 or minWidth
+    button:SetWidth(math.max(minWidth, width))
 end
 
 function ns.RegisterEvent(event, handler)
@@ -167,6 +177,9 @@ ns.RegisterEvent("ADDON_LOADED", function(loadedName)
     migrate(TidyPackCharDB, CHAR_DATA_VERSION, charMigrations)
     applyDefaults(TidyPackCharDB, ns.charDefaults)
     ns.charDb = TidyPackCharDB
+
+    -- Språket först, så att allt som startar nedan får rätt texter (Locales.lua).
+    ns.SetLanguage(ns.db.language)
 
     for _, callback in ipairs(loadCallbacks) do
         callback(ns.db)

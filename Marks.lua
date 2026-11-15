@@ -140,6 +140,44 @@ local function updateGearButton()
     end
 end
 
+-- Undermenyn Language (Locales.lua): Automatic följer spelets språk, och varje språk står med sitt
+-- eget namn. Valet sparas direkt men gäller efter /reload, eftersom flikar och knappar redan har sina
+-- texter; knappen längst ned gör /reload (C_UI.Reload) och är bara klickbar när valet ändrar språket.
+local function languageName(code)
+    for _, language in ipairs(ns.LANGUAGES) do
+        if language.code == code then
+            return language.name
+        end
+    end
+    return code
+end
+
+local function addLanguageMenu(rootDescription)
+    local menu = rootDescription:CreateButton(L["Language"])
+    local function isSelected(choice)
+        return (ns.db.language or "auto") == choice
+    end
+    local function setSelected(choice)
+        ns.db.language = choice
+        if ns.ResolveLanguage(choice) ~= ns.language then
+            ns.Print(L["Tidy Pack switches language after a reload of the interface (/reload)."])
+        end
+        return MenuResponse.Refresh -- menyn står kvar, så att knappen nedan kan klickas
+    end
+    menu:CreateRadio(L["Automatic (%s)"]:format(languageName(ns.ResolveLanguage("auto"))),
+        isSelected, setSelected, "auto")
+    for _, language in ipairs(ns.LANGUAGES) do
+        menu:CreateRadio(language.name, isSelected, setSelected, language.code)
+    end
+    menu:CreateDivider()
+    local reload = menu:CreateButton(L["Reload Now"], function()
+        C_UI.Reload()
+    end)
+    reload:SetEnabled(function()
+        return ns.ResolveLanguage(ns.db.language) ~= ns.language
+    end)
+end
+
 -- Menyn under kugghjulet, byggd av spelets eget menysystem. Med en sak på markören: favorit,
 -- skräplistan eller egen grupp. Annars: skräplistan, grupperna och inställningarna.
 local function buildMenu(_, rootDescription, itemOverride)
@@ -200,6 +238,9 @@ local function buildMenu(_, rootDescription, itemOverride)
             if menu.extra then
                 menu.extra(submenu)
             end
+        end
+        if ns.LANGUAGES then
+            addLanguageMenu(rootDescription)
         end
         rootDescription:CreateDivider()
         rootDescription:CreateButton(L["Show Tips Again"], function()

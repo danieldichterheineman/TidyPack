@@ -51,6 +51,9 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   yellow exclamation mark and are never suggested for deletion.
 - **Controller**: the cursor starts on your newest loot, LB and RB jump between groups, and
   the D-pad moves to the nearest item.
+- **Your language**: Tidy Pack follows the game's language – English, Deutsch, Español,
+  Français, Italiano, Português, Русский, 한국어, 简体中文 or 繁體中文 – or the one you pick under
+  the gear button → Language.
 
 ## How to use
 
@@ -60,6 +63,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Gear button** (next to the close button): all options, in three menus (Show, Merchants and
   loot, Bag and bank), plus your junk list and your own groups, which open in the bag window.
 - **Quests tab**: click a heading to open it, then a quest to see its items.
+- **Language**: gear button → Language. "Automatic" follows the game's language. Press "Reload
+  Now" (or type `/reload`) to switch.
 - **Settings**: right-click the Tidy Pack logo, or use `/tidypack` or the minimap's addon menu
   with your bags open, for the gear button's menu. With your bags closed, `/tidypack` opens
   Esc → Options → AddOns → Tidy Pack, which has a short guide and a link to updates.
@@ -77,6 +82,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   groups.
 - The Bank tab shows your character's bank, not the account-wide bank. With a controller, the
   game's own bank window is used.
+- The translations are machine-made. Corrections are very welcome – leave a comment or open an
+  issue. Item names, item types and the game's own buttons stay in the game's language.
 
 ## Feedback
 

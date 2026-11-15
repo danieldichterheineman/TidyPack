@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### New
+- Tidy Pack speaks the game's languages: English, Deutsch, Español (España and Latinoamérica),
+  Français, Italiano, Português, Русский, 한국어, 简体中文 and 繁體中文. It follows the game's
+  language, or pick one under the gear button → Language and press Reload Now. The translations
+  are machine-made – corrections are very welcome.
 - Bank tab, between Bags and Quests. At a banker, your bank is sorted in the same groups and
   parts as your bags, and the game's bank window is hidden. Right-click an item to move it between
   your bank and your bags, drag it onto the other tab, or drop it on an empty spot in the Bank tab.
