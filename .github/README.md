@@ -28,8 +28,11 @@ an item – use, equip, sell, split, link – works as usual, also with a contro
   in them by Alt-clicking an item.
 - **Quests:** quest items show "3/7", and the Quests tab lists your quests – open one to see its
   items and what is still missing.
-- **Bank:** a Bank tab sorts your bank the same way, and remembers it when you're away.
-  Tooltips show how many you have in your bags and bank.
+- **Bank:** a Bank tab sorts your bank the same way, shows its bag slots, and remembers it when
+  you're away.
+- **All your characters:** item tooltips show how many you have in your bags and bank, and what
+  your other characters on the same realm have. Point at your money for everyone's money and the
+  total.
 - **Locks:** quest items, items your quests ask for and items in the game's equipment sets can't
   be sold by mistake at a merchant (can be turned off in the gear button's menu).
 - **Junk list and full bags:** Tidy Pack asks before deleting anything, and only when you
@@ -50,7 +53,7 @@ If a message from Tidy Pack shows up in your chat, please include it.
 
 ## Development
 
-Developer notes (in Swedish) are in [AGENTS.md](../AGENTS.md), and changes are in
+Developer notes are in [AGENTS.md](../AGENTS.md), and changes are in
 [CHANGELOG.md](../CHANGELOG.md). Design sketches and the logo are in `.design/`.
 
 ## License

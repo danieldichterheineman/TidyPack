@@ -444,6 +444,11 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
   bags from addon code – fixed with the secure logo; confirmed working).
 - 2026-11-14: guide loads without errors; reagent bag with the mouse works (empty and with items);
   options page error with the secure button found in the console log – button removed.
+- 2026-11-15: languages and the reload question work; the Bank tab with its bottom row (screenshots:
+  chest 48, an empty bought slot, "+", locks; the free tooltips). Fixed from screenshots: a blue
+  shop highlight on every bank slot, the money a little lower than "N free", the game's bank window
+  flashing when the bank opened, and smaller bags when the bank opened them. The owner then said it
+  all works and 1.2.0 is ready.
 
 ## 9. Publishing
 

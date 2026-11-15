@@ -9,7 +9,7 @@ Copy the fields below into the project in the Authors Console (authors.curseforg
 | Game | World of Warcraft |
 | Project class | Addons |
 | Name | Tidy Pack |
-| Summary | Sorts the game's own bag window into clear groups, with a sorted bank, quest item locks, a junk list and your own groups – in the game's eleven languages. |
+| Summary | Sorts the game's own bag window into clear groups, with a sorted bank, counts and money for all your characters, quest item locks, a junk list and your own groups – in the game's eleven languages. |
 | Main category | Bags & Inventory |
 | Additional categories | none |
 | License | MIT License |
