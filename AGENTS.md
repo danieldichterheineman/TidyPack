@@ -5,7 +5,8 @@ few options. Works with mouse and controller. Made for WoW Forever.
 
 This file is the project's memory for anyone (person or agent) who works on Tidy Pack. It says
 what is true **now**. The full log of earlier decisions, old test items and what was tried when
-(in Swedish, until 2026-11-15) is in `.design/agents-history-sv.md`.
+(in Swedish, until 2026-11-15) is the previous version of this file in git:
+`git show a04b27b:AGENTS.md`.
 
 ## 1. Facts
 
@@ -250,7 +251,7 @@ with a default need no migration; a key that is removed or changes meaning needs
 - `Gamepad.lua` – the controller cursor, cursor locks, button icons in text.
 - `Media/Logo.tga` – the logo in the game (made from `.design/logo.png`).
 - `.wow-check/` – patch-check baseline and watch list.
-- `.design/` – sketches, logo sources, CurseForge texts, `agents-history-sv.md`; never in the zip.
+- `.design/` – sketches (HTML and PNG), logo sources, CurseForge texts; never in the zip.
 - `.github/` – the GitHub front page (`README.md`) and the release workflows.
 
 ## 7. Languages
@@ -405,7 +406,7 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 
 ## 10. Ideas and decisions
 
-**Binding decisions** (dates; details in `.design/agents-history-sv.md`)
+**Binding decisions** (dates; details in `git show a04b27b:AGENTS.md`)
 - 2026-11-08: Baganator (All Rights Reserved) is inspiration only – no code copied.
 - 2026-11-09: Rearrange the game's own bag window instead of an own window – it is the only way to
   keep the game's item actions and controller support. The window stays where the game puts it.
@@ -429,7 +430,6 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
   `Camelot/BankFrame.lua`).
 - Controller access to the Bank tab and the panels (issue #6).
 - Split `Layout.lua` into smaller files.
-- Repository in English (issue #7): this file is; code comments and the sketches are still Swedish.
 - Bank: bank bags and buying slots in the bottom row (issue #4).
 
 **Rejected by the owner – don't suggest again unless asked**
