@@ -1,36 +1,36 @@
 -- TidyPack – Panels.lua
--- Skräplistan och de egna grupperna i väskans eget fönster (användarens önskan 2026-11-12, skissen
--- .design/sketch-settings-in-bag.html, 3a och 3b), i stället för egna sidor i spelets inställningar.
--- Kugghjulets meny öppnar dem (Marks.lua): fönstret visar då panelen i stället för sakerna.
--- Done, eller en flik, går tillbaka.
--- Layout.lua lägger panelen på plats (ns.LayoutPanel) när vyn är "junk" eller "groups".
--- Långa listor rullas med mushjulet (spelets ScrollFrameTemplate), så fönstret byter inte storlek.
--- ⚠️ Inte provat i spelet. Med handkontroll är panelens knappar inte inkopplade i markören än.
+-- The junk list and the own groups in the bag window itself (the owner's wish 2026-11-12, sketch
+-- .design/sketch-settings-in-bag.html, 3a and 3b), instead of own pages in the game's options.
+-- The gear menu opens them (Marks.lua): the window then shows the panel instead of the items.
+-- Done, or a tab, goes back.
+-- Layout.lua puts the panel in place (ns.LayoutPanel) when the view is "junk" or "groups".
+-- Long lists scroll with the mouse wheel (the game's ScrollFrameTemplate), so the window keeps its size.
+-- ⚠️ Not tried in the game. With a controller the panel's buttons aren't hooked into the cursor yet.
 
 local _, ns = ...
 local L = ns.L
 
-local HEAD = 40          -- raden överst: ikon, rubrik, antal och Done
-local CELL = 42          -- en ruta (37) och avståndet till nästa (5), som i väskan
-local SMALL = 26         -- små rutor för sakerna i en grupp
+local HEAD = 40          -- the top line: icon, title, count and Done
+local CELL = 42          -- a slot (37) and the gap to the next (5), as in the bags
+local SMALL = 26         -- small slots for the items in a group
 local SMALL_CELL = SMALL + 4
-local ROW = 34           -- en grupps rad
-local JUNK_FOOT = 112    -- skrivrutan, förklaringen och de två kryssrutorna under skräplistan
-local SCROLLBAR = 18     -- plats för rullningslisten till höger
+local ROW = 34           -- a group's line
+local JUNK_FOOT = 112    -- the input box, the explanation and the two checkboxes under the junk list
+local SCROLLBAR = 18     -- room for the scroll bar on the right
 ns.PANEL_MIN_HEIGHT = HEAD + 2 * CELL + JUNK_FOOT
 
 local panel, head, scroll, child, junkFoot
-local which              -- "junk", "groups" eller nil
-local openGroup          -- platsen för gruppen som är utfälld, eller nil
+local which              -- "junk", "groups" or nil
+local openGroup          -- the index of the opened group, or nil
 local junkInput, junkHint, groupInput, groupHint
 local junkChecks = {}
 
 ---------------------------------------------------------------------------
--- Delade delar
+-- Shared parts
 ---------------------------------------------------------------------------
 
--- Sakens id ur en länk, ett nummer eller ett namn (ett namn bara om spelet känner till
--- saken). Nil om det inte är en riktig sak.
+-- The item's id from a link, a number or a name (a name only if the game knows the
+-- item). Nil if it isn't a real item.
 local function itemIDFromText(text)
     text = strtrim(text or "")
     if text == "" then
@@ -65,7 +65,7 @@ local function sortByName(ids)
     return ids
 end
 
--- Det röda krysset som spelets egna frågor stängs med.
+-- The red cross the game's own dialogs are closed with.
 local function createRemoveButton(parent, size)
     local button = CreateFrame("Button", nil, parent)
     button:SetSize(size, size)
@@ -80,10 +80,10 @@ local function setHint(fontString, text, color)
     fontString:SetTextColor(color:GetRGB())
 end
 
-local refresh -- längre ner
+local refresh -- further down
 
--- En ruta med en sak (bild, kvalitetsram och tooltip) och ett rött kryss när musen står på den.
--- onRemove(itemID) körs när krysset klickas; onDrop() när en sak släpps på rutan.
+-- A slot with an item (image, quality border and tooltip) and a red cross while hovered.
+-- onRemove(itemID) runs when the cross is clicked; onDrop() when an item is dropped on the slot.
 local function createItemCell(size, onRemove, onDrop)
     local cell = CreateFrame("ItemButton", nil, child)
     cell:SetSize(37, 37)
@@ -134,7 +134,7 @@ local function setItemCell(cell, itemID)
     cell.itemID = itemID
     SetItemButtonTexture(cell, C_Item.GetItemIconByID(itemID))
     SetItemButtonQuality(cell, C_Item.GetItemQualityByID(itemID), itemID)
-    -- Spelet har kanske inte sakens data än: rita om när den har kommit.
+    -- The game may not have the item's data yet: redraw when it has arrived.
     if not C_Item.GetItemNameByID(itemID) then
         Item:CreateFromItemID(itemID):ContinueOnItemLoad(function()
             refresh()
@@ -142,7 +142,7 @@ local function setItemCell(cell, itemID)
     end
 end
 
--- En tom ruta med "+": klicka med en sak, eller släpp den här.
+-- An empty slot with "+": click with an item, or drop it here.
 local function createPlusCell(size, tooltipText, onDrop)
     local cell = CreateFrame("Button", nil, child)
     cell:SetSize(size, size)
@@ -165,7 +165,7 @@ local function createPlusCell(size, tooltipText, onDrop)
     return cell
 end
 
--- En skrivruta med knappen Add och en rad under. onAdd(itemID) körs för en sak som hittas.
+-- An input box with the button Add and a line below. onAdd(itemID) runs for an item that is found.
 local function createInput(parent, width, onAdd)
     local input = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
     input:SetSize(width, 22)
@@ -174,7 +174,7 @@ local function createInput(parent, width, onAdd)
     button:SetSize(70, 22)
     button:SetText(L["Add"])
     ns.FitButtonText(button, 70)
-    -- En längre knapp (översättningar) tar sin plats från skrivrutan, så att raden är lika bred.
+    -- A longer button (translations) takes its room from the input box, so the line keeps its width.
     input:SetWidth(width - (button:GetWidth() - 70))
     button:SetPoint("LEFT", input, "RIGHT", 8, 0)
     local hint = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -200,7 +200,7 @@ local function createInput(parent, width, onAdd)
 end
 
 ---------------------------------------------------------------------------
--- Skräplistan
+-- The junk list
 ---------------------------------------------------------------------------
 
 local junkCells = {}
@@ -210,7 +210,7 @@ local junkEmpty
 local function addJunkFromCursor()
     local itemID = cursorItemID()
     if itemID then
-        ClearCursor() -- saken går tillbaka till sin plats
+        ClearCursor() -- the item goes back to its place
         ns.SetJunk(itemID, true)
     end
 end
@@ -256,7 +256,7 @@ local function buildJunk(width)
 end
 
 ---------------------------------------------------------------------------
--- Grupperna
+-- The groups
 ---------------------------------------------------------------------------
 
 local groupRows = {}
@@ -264,7 +264,7 @@ local chips = {}
 local groupCells = {}
 local groupPlus, newRow, groupInputHolder
 
--- Kort sammanfattning av en grupp: "1 rule · 2 items". Det andra värdet är sant när gruppen är tom.
+-- Short summary of a group: "1 rule · 2 items". The second value is true when the group is empty.
 local function summary(group)
     local rules, items = 0, 0
     for _ in pairs(group.types) do
@@ -319,7 +319,7 @@ local function createGroupRow()
     row:SetScript("OnReceiveDrag", function(self)
         addToGroupFromCursor(self.index)
     end)
-    -- Upp och ned, ovanpå varandra (samma knappar som spelets rullningslister).
+    -- Up and down, on top of each other (the same buttons as the game's scroll bars).
     row.up = CreateFrame("Button", nil, row, "UIPanelScrollUpButtonTemplate")
     row.up:SetPoint("TOPLEFT", 4, -1)
     row.up:SetScript("OnClick", function(self)
@@ -371,7 +371,7 @@ local function createGroupRow()
     return row
 end
 
--- En regel ("All "Potion" items") med ett rött kryss.
+-- A rule ("All "Potion" items") with a red cross.
 local function createChip()
     local chip = CreateFrame("Frame", nil, child)
     chip:SetHeight(20)
@@ -424,7 +424,7 @@ local function buildGroups(width)
         row:Show()
         y = y + ROW
 
-        -- Den utfällda gruppen: reglerna, sakerna som små rutor, "+" och en skrivruta.
+        -- The opened group: the rules, the items as small slots, "+" and an input box.
         if index == openGroup then
             local x, top = 30, y + 6
             local keys = {}
@@ -476,7 +476,7 @@ local function buildGroups(width)
                     groupCells[cellIndex] = cell
                 end
                 setItemCell(cell, itemID)
-                -- Rutan är skalad, så platsen räknas i dess egna enheter.
+                -- The slot is scaled, so its place is counted in its own units.
                 local scale = SMALL / 37
                 cell:ClearAllPoints()
                 cell:SetPoint("TOPLEFT", (30 + ((cellIndex - 1) % cols) * SMALL_CELL) / scale,
@@ -498,7 +498,7 @@ local function buildGroups(width)
     for index = #list + 1, #groupRows do
         groupRows[index]:Hide()
     end
-    -- "+ New group": klicka, eller släpp en sak (den hamnar i den nya gruppen).
+    -- "+ New Group": click, or drop an item (it goes into the new group).
     newRow:ClearAllPoints()
     newRow:SetPoint("TOPLEFT", 0, -y)
     newRow:SetWidth(width)
@@ -516,7 +516,7 @@ local function buildGroups(width)
 end
 
 ---------------------------------------------------------------------------
--- Panelen
+-- The panel
 ---------------------------------------------------------------------------
 
 refresh = function()
@@ -553,12 +553,12 @@ refresh = function()
     end
 end
 
--- Marks.lua och Groups.lua anropar dessa när skräplistan eller grupperna ändras.
+-- Marks.lua and Groups.lua call these when the junk list or the groups change.
 ns.RefreshJunkListPage = refresh
 ns.RefreshGroupsPage = refresh
 
--- Layout.lua: visa panelen för vyn ("junk" eller "groups") med bredd och höjd. place(panel) sätter
--- den på plats i fönstret.
+-- Layout.lua: show the panel for the view ("junk" or "groups") with width and height. place(panel)
+-- puts it in place in the window.
 function ns.LayoutPanel(view, place, width, height)
     if not panel then
         return
@@ -582,9 +582,9 @@ function ns.HidePanel()
     end
 end
 
--- Kugghjulets meny: öppna skräplistan eller grupperna i väskan.
+-- The gear menu: open the junk list or the groups in the bags.
 function ns.OpenPanel(view)
-    -- Bara när väskan är öppen: den öppnas aldrig från addonets kod (se LogoButton.lua).
+    -- Only when the bags are open: they are never opened from addon code (see LogoButton.lua).
     if not ns.bagFrame or not ns.bagFrame:IsShown() then
         return
     end
@@ -599,10 +599,10 @@ ns.OnLoad(function()
         return
     end
     panel = CreateFrame("Frame", nil, bagFrame)
-    panel:SetFrameLevel(bagFrame:GetFrameLevel() + 15) -- ovanför bakgrunden och väskans rutor
+    panel:SetFrameLevel(bagFrame:GetFrameLevel() + 15) -- above the background and the item buttons
     panel:EnableMouse(true)
     panel:Hide()
-    -- En sak som släpps på panelen läggs i skräplistan, eller i den utfällda gruppen.
+    -- An item dropped on the panel goes on the junk list, or into the opened group.
     local function dropOnPanel()
         if which == "junk" then
             addJunkFromCursor()
@@ -613,7 +613,7 @@ ns.OnLoad(function()
     panel:SetScript("OnReceiveDrag", dropOnPanel)
     panel:SetScript("OnMouseUp", dropOnPanel)
 
-    -- Raden överst: ikon, rubrik, antal och Done.
+    -- The top line: icon, title, count and Done.
     head = CreateFrame("Frame", nil, panel)
     head:SetPoint("TOPLEFT")
     head:SetPoint("TOPRIGHT")
@@ -640,7 +640,7 @@ ns.OnLoad(function()
     line:SetPoint("BOTTOMLEFT", 0, 2)
     line:SetPoint("BOTTOMRIGHT", 0, 2)
 
-    -- Listan, som rullas med mushjulet. Rullningslisten syns bara när den behövs.
+    -- The list, which scrolls with the mouse wheel. The scroll bar shows only when needed.
     scroll = CreateFrame("ScrollFrame", nil, panel, "ScrollFrameTemplate")
     if scroll.ScrollBar and scroll.ScrollBar.SetHideIfUnscrollable then
         scroll.ScrollBar:SetHideIfUnscrollable(true)
@@ -649,12 +649,12 @@ ns.OnLoad(function()
     child:SetSize(1, 1)
     scroll:SetScrollChild(child)
 
-    -- Skräplistan: "+" och texten när listan är tom.
+    -- The junk list: "+" and the text when the list is empty.
     junkPlus = createPlusCell(37, L["Drop an item here to add it to your junk list."], addJunkFromCursor)
     junkEmpty = child:CreateFontString(nil, "ARTWORK", "GameFontDisable")
     junkEmpty:SetText(ns.KeyText(L["Your junk list is empty. Drop an item here, or Alt-click one in your bags."]))
 
-    -- Under skräplistan: skrivrutan och de två frågorna om skräp (samma inställningar som förut).
+    -- Under the junk list: the input box and the two junk questions (the same options as before).
     junkFoot = CreateFrame("Frame", nil, panel)
     junkFoot:SetPoint("BOTTOMLEFT")
     junkFoot:SetPoint("BOTTOMRIGHT")
@@ -675,7 +675,7 @@ ns.OnLoad(function()
     }) do
         local check = CreateFrame("CheckButton", nil, junkFoot, "UICheckButtonTemplate")
         check:SetSize(22, 22)
-        -- Den första under rubriken, nästa under den förra.
+        -- The first under the heading, the next under the one before.
         check:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", previous == label and -4 or 0, previous == label and -2 or 2)
         check.key = option[1]
         check.Text:SetText(option[2])
@@ -694,7 +694,7 @@ ns.OnLoad(function()
         previous = check
     end
 
-    -- Grupperna: "+" i den utfällda gruppen, skrivrutan under den och raden "+ New group".
+    -- The groups: "+" in the opened group, the input box under it and the line "+ New Group".
     groupPlus = createPlusCell(SMALL, L["Drop an item here to add it to the group."], function()
         if openGroup then
             addToGroupFromCursor(openGroup)
@@ -729,8 +729,8 @@ ns.OnLoad(function()
     end)
     newRow:SetScript("OnReceiveDrag", newRow:GetScript("OnClick"))
 
-    -- Shift-klick på en länk medan en skrivruta är aktiv. Spelet lägger själv bara länkar i chatten
-    -- och några egna fält (ChatFrameUtil.InsertLink), så Tidy Pack lyssnar efteråt.
+    -- Shift-click on a link while an input box is active. The game itself only puts links in the
+    -- chat and a few own fields (ChatFrameUtil.InsertLink), so Tidy Pack listens afterwards.
     if ChatFrameUtil and ChatFrameUtil.InsertLink then
         hooksecurefunc(ChatFrameUtil, "InsertLink", function(text)
             if type(text) ~= "string" or not text:find("item:", 1, true) then
