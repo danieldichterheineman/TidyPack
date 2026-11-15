@@ -1,8 +1,8 @@
 -- TidyPack – Panels.lua
 -- Skräplistan och de egna grupperna i väskans eget fönster (användarens önskan 2026-11-12, skissen
 -- .design/sketch-settings-in-bag.html, 3a och 3b), i stället för egna sidor i spelets inställningar.
--- Kugghjulets meny öppnar dem (Marks.lua): fönstret visar då panelen i stället för sakerna, som
--- ikonvalet i fliken Sets. Done, eller en flik, går tillbaka.
+-- Kugghjulets meny öppnar dem (Marks.lua): fönstret visar då panelen i stället för sakerna.
+-- Done, eller en flik, går tillbaka.
 -- Layout.lua lägger panelen på plats (ns.LayoutPanel) när vyn är "junk" eller "groups".
 -- Långa listor rullas med mushjulet (spelets ScrollFrameTemplate), så fönstret byter inte storlek.
 -- ⚠️ Inte provat i spelet. Med handkontroll är panelens knappar inte inkopplade i markören än.
@@ -142,7 +142,7 @@ local function setItemCell(cell, itemID)
     end
 end
 
--- En tom ruta med "+", som den tomma rutan i fliken Sets: klicka med en sak, eller släpp den här.
+-- En tom ruta med "+": klicka med en sak, eller släpp den här.
 local function createPlusCell(size, tooltipText, onDrop)
     local cell = CreateFrame("Button", nil, child)
     cell:SetSize(size, size)

@@ -131,8 +131,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ✅ Kugghjulet (`Marks.lua`) är den enda knapp Tidy Pack lägger i väskfönstret, på
   sorteringsknappens plats. Det är spelets egen menyknapp (`DropdownButton`): med en sak på
   markören (släppt eller klickad) öppnas "Add to Favorites" / "Add to Junk List" /
-  "Add to Set ▸", annars "Junk List…" / "Settings…" (med handkontroll också "Show Sets"
-  eller "Show Bags"). Svagt tills man håller en sak, pekar på det eller har menyn öppen.
+  "Add to Group ▸", annars "Junk List…" / "Groups…" och inställningarnas undermenyer. Svagt tills man håller en sak, pekar på det eller har menyn öppen.
 - ✅ Favorites (`Marks.lua`): Alt-klick (mus, öppnar menyn för saken) eller via kugghjulet. Sparas per itemID och konto.
 - ✅ Skräplistan (`Marks.lua`, `Options.lua`): Alt-klick-menyn, via kugghjulet eller i skräplistan i väskan
   (kugghjulet → Junk List…, sedan 2026-11-12; förut en sida i inställningarna) (lägg till med länk, namn, nummer eller genom att släppa en sak;
@@ -245,8 +244,7 @@ knapp (`SecureActionButtonTemplate`, type `click`) som klickar på spelets egen
 `MainMenuBarBackpackButton`, som finns kvar fast väskraden är dold. Inställningssidan har
 ingen säker knapp (borttagen 2026-11-14, issue #2): en säker knapp där gör hela sidan skyddad
 i strid och får inte ankras till text eller ramar som sitter i text. `/tidypack` och addonmenyn
-öppnar inställningssidan när väskan är stängd, snabbtangenten för Sets skriver en rad, och vid
-bankiren öppnar spelet väskan själv. Att stänga väskan från addonets kod är ofarligt.
+öppnar inställningssidan när väskan är stängd, och vid bankiren öppnar spelet väskan själv. Att stänga väskan från addonets kod är ofarligt.
 
 Tidy Pack har inget eget väskfönster. Det ordnar om rutorna i spelets fönster
 `ContainerFrameCombinedBags` och använder bara `hooksecurefunc` och `HookScript`, aldrig
@@ -346,9 +344,12 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
   (alla sanna från början), `groups` (egna grupper, ny 2026-11-10: lista med
   `{ id, name, items = { [itemID] = true }, types = { ["klass:undertyp"] = true } }` i visningsordning)
   och `nextGroupID`, och `dataVersion`. De nya nycklarna har standardvärden, så ingen migrering behövdes.
-- `TidyPackCharDB` (per karaktär, ny 2026-11-09): `sets` = lista med
-  `{ name = "...", items = { itemID, ... } }` i den ordning seten skapades. Kräver omstart
-  av spelet första gången, eftersom TOC-filen fick en ny rad.
+- `TidyPackCharDB` (per karaktär, ny 2026-11-09) hade `sets` (Tidy Packs egna set) till och med
+  1.1.0. Fliken Sets togs bort 2026-11-14 och `charMigrations[2]` (`CHAR_DATA_VERSION = 2`,
+  `Core.lua`) tar bort `sets`. Setens makron "TP <namn>" ligger kvar hos spelaren; `/tidypack equip`
+  i dem skriver nu en rad om Equipment Manager (`Options.lua`).
+- `TidyPackDB.showSearchBox` och `groupByBag` (nya 2026-11-14, falska från början). Nya nycklar,
+  ingen migrering.
 - `TidyPackCharDB.bank` (ny 2026-11-12, inget standardvärde): `{ time, free, items = { { link, count,
   quality, icon, bag, slot, quest, bound, noValue } } }`, sparas vid varje genomgång hos bankiren.
   `TidyPackDB.bankTab` och `showCounts` (sanna från början). Nya nycklar, ingen migrering.
@@ -489,27 +490,16 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     bara vanliga platser. Utan specialväska syns ingen linje.
 25. Mer luft: rutorna står längre från ramen än förut, och inget krockar (kugghjulet, sökrutan,
     pengarna). Skicka en skärmbild.
-26. Set, i fliken Sets: "New Set" → namn och ikon i spelets ruta → Okay. Plocka upp en sak
-    och håll den över fliken Sets (fönstret byter flik), släpp den på setets rad – den syns
-    som en liten ruta. Klick på raden tar på utrustningen och visar "Equipped". Sälj eller
-    banka en sak – rutan blir grå och raden visar "⚠ 1 missing". Högerklick: byt namn och
-    ikon, ta bort en sak, ta bort setet. Hos en handlare är setets saker låsta. Tooltipen
-    visar "Tidy Pack set". I strid: ett meddelande i stället. Kugghjulets "Add to Set"
-    fungerar också. Med handkontroll: nå flikarna och raderna med markören, och prova "Show
-    Sets" i kugghjulets meny. Grupperna heter
-    "Spare Bags" och "Add to bag".
+26. (Borttaget 2026-11-14: fliken Sets.) Ett gammalt makro "TP <namn>" på en actionbar: klick
+    ger raden "Tidy Pack no longer has sets …" i chatten. Saker i spelets utrustningsset är låsta
+    hos en handlare.
 27. Efter uppdateringen: starta om spelet helt (ny rad i TOC-filen), och kontrollera att
     favoriter, skräplista och inställningar finns kvar.
-28. Fliken Sets: New Set överst, Equip på varje rad (grå när setet redan sitter på), "+"
-    sist bland sakerna. Pricken på fliken Sets lyser när ett set saknar en sak. Båda
-    flikarnas text är lika stor. Esc → Options → Keybindings → AddOns → Tidy Pack: lägg en
-    tangent på "Open the Sets tab" och "Equip set 1" och prova (i strid: ett meddelande).
+28. (Borttaget 2026-11-14: fliken Sets och snabbtangenterna.)
 29. Specialväska och `/reload`: med en specialväska på plats (t.ex. Apprentice's Mining Pack
     eller ett koger), gör `/reload` och öppna väskan direkt, med mus och med handkontroll.
     Grupperna och linjen ovanför specialväskan syns, och inget felmeddelande kommer.
-30. Set: kugghjulet på en rad öppnar setets meny, också med handkontroll. "Add What I'm
-    Wearing" lägger det du har på dig i setet (inte skjorta och tabard). Fliken Sets utan
-    set visar en förklaring med New Set under.
+30. (Borttaget 2026-11-14: fliken Sets.)
 33. "Add to bag": rutan står näst först (bredvid Favorites, eller först utan favoriter), har ett
     + och antalet lediga platser, och en tooltip. Släpp en sak på den – saken hamnar i väskorna.
     Prova också med handkontroll: markören börjar på en riktig sak, och en sak du plockat upp
@@ -549,7 +539,7 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     banken: "Visit a banker once …". Inställningen "Use the Bank tab at bankers" av: spelets fönster som
     vanligt. Inget "Interface action failed" och inget felmeddelande om blockerade handlingar
     (`/console taintLog 1`, kontrollera `Logs/taint.log` efteråt). Öppna karaktärsfönstret (`C`) hos bankiren och se var det hamnar. Med handkontroll: spelets bankfönster som vanligt.
-48. Finputs (2026-11-12): titeln följer vyn (`updateTitle` i relayout); Esc-hanteraren via `RegisterGameMenuEscHandler` togs bort
+52. Finputs (2026-11-12): titeln följer vyn (`updateTitle` i relayout); Esc-hanteraren via `RegisterGameMenuEscHandler` togs bort
     samma dag: den gav rutan "blocked from an action" när Esc öppnade spelets meny (addonet ändrar spelets
     lista över hanterare, som spelets skyddade kod sedan läser); linjen före
     specialväskorna är samma tunna linje som mellan avsnitten (`LINE_COLOR`); tooltip på grupprubrikerna (en
@@ -565,7 +555,12 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     syns i en egen grupp sist bland råvarorna. (b) Loggan: efter ett högerklick med öppen väska, eller en
     släppt sak, var knappens klick avstängt tills nästa klick utanför strid; `PostClick` slår nu på det igen.
     Prova: högerklicka på loggan med öppen väska, gå in i strid, klicka på loggan – väskan öppnas.
-49. Disenchant (2026-11-12): öppna väskan med loggan efter `/reload`, disenchanta en sak och använd en sak
+54. Granskning (2026-11-15): slå på Search box och sök med en reagens i reagensväskan och en sak i
+    banken hos bankiren: träffarna lyser, resten tonas ner, och sakerna i spelets egna rutor tonas
+    som förut (spelet sätter deras sökläge själv; Tidy Pack anropar `SetMatchesSearch` bara på sina
+    egna rutor, `isOwnLiveButton` i `Layout.lua`). Disenchanta en sak efter en sökning: ingen ruta
+    "blocked from an action". `/tidypack equip Fishing`: raden om Equipment Manager i chatten.
+53. Disenchant (2026-11-12): öppna väskan med loggan efter `/reload`, disenchanta en sak och använd en sak
     på en annan (t.ex. en sten på ett vapen): ingen ruta "blocked from an action". Klick på loggan öppnar
     och stänger, högerklick öppnar kugghjulets meny (väskan öppnas först om den är stängd), en sak på
     markören läggs i väskorna. `/tidypack` med stängd väska: Tidy Packs sida i spelets inställningar
@@ -608,8 +603,8 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     ingen text. Gruppen med recept, ädelstenar och förbättringar heter "Recipes & Gems". Inte provat i spelet.
 41. Guiden (2026-11-11, `Tour.lua`, ändrad 2026-11-14 för issue #3): egen ram av mallen `HelpTipTemplate`
     utanför spelets delade pool (`HelpTip:Show` byttes ut för att inte smitta spelets egna tipsrutor).
-    Första gången väskan öppnas i Bags: fyra rutor med Next/Got it – en sak (Alt-klick), kugghjulet,
-    fliken Sets, fliken Quests. Saknas något att peka på hoppas steget över. Stängs väskan mitt i börjar
+    Första gången väskan öppnas i Bags: tre rutor med Next/Got it – en sak (Alt-klick), kugghjulet och
+    fliken Quests. Saknas något att peka på hoppas steget över. Stängs väskan mitt i börjar
     guiden om nästa gång. Klar → `tourDone = true`. Kugghjulet eller Options → Show Tips Again
     (`ns.ResetTour`). Visas inte med handkontroll eller med spelets inställning "hideHelptips"
     (`HelpTip:AreHelpTipsEnabled`). Ersätter den blå tipsraden (`itemTip` används inte längre).
@@ -623,7 +618,7 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     Håll en sak över väskan: gul kant och "Drop anywhere to put it in your bags"; släpp på tom yta →
     första lediga plats i en vanlig väska (`C_Container.PickupContainerItem`); full väska → spelets
     röda "Inventory is full". Inte provat i spelet.
-39. Set i väskan (2026-11-10, skissen `.design/sketch-sets-in-bag.html`, ändrad 2026-11-14 för issue #8): dra setets ikon till en
+39. (Borttaget 2026-11-14 med fliken Sets; texten nedan är historik.) Set i väskan (2026-11-10, skissen `.design/sketch-sets-in-bag.html`, ändrad 2026-11-14 för issue #8): dra setets ikon till en
     actionbar → makrot "TP <namn>" (kontots, `/tidypack equip <namn>`, setets ikon) skapas eller uppdateras
     och läggs på markören (`ns.PickupSetMacro`); `truncateUtf8` kortar av setnamn vid 32 tecken och makronamn vid 16 byte på hel UTF-8-teckengräns så att tecken som å/ä/ö aldrig delas mitt i; släpp på en knapp och klicka – setet tas på. Byt namn eller
     ikon: makrot följer med. I strid: en rad i chatten, inget makro. Klick på ikonen: ett rutnät med ikoner i

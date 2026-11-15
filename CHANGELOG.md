@@ -2,86 +2,57 @@
 
 ## Unreleased
 
-- Removed the Sets tab (`Sets.lua`, `SetsView.lua`, `Bindings.xml`): the game's built-in
-  Equipment Manager already handles gear sets, and items in your equipment sets remain locked at
-  merchants. The top tabs are now Bags, Bank and Quests.
-- Fixed: the junk deletion prompt (`MakeRoom.lua`) now hides immediately when combat starts and
-  runs `DeleteCursorItem()` before hiding the panel, avoiding `ADDON_ACTION_BLOCKED` when combat
-  starts during looting.
-- Opaque outer window background: the outer bag window background now keeps the game's panel
-  color without transparency.
-- Cleaner title bar and optional search box: the window title bar no longer repeats the active
-  tab name ("Backpack", "Bank", "Quests"), and an optional "Search box" setting (off by
-  default under gear menu → Show) places the search box on the left side of the title bar on the
-  Bags and Bank tabs. Matching items get a blue highlight glow while non-matching items and empty
-  slots dim, including offline Bank views.
-- New "Show by bag" setting (gear menu → Bag and bank): displays each equipped bag (including
-  your reagent bag) and each bank tab on its own rows in exact slot order including empty slots,
-  while keeping Favorites and your custom groups at the top.
-
-- Reagent bag in mouse mode: items in your reagent bag now appear in their own section at the
-  bottom of the bag window (under the divider, without mixing into regular groups) whenever the bag
-  holds items, the reagent bag slot appears next to your other bags in the bottom bar, special bags
-  no longer show an empty "+ N" slot in mouse mode, and the game's separate reagent bag window is
-  hidden cleanly without taint.
-- Fixed: dropping an item on empty space in the Bags or Bank tab by left-clicking or dragging now
-  works instead of being swallowed by the window frame, and dropping on a group header works too.
-- Fixed: clicking Next in the first-time guide now advances to the following steps and marks the
-  guide as done at the end instead of hiding the guide on the first click.
-- Fixed: the Bank tab now keeps the game's bank window visible until the Bank tab finishes laying
-  out without errors, and restores it if a layout error occurs.
-- Fixed: set and macro names with non-ASCII letters (like å, ä, ö) are no longer cut in the
-  middle of a letter.
-- Fixed: right-clicking the Tidy Pack logo in combat no longer closes an open bag window; when
-  your bags are closed in combat, right-click shows the tip to open bags first.
-- Fixed: the Tidy Pack logo is now anchored to UIParent at the micro menu's position instead of
-  being anchored directly to MicroMenuContainer, avoiding tying protected frames to the micro menu.
-- Fixed: the first-time guide now uses its own tip frame instead of the game's shared HelpTip
-  pool, avoiding taint when other game tips are shown or hidden.
-- Fixed: a crafting material of a kind Tidy Pack didn't know about could be missing from the bag
-  window. Every kind the game has now gets its own group, and an item can never be hidden because
-  its group is missing.
-- Fixed: after a right-click on the Tidy Pack logo, or after dropping an item on it, the logo
-  could stop opening your bags in combat.
-- Fixed: disenchanting an item, or using an item on another, could show "TidyPack has been blocked
-  from an action" after you opened your bags with the Tidy Pack logo. The logo now opens your bags
-  the same way as the game's own backpack button.
-- /tidypack and the addon menu open Tidy Pack's page in the game's options when your bags are
-  closed (open your bags with B or the Tidy Pack logo for the gear button's menu). The key binding for the Sets tab
-  switches to Sets while your bags are open.
-- New Bank tab, between Bags and Sets. At a banker, your bank is sorted in the same groups and
+### New
+- Bank tab, between Bags and Quests. At a banker, your bank is sorted in the same groups and
   parts as your bags, and the game's bank window is hidden. Right-click an item to move it between
-  your bank and your bags, or drag it onto the other tab. Drop an item on an empty spot in the Bank
-  tab to put it in your bank.
-- Away from the bank, the Bank tab shows what your bank held the last time you were there (for
-  each character). You can see the items and their tooltips, but not move them.
-- All options are in the gear button's menu on the bag window, in three submenus: Show, Merchants
-  and loot, and Bag and bank. Each option explains itself when you point at it, and the menu stays
-  open so you can see the change right away.
-- The junk list and your groups open right in the bag window from the gear button, like the icon
-  grid in Sets. Drop items, type a name or link, remove with the red cross, and press Done.
-- The Tidy Pack page in the game's options now tells you who made Tidy Pack, how to use it and
-  where to find updates (a link to copy). /tidypack and the addon menu open the gear button's menu.
-- New options under Show: "Tidy Pack lines in tooltips" and "Junk value in the header".
+  your bank and your bags, drag it onto the other tab, or drop it on an empty spot in the Bank tab.
+  Away from the bank, the tab shows what your bank held the last time you were there (for each
+  character) – you can see the items and their tooltips, but not move them.
 - Item tooltips show how many you have in your bags and in your bank, and the total ("Bags 12 ·
-  Bank 40 · Total 52"), also away from the bank. Only for items in your bank. Turn it off under the
-  gear button: Show → Bag and bank counts.
-- The gear button's menu at a banker can show the game's bank window again, for example to buy a
-  bank slot. Turn the Bank tab off under the gear button: Bag and bank → Use the Bank tab at bankers.
-- The window's title follows the tab: Backpack, Bank, Sets or Quests (and Junk List or Groups).
-- The line above special bags is the same thin line as between the parts of the Bags tab.
+  Bank 40 · Total 52"), also away from the bank.
+- The reagent bag is part of the bag window: its items get their own part at the bottom, and the
+  reagent bag sits next to your other bags at the bottom of the window.
+- "Show by bag" (gear button → Bag and bank): each bag and bank tab on its own rows, in slot order
+  with its empty slots. Favorites and your own groups stay at the top.
+- "Search box" (gear button → Show, off by default): a search box in the title bar of the Bags and
+  Bank tabs. Matching items glow blue and the rest dims.
+- All options are in the gear button's menu, in three submenus: Show, Merchants and loot, and Bag
+  and bank. Each option explains itself when you point at it. The junk list and your own groups
+  open right in the bag window.
+- New options under Show: "Tidy Pack lines in tooltips" and "Junk value in the header".
 - Point at a group's heading to see how many items it holds, in how many slots, and what they're
   worth at a merchant.
-- Shorter tooltips on the gear button and the Tidy Pack logo, in the same style as the rest.
-- The game's own sounds when the junk list, your groups and the icon grid open and close, and a
-  short fade when the content of the bag window changes.
-- Sets: "Add What I'm Wearing" is now "Save What I'm Wearing". It replaces the gear in the set
-  with what you wear, so gear you have swapped out no longer stays in the set as missing. Other
-  items you put in the set, like your Hearthstone, stay.
-- The bank's contents are saved every time they change at a banker, also when the Bank tab isn't
-  shown, so the counts in tooltips are always up to date.
-- When you point at one of your bags at the bottom of the bag window, the bag itself now glows
-  blue too, in the same color as the items in it.
+- The game's own sounds when the junk list and your groups open and close, and a short fade when
+  the content of the bag window changes.
+
+### Changed
+- The Sets tab is gone. The game's own Equipment Manager (character window) does the same job.
+  Items in your equipment sets are still locked at merchants. An old "TP" set macro on your action
+  bars now tells you this; you can delete it under Esc → Macros.
+- The bag window has a solid background, and its title bar no longer repeats the tab's name.
+- Thin lines between all parts of the Bags tab, including above special bags, and shorter tooltips
+  on the gear button and the Tidy Pack logo.
+- Right-click the Tidy Pack logo for the gear button's menu. With your bags closed, /tidypack and
+  the addon menu open Tidy Pack's page in the game's options, which tells you how to open them.
+- The Tidy Pack page in the game's options tells you who made Tidy Pack, how to use it and where
+  to find updates (a link to copy).
+
+### Fixed
+- Disenchanting an item, or using an item on another, could show "TidyPack has been blocked from
+  an action" after you opened your bags with the Tidy Pack logo. The logo now opens your bags the
+  same way as the game's own backpack button.
+- The logo could stop opening your bags in combat after a right-click or after dropping an item on
+  it, and a right-click in combat could close an open bag window.
+- Some crafting materials could be missing from the bag window. Every kind of crafting material
+  now has a group, and no item can be hidden because its group is missing.
+- Dropping an item on empty space in the Bags or Bank tab, or on a group's heading, now puts it
+  away instead of doing nothing.
+- The first-time guide's Next button now goes to the next tip, and the guide no longer borrows
+  the game's own tip frames.
+- If the Bank tab can't be shown, the game's own bank window stays open so you can still use
+  your bank.
+- The question to delete junk list loot hides when combat starts and comes back afterwards,
+  instead of being stopped by the game.
 
 ## 1.1.0 (2026-11-11)
 

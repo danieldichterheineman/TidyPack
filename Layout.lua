@@ -90,7 +90,7 @@ local bagFrame                    -- spelets fönster med alla väskor i ett
 local overlay                     -- vår egen ram i spelets fönster, för rubrikerna
 local inset                       -- den mörka, infällda bakgrunden bakom sakerna
 local contentHeight               -- höjden på det Tidy Pack lägger ut
-local sharedHeight                -- samma höjd i alla tre flikarna (Bags, Sets, Quests)
+local sharedHeight                -- samma höjd i alla tre flikarna (Bags, Bank, Quests)
 local gridCols = MIN_COLUMNS      -- antal kolumner just nu
 local gridWidth = widthOf(MIN_COLUMNS) -- rutnätets bredd just nu
 local measurer                    -- osynlig text som mäter hur breda rubrikerna är
@@ -409,7 +409,7 @@ local function getExtras(button)
             free = button:CreateFontString(nil, "ARTWORK", "NumberFontNormal"),
             lock = button:CreateTexture(nil, "OVERLAY", nil, 6),
             later = button:CreateTexture(nil, "OVERLAY", nil, 6),
-            -- Ett + mitt på den tomma rutan, som den tomma rutan i fliken Sets: släpp en sak här.
+            -- Ett + mitt på den tomma rutan: släpp en sak här.
             plus = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge"),
             -- Antal man har / antal som behövs för en quest-sak ("3/7"), där nivån står på utrustning.
             quest = button:CreateFontString(nil, "ARTWORK", "NumberFontNormalSmall"),
@@ -665,6 +665,15 @@ local function syncSearchBox()
     end
 end
 
+-- Sant för Tidy Packs egna rutor av spelets mall (reagensväskan och banken hos bankiren). Spelets
+-- egna rutor (förälder bagFrame) får sitt sökläge av spelet självt, när sökrutan ändrar spelets
+-- sökning (C_Container.SetItemSearch → UpdateSearchResults). Tidy Pack skriver aldrig värden i
+-- spelets rutor: värden som addonets kod skrivit kan göra att spelet stoppar klick på saken.
+local function isOwnLiveButton(entry)
+    return not entry.offline and entry.button.SetMatchesSearch ~= nil
+        and entry.button:GetParent() ~= bagFrame
+end
+
 -- Markerar träffar från sökrutan med samma blå sken som väskraden och tonar ner resten.
 -- Fungerar också i fliken Bank borta från bankiren genom att matcha mot sakens namn.
 local function applySearchHighlights()
@@ -685,7 +694,7 @@ local function applySearchHighlights()
                 if extra then
                     extra.bagGlow:Hide()
                 end
-                if not entry.offline and entry.button.SetMatchesSearch then
+                if isOwnLiveButton(entry) then
                     entry.button:SetMatchesSearch(true)
                 end
             elseif entry.isEmpty then
@@ -700,7 +709,7 @@ local function applySearchHighlights()
                 else
                     local info = C_Container.GetContainerItemInfo(entry.bagID, entry.slot)
                     matches = not (info and info.isFiltered)
-                    if entry.button.SetMatchesSearch then
+                    if isOwnLiveButton(entry) then
                         entry.button:SetMatchesSearch(matches)
                     end
                 end
@@ -1343,7 +1352,7 @@ local function layoutQuestsView(atMerchant)
         end
     end
     -- Allt hänger i raden med pengar och räknas uppifrån, så höjden måste vara känd innan något
-    -- placeras (som i fliken Sets): texterna och staplarna samlas först.
+    -- placeras: texterna och staplarna samlas först.
     local placements = {}
     -- Fliken Quests får inte bli högre än de andra: det som inte ryms står som "...and N more".
     local height, _, firsts = ns.BuildQuestsView(byName, others, gridWidth, sharedHeight,
@@ -1366,7 +1375,7 @@ local function layoutQuestsView(atMerchant)
     commit(atMerchant)
 end
 
--- Skräplistan eller de egna grupperna (Panels.lua) i stället för sakerna, som listan i fliken Sets.
+-- Skräplistan eller de egna grupperna (Panels.lua) i stället för sakerna.
 local function layoutPanelView(view)
     releaseHeaders()
     hideSectionLines()
@@ -1486,9 +1495,9 @@ local function relayout()
     syncSearchBox()
 
     -- 1. Sortera in varje sak i sin grupp, och räkna ut fliken Bags storlek. Alla tre flikarna
-    -- får samma bredd och höjd: den högsta av fliken Bags, de fem platserna i Sets och Quests
-    -- minsta höjd. Fönstret ändrar alltså bara storlek när innehållet i väskorna gör det, aldrig
-    -- när du byter flik (användarens önskan 2026-11-10).
+    -- får samma bredd och höjd: den högsta av fliken Bags och Quests minsta höjd. Fönstret ändrar
+    -- alltså bara storlek när innehållet i väskorna gör det, aldrig när du byter flik (användarens
+    -- önskan 2026-11-10).
     local junkValue = classify()
     gridCols = chooseColumns(junkValue)
     -- Banken (Bank.lua) räknas med när fliken Bank visas eller du står hos bankiren: flikarna är lika

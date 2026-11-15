@@ -250,7 +250,14 @@ end)
 ---------------------------------------------------------------------------
 
 SLASH_TIDYPACK1 = "/tidypack"
-SlashCmdList.TIDYPACK = function()
+-- "/tidypack equip <namn>" stod i setens makron ("TP <namn>") i 1.1.0 och tidigare, innan fliken Sets togs bort.
+-- Ett sådant makro på en actionbar säger nu vad som hänt, i stället för att öppna inställningarna.
+SlashCmdList.TIDYPACK = function(message)
+    local command = (message or ""):match("^%s*(%S+)")
+    if command and command:lower() == "equip" then
+        ns.Print(L["Tidy Pack no longer has sets. Use the game's Equipment Manager in the character window (C), and delete the old \"TP\" macro (Esc → Macros)."])
+        return
+    end
     ns.OpenSettings()
 end
 

@@ -30,15 +30,16 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   are shown as small icons at the bottom of the bag window – drop a bigger bag on one to swap it.
 - **Drop anywhere**: hold an item over your bags and drop it on any empty spot.
 - **Special bags** – quivers, ammo pouches, soul bags, profession bags and the reagent bag –
-  get their own groups at the bottom, with the bag's icon, name and free slots.
+  get their own part at the bottom, with the bag's icon, name and free slots.
+- **Show by bag** (optional): each bag and bank tab on its own rows, in slot order with its empty
+  slots, with Favorites and your own groups still at the top.
+- **Search box** (optional): search in the title bar of the Bags and Bank tabs – matches glow
+  blue and the rest dims.
 - **New loot** is shown at the top until you close your bags.
 - **Favorites**: keep items like your Hearthstone at the top.
-- **Sets**: up to five sets, with a name and icon you pick, like "Fishing", in the Sets tab.
-  Click a set to put it all on. Missing items are greyed out, and a dot on the tab tells you
-  something is missing.
-- **Locked items**: quest items, items your active quests ask for and items in your sets
-  can't be sold by mistake at a merchant. Their tooltip tells you why. You can turn the locks
-  off in the gear button's menu.
+- **Locked items**: quest items, items your active quests ask for and items in the game's
+  equipment sets can't be sold by mistake at a merchant. Their tooltip tells you why. You can
+  turn the locks off in the gear button's menu.
 - **Junk list**: whenever you loot an item on the list, Tidy Pack asks whether to delete it.
 - **Bags full**: when something can't be looted, Tidy Pack suggests an item to delete.
   Nothing is ever deleted until you press Delete.
@@ -54,35 +55,26 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 ## How to use
 
 - **Item options**: hold Alt (Option on a Mac) to see a small "..." on every item, then
-  Alt-click one for a menu: favorite, junk list, sets and your own groups. With a controller, pick the item up and drop
-  it on the gear button.
+  Alt-click one for a menu: favorite, junk list and your own groups. With a controller, pick the
+  item up and drop it on the gear button.
 - **Gear button** (next to the close button): all options, in three menus (Show, Merchants and
   loot, Bag and bank), plus your junk list and your own groups, which open in the bag window.
-- **Sets tab**: click an empty place, or drop an item on it, type a name and press Enter. Click
-  a set's icon to choose a new one, or drag it to an action bar to put the set on with one
-  click there. Then use the set's
-  "..." button and choose "Save What I'm Wearing" (it replaces the gear in the set with what you wear), or drop items on the set. The "..." button also renames the set, changes its
-  icon, removes an item or deletes it.
 - **Quests tab**: click a heading to open it, then a quest to see its items.
 - **Settings**: right-click the Tidy Pack logo, or use `/tidypack` or the minimap's addon menu
   with your bags open, for the gear button's menu. With your bags closed, `/tidypack` opens
   Esc → Options → AddOns → Tidy Pack, which has a short guide and a link to updates.
-- **Key bindings**: Esc → Options → Keybindings → AddOns → Tidy Pack, to switch to the Sets tab
-  while your bags are open, or equip sets 1–5.
 
 ## Known limitations
 
-- Sets can't be put on in combat – the game doesn't allow anyone to change gear then.
-- Locks and the controller cursor can't change during combat. They
-  catch up as soon as combat ends.
+- Locks and the controller cursor can't change during combat. They catch up as soon as combat
+  ends.
 - Quest locks match item names in English, the game's language.
 - The merchant's own "Sell All Junk" button sells every grey item. It doesn't know about
   Tidy Pack's locks or your junk list.
 - Quest hints need Questie, whose data for Forever's new quests isn't complete yet.
 - Tidy Pack turns on the game's "Combined Bags" once, at your first login.
-- With a mouse, the game shows the reagent bag in its own window. Tidy Pack attaches that window
-  to its own, but doesn't sort the reagent bag's items into groups.
-- There is no search box: Tidy Pack's groups take its place.
+- The reagent bag's items stay in their own part at the bottom; they aren't mixed into the other
+  groups.
 - The Bank tab shows your character's bank, not the account-wide bank. With a controller, the
   game's own bank window is used.
 
