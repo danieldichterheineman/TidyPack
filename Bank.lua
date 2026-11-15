@@ -35,7 +35,10 @@ local offlineButtons = {}      -- buttons for saved items, in order
 local allButtons = {}          -- all the bank's buttons, for Layout.lua (hide what isn't used)
 local freeSlots = 0            -- free bank slots at the last pass
 local bankTabShown = false     -- the Bank tab has shown since the bank opened
-local bankLaidOut = false      -- safety net: don't hide the game's bank window until the tab laid out without errors
+local bankLaidOut = false      -- the Bank tab has been laid out without errors since the bank opened
+local layoutFailed = false     -- safety net: the Bank tab couldn't be drawn, so the game's window shows
+local openCount = 0            -- counts visits to a banker, so an old timer leaves a new visit alone
+local openedAt = 0             -- GetTime() when the bank opened (the same for the whole first frame)
 
 -- True between BANKFRAME_OPENED and BANKFRAME_CLOSED.
 function ns.IsAtBank()
@@ -460,14 +463,17 @@ end
 
 local originalScale
 
--- Invisible and very small, but still open (see the top of the file). Made invisible only when the
--- Bank tab has been laid out without errors, and restored at once if an error stops the layout.
+-- Invisible and very small, but still open (see the top of the file). It is made invisible the moment
+-- it shows: waiting for the Bank tab's first layout let it flash for a frame (the owner saw it
+-- 2026-11-15). The safety net: an error in the layout, or no finished Bank tab within a second of the
+-- bank opening, brings the game's window back (layoutFailed).
 local function updateGameBankFrame()
     if not BankFrame then
         return
     end
     originalScale = originalScale or BankFrame:GetScale()
-    local hide = atBank and takesOverBank() and bankLaidOut and not showGameFrame
+    local open = atBank or BankFrame:IsShown()
+    local hide = open and takesOverBank() and not layoutFailed and not showGameFrame
     if hide then
         BankFrame:SetAlpha(0)
         BankFrame:SetScale(0.01)
@@ -481,7 +487,9 @@ end
 -- Safety net from Layout.lua: says when the Bank tab finished drawing (or when the layout failed).
 function ns.SetBankLayoutOk(ok)
     bankLaidOut = ok == true
-    if ok and atBank then
+    layoutFailed = not bankLaidOut
+    -- Not in the bank's first frame: the game may still close and reopen the bags then.
+    if ok and atBank and GetTime() > openedAt then
         bankTabShown = true
     end
     updateGameBankFrame()
@@ -501,17 +509,19 @@ end
 -- The option "Use the Bank tab at bankers" changed (Options.lua).
 ns.ApplyBankSetting = updateGameBankFrame
 
--- Switches to the Bank tab when the game has opened the bags at a banker.
-local function showBankTab()
+-- Switches to the Bank tab, without the fade between tabs. The game opens the bags itself at a banker;
+-- Tidy Pack never opens them from its own code (see LogoButton.lua). settled: called a frame after the
+-- bank opened, when closing the bags may close the bank.
+local function showBankTab(settled)
     if not atBank or not ns.bagFrame then
         return
     end
-    -- The game opens the bags itself at a banker. Tidy Pack never opens them from its own code (see
-    -- LogoButton.lua).
     if ns.SetView then
-        ns.SetView("bank")
+        ns.SetView("bank", true)
     end
-    bankTabShown = true
+    if settled then
+        bankTabShown = true
+    end
 end
 
 ns.RegisterEvent("BANKFRAME_OPENED", function()
@@ -519,11 +529,26 @@ ns.RegisterEvent("BANKFRAME_OPENED", function()
     showGameFrame = false
     bankTabShown = false
     bankLaidOut = false
+    layoutFailed = false
+    openCount = openCount + 1
+    openedAt = GetTime()
     saveBank()
     updateGameBankFrame()
     if takesOverBank() then
-        -- One frame later: the game opens the bags itself when the bank opens.
-        C_Timer.After(0, showBankTab)
+        -- At once, so the bags show the Bank tab from the first frame (before, they showed Bags for a
+        -- frame), and once more a frame later: the game may close and reopen the bags while the bank
+        -- opens, and closing them goes back to Bags.
+        showBankTab(false)
+        C_Timer.After(0, function()
+            showBankTab(true)
+        end)
+        local visit = openCount
+        C_Timer.After(1, function()
+            if atBank and visit == openCount and not bankLaidOut then
+                layoutFailed = true
+                updateGameBankFrame()
+            end
+        end)
     elseif ns.Refresh then
         ns.Refresh()
     end
@@ -534,6 +559,7 @@ ns.RegisterEvent("BANKFRAME_CLOSED", function()
     showGameFrame = false
     bankTabShown = false
     bankLaidOut = false
+    layoutFailed = false
     updateGameBankFrame()
     if ns.Refresh then
         ns.Refresh() -- the Bank tab now shows what was saved
@@ -559,9 +585,11 @@ ns.OnLoad(function()
     if not ns.bagFrame then
         return
     end
-    -- The game shows its bank window after BANKFRAME_OPENED; it is made invisible every time it shows.
+    -- Made invisible every time the game shows its bank window, in the same frame, and given back its
+    -- size and look when the game hides it.
     if BankFrame then
         BankFrame:HookScript("OnShow", updateGameBankFrame)
+        BankFrame:HookScript("OnHide", updateGameBankFrame)
     end
     -- If you close the bags at a banker the bank closes too, since the game's window isn't shown. Only
     -- after the Bank tab has shown: the game may close and reopen the bags while the bank opens.

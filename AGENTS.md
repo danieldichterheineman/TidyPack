@@ -76,9 +76,12 @@ controller. The rules below each come from a real problem.
    tips. Questions use an own panel built from `DefaultPanelFlatTemplate`; the first-time guide uses
    an own frame from `HelpTipTemplate`.
 6. **The game's bank window is made invisible, never hidden.** Its `OnHide` closes the bank, so
-   `Bank.lua` uses `SetAlpha(0)` and `SetScale(0.01)` – and only after the Bank tab has been laid
-   out without errors (`ns.SetBankLayoutOk`). The reagent bag's own window is moved off screen the
-   same way.
+   `Bank.lua` uses `SetAlpha(0)` and `SetScale(0.01)` – in the same frame as the game shows it
+   (`HookScript("OnShow")`), so it never flashes (2026-11-15; waiting for the first layout let it
+   show for a frame). The safety net: an error in a layout (`ns.SetBankLayoutOk(false)`) or no Bank
+   tab laid out within a second brings the game's window back. The bags switch to Bank at once and
+   again a frame later (`ns.SetView("bank", true)`, no fade). The reagent bag's own window is moved
+   off screen the same way.
 7. **Own item buttons use the game's template** (`ContainerFrameItemButtonTemplate`) on a holder
    frame with `SetID(bag)`, and the button with `SetID(slot)`. The game's click reads
    `GetParent():GetID()` and `GetID()`, so right-click, drag and drop work untainted. Never set
@@ -204,6 +207,12 @@ Status: ✅ tried in the game · ⚠️ built, not tried in the game yet.
   others with the most first, names in class color (`C_ClassColor.GetClassColor`), at most 8 lines,
   "+N more characters", Total. Gear → Bag and bank → Forget a Character (newest first, other realms
   with " - Realm") asks with `ns.ShowDialog`. Not counted: mail, worn items, the account bank.
+- ⚠️ Money's tooltip (`Characters.lua`, sketch `.design/sketch-money.html`): each character also saves
+  `GetMoney()` (and at `PLAYER_MONEY`). Pointing at the coins in the bag window (`HookScript` on
+  `MoneyFrame.GoldButton`/`SilverButton`/`CopperButton`; the game's click still picks up money) shows
+  Money, "Total: …" in gold, you first, the others with the most first, "+N more characters" and
+  "Account bank" (`C_Bank.FetchDepositedMoney(Enum.BankType.Account)`, only when above 0). No tooltip
+  with no other character and an empty account bank. Needs `showCounts` and `showOtherCharacters`.
 - Not built: the account (warband) bank, buying a slot right from the "+", controller.
 
 **Quests tab**
@@ -241,7 +250,7 @@ with a default need no migration; a key that is removed or changes meaning needs
   `showQuestItemsInBags`, `junkValue`,
   `showSearchBox` (false), `groupByBag` (false), `lockAtMerchant`, `suggestOnLoot`, `suggestWhenFull`,
   `replaceBagBar`, `bankTab`; `characters` (`["Name-Realm"] = { name, realm, class, time, bags =
-  { [itemID] = count }, bank = { [itemID] = count } }`, `bank` nil before a visit to a banker);
+  { [itemID] = count }, bank = { [itemID] = count }, money } }`, `bank` nil before a visit to a banker);
   `dataVersion`.
 - `TidyPackCharDB` (character): `bank` = `{ time, free, maxTabs, nextCost, tabs = { { id, index, name,
   icon, link, slots, free } }, items = { { link, count, quality, icon, bag, slot, quest, bound,
@@ -266,8 +275,8 @@ with a default need no migration; a key that is removed or changes meaning needs
   reagent bags, money, bag row and the bank's row, search, tabs, views, drop glow, fade. (2,583 lines – a candidate
   for splitting, section 10.)
 - `Bank.lua` – the Bank tab, saved bank, the bank's slots and bags, the game's bank window.
-- `Characters.lua` – counts in item tooltips, for this character and your other characters; Forget a
-  Character.
+- `Characters.lua` – counts in item tooltips, for this character and your other characters; the
+  money's tooltip; Forget a Character.
 - `QuestsView.lua` – the Quests tab.
 - `Marks.lua` – favorites, junk list marks, Alt-click, the gear button and its menu, Language ▸.
 - `Panels.lua` – the junk list and own groups in the bag window.
@@ -360,7 +369,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 
 **Bank**
 22. At a banker: the bags open on the Bank tab, sorted, with no blue frame on the slots (also the
-    first time after `/reload`); the game's bank window is invisible.
+    first time after `/reload`); the game's bank window never shows, not even for a moment, and the
+    Bags tab doesn't flash first.
     Right-click an item in Bank → bags, and in Bags → bank; drag between the tabs; drop on empty
     space in Bank → bank; "N free" shows the bank's free slots. Gear → "Show the game's bank window"
     and back. Closing the bags closes the bank. Open the character window (C) at the banker.
@@ -379,6 +389,9 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
     that line. Gear → Show → Other characters off: only this character's line; "Bag and bank counts"
     off greys it out. Gear → Bag and bank → Forget a Character → the other one with "today" → the
     question; Cancel keeps it, Forget removes its line.
+    Money: point at the coins with two characters – Money, "Total" in gold, both with their money; with
+    the other one forgotten (and an empty account bank) – no tooltip; click a coin – the game's box
+    for picking up money opens as before.
 
 **Quests**
 25. Take a quest that needs items (e.g. 3 of 7): "3/7" on the item, green when done; tooltip "Needed
@@ -476,7 +489,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 - 2026-11-15: Languages (section 7); Show ▸ with headings; the guide shows the Bank tab; the Bank
   tab's bottom row shows the bank's slots, and "+" sends you to the game's bank window to buy; counts
   on your other characters in item tooltips, with an option and Forget a Character (still no
-  browsing of other characters' bags).
+  browsing of other characters' bags); the money's tooltip for all characters; the game's bank window
+  is made invisible as soon as it shows (it flashed for a frame).
 
 **Open ideas** (proposed, not decided)
 - Counts on other characters: mail, worn items and the account bank too.

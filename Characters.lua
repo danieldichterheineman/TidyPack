@@ -12,6 +12,12 @@
 -- character has the item, the single line from before shows ("Bags 12 · Bank 40 · Total 52"), and
 -- only when the item is in the bank. Options: showCounts (all of it) and showOtherCharacters.
 -- Gear → Bag and bank → Forget a Character removes a character you deleted or don't play.
+--
+-- Money (the owner's wish 2026-11-15, sketch .design/sketch-money.html): each character also saves its
+-- money, and pointing at the money in the bag window shows Money, the total in gold, each character on
+-- this realm (you first, then the most first) and the account bank when it holds some. No tooltip with
+-- only one character and an empty account bank. The game's own click on the money (picking it up)
+-- still works: Tidy Pack only adds to the coins' OnEnter and OnLeave with HookScript.
 
 local _, ns = ...
 local L = ns.L
@@ -87,6 +93,7 @@ local function saveMe()
     entry.time = time()
     entry.bags = bags
     entry.bank = myBankCounts()
+    entry.money = GetMoney()
     ns.db.characters[myKey] = entry
 end
 
@@ -118,6 +125,7 @@ ns.RegisterEvent("PLAYER_LOGIN", function()
     saveSoon()
 end)
 ns.RegisterEvent("BAG_UPDATE_DELAYED", saveSoon)
+ns.RegisterEvent("PLAYER_MONEY", saveSoon)
 ns.RegisterEvent("BANKFRAME_CLOSED", saveSoon)
 -- The saved data is written when you log out or reload, so the last change is counted then too.
 ns.RegisterEvent("PLAYER_LOGOUT", saveMe)
@@ -196,6 +204,82 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tool
     end
     if lines + hidden > 1 then
         tooltip:AddDoubleLine(L["Total"], tostring(total), r, g, b, r, g, b)
+    end
+end)
+
+---------------------------------------------------------------------------
+-- The money's tooltip
+---------------------------------------------------------------------------
+
+local function accountBankMoney()
+    if C_Bank and C_Bank.FetchDepositedMoney and Enum.BankType and Enum.BankType.Account then
+        return C_Bank.FetchDepositedMoney(Enum.BankType.Account) or 0
+    end
+    return 0
+end
+
+local function byMostMoney(a, b)
+    if a.money ~= b.money then
+        return a.money > b.money
+    end
+    return (a.name or "") < (b.name or "")
+end
+
+local function showMoneyTooltip(owner)
+    if not (ns.db and ns.db.showCounts ~= false and ns.db.showOtherCharacters ~= false and myKey) then
+        return
+    end
+    local others = {}
+    for key, character in pairs(ns.db.characters or {}) do
+        if key ~= myKey and sameRealm[character.realm] and (character.money or 0) > 0 then
+            others[#others + 1] = character
+        end
+    end
+    local account = accountBankMoney()
+    if #others == 0 and account == 0 then
+        return -- only you: the money row already says it all
+    end
+    table.sort(others, byMostMoney)
+    local mine = GetMoney()
+    local total = mine + account
+    for _, other in ipairs(others) do
+        total = total + other.money
+    end
+    GameTooltip:SetOwner(owner, "ANCHOR_TOP")
+    GameTooltip_SetTitle(GameTooltip, L["Money"])
+    GameTooltip:AddLine(L["Total: %s"]:format(GetMoneyString(total, true)), NORMAL_FONT_COLOR:GetRGB())
+    GameTooltip:AddDoubleLine(classColored(myName, myClass), GetMoneyString(mine, true), 1, 1, 1, 1, 1, 1)
+    local lines, hidden = 1, 0
+    for _, other in ipairs(others) do
+        if lines < MAX_LINES then
+            GameTooltip:AddDoubleLine(classColored(other.name or "", other.class), GetMoneyString(other.money, true),
+                1, 1, 1, 1, 1, 1)
+            lines = lines + 1
+        else
+            hidden = hidden + 1
+        end
+    end
+    if hidden > 0 then
+        GameTooltip:AddLine(hidden == 1 and L["+1 more character"] or L["+%d more characters"]:format(hidden),
+            GRAY_FONT_COLOR:GetRGB())
+    end
+    if account > 0 then
+        GameTooltip:AddDoubleLine(L["Account bank"], GetMoneyString(account, true), 1, 1, 1, 1, 1, 1)
+    end
+    GameTooltip:Show()
+end
+
+ns.OnLoad(function()
+    local moneyFrame = ns.bagFrame and ns.bagFrame.MoneyFrame
+    if not moneyFrame then
+        return
+    end
+    for _, key in ipairs({ "GoldButton", "SilverButton", "CopperButton" }) do
+        local coin = moneyFrame[key]
+        if coin then
+            coin:HookScript("OnEnter", showMoneyTooltip)
+            coin:HookScript("OnLeave", GameTooltip_Hide)
+        end
     end
 end)
 

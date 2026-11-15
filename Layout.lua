@@ -2543,7 +2543,8 @@ function ns.UpdateQuestsNotice()
 end
 
 -- Switches between "bags", "bank" and "quests", or the panel views "junk" and "groups".
-function ns.SetView(newView)
+-- instant: no fade between the tabs (the Bank tab when the bank opens, Bank.lua).
+function ns.SetView(newView, instant)
     local oldView = view
     view = (TAB_OF[newView] or PANEL_VIEWS[newView]) and newView or "bags"
     if view ~= oldView then
@@ -2552,7 +2553,7 @@ function ns.SetView(newView)
         elseif PANEL_VIEWS[oldView] and not PANEL_VIEWS[view] then
             PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE)
         end
-        if ns.PlayViewTransition then
+        if ns.PlayViewTransition and not instant then
             ns.PlayViewTransition()
         end
     end

@@ -51,7 +51,7 @@ local function buildOptionMenus()
                 { key = "showCounts", name = L["Bag and bank counts"],
                     tooltip = L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank or on your other characters."] },
                 { key = "showOtherCharacters", name = L["Other characters"],
-                    tooltip = L["Item tooltips also show what your other characters on this realm have, as it was when you last played them. A character shows up after you log in with it once, and its bank after a visit to a banker."],
+                    tooltip = L["Item tooltips and the money's tooltip also show your other characters on this realm, as it was when you last played them. A character shows up after you log in with it once, and its bank after a visit to a banker."],
                     enabled = function()
                         return ns.db.showCounts ~= false
                     end },

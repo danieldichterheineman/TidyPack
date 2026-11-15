@@ -29,6 +29,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
   ("Bags 12 · Bank 40 · Total 52"), and what your other characters on the same realm have – each
   name in its class color. Gear button → Bag and bank → Forget a Character removes one you no
   longer play.
+- **Money on all characters**: point at your money in the bag window to see what each of your
+  characters on the same realm has, the account bank and the total.
 - **Crafting materials** are grouped by type (Cloth, Herb, Leather …), with the ones your
   professions use first.
 - **Your bags at a glance**: the Tidy Pack logo replaces the game's bag buttons, and your bags

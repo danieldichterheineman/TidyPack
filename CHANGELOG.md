@@ -26,6 +26,8 @@
   you've logged in with it once, and its bank after it has visited a banker. Turn it off under the
   gear button → Show → Other characters, and remove a character you no longer play under the gear
   button → Bag and bank → Forget a Character.
+- Point at your money at the bottom right of the bag window to see the money on all your
+  characters on the same realm, the account bank and the total.
 - The reagent bag is part of the bag window: its items get their own part at the bottom, and the
   reagent bag sits next to your other bags at the bottom of the window.
 - "Show by bag" (gear button → Show): each bag and bank tab on its own rows, in slot order
