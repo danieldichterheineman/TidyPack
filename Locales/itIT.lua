@@ -80,7 +80,7 @@ ns.AddTranslation("itIT", {
     ["You looted %s, which is on your junk list. Delete it?"] = "Hai raccolto %s, che è nella tua lista cianfrusaglie. Eliminarlo?",
     ["Not now"] = "Non ora",
     ["Language"] = "Lingua",
-    ["Tidy Pack switches language after a reload of the interface (/reload)."] = "Tidy Pack cambia lingua dopo aver ricaricato l'interfaccia (/reload).",
+    ["Reload the interface now to show Tidy Pack in %s?"] = "Ricaricare l'interfaccia ora per mostrare Tidy Pack in %s?",
     ["Automatic (%s)"] = "Automatica (%s)",
     ["Reload Now"] = "Ricarica ora",
     ["Item"] = "Oggetto",

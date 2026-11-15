@@ -81,7 +81,7 @@ ns.AddTranslation("ruRU", {
     ["You looted %s, which is on your junk list. Delete it?"] = "Вы получили %s из списка хлама. Удалить?",
     ["Not now"] = "Не сейчас",
     ["Language"] = "Язык",
-    ["Tidy Pack switches language after a reload of the interface (/reload)."] = "Tidy Pack сменит язык после перезагрузки интерфейса (/reload).",
+    ["Reload the interface now to show Tidy Pack in %s?"] = "Перезагрузить интерфейс сейчас, чтобы показать Tidy Pack на языке %s?",
     ["Automatic (%s)"] = "Автоматически (%s)",
     ["Reload Now"] = "Перезагрузить",
     ["Item"] = "Предмет",

@@ -288,6 +288,7 @@ local function createDialog()
     dialog.cancel:SetSize(100, 22)
     dialog.cancel:SetPoint("BOTTOMLEFT", dialog, "BOTTOM", 4, 12)
     dialog.cancel:SetText(L["Cancel"])
+    ns.FitButtonText(dialog.cancel, 100)
 
     local function accept()
         local onAccept = dialog.onAccept
@@ -321,10 +322,14 @@ local function showDialog(text, acceptLabel, withInput, defaultText, onAccept)
     dialog.text:SetText(text)
     dialog.text:SetTextColor(HIGHLIGHT_FONT_COLOR:GetRGB())
     dialog.accept:SetText(acceptLabel)
+    ns.FitButtonText(dialog.accept, 100) -- translations can be longer than the English label
     dialog.onAccept = onAccept
     dialog.input:SetShown(withInput)
     dialog.input:SetText(defaultText or "")
-    dialog:SetHeight(withInput and 130 or 104)
+    -- Tall enough for the text (a long translation can take three lines): title and text, the input
+    -- box if any, and the buttons.
+    local textHeight = math.ceil(dialog.text:GetStringHeight())
+    dialog:SetHeight(math.max(withInput and 130 or 104, 34 + textHeight + (withInput and 30 or 0) + 50))
     dialog:Show()
     if withInput then
         dialog.input:SetFocus()

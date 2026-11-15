@@ -80,7 +80,7 @@ ns.AddTranslation("zhTW", {
     ["You looted %s, which is on your junk list. Delete it?"] = "你拾取了垃圾清單中的 %s。要刪除嗎？",
     ["Not now"] = "暫不",
     ["Language"] = "語言",
-    ["Tidy Pack switches language after a reload of the interface (/reload)."] = "重新載入介面（/reload）後 Tidy Pack 會切換語言。",
+    ["Reload the interface now to show Tidy Pack in %s?"] = "現在重新載入介面，以%s顯示 Tidy Pack 嗎？",
     ["Automatic (%s)"] = "自動（%s）",
     ["Reload Now"] = "立即重新載入",
     ["Item"] = "物品",

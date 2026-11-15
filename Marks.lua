@@ -141,8 +141,11 @@ local function updateGearButton()
 end
 
 -- The Language submenu (Locales.lua): Automatic follows the game's language, and each language has
--- its own name. The choice is saved at once but applies after /reload, because tabs and buttons
--- already have their texts; the bottom button does /reload (C_UI.Reload) and is only clickable when the choice changes the language.
+-- its own name. A new language needs a reload of the interface, because tabs and buttons already have
+-- their texts. So choosing one asks first (Tidy Pack's own dialog, ns.ShowDialog in Groups.lua):
+-- Reload Now saves the choice and reloads (C_UI.Reload); Cancel changes nothing (the owner's wish
+-- 2026-11-15). A choice that shows the same language (e.g. Automatic → English on an English client)
+-- is saved without asking.
 local function languageName(code)
     for _, language in ipairs(ns.LANGUAGES) do
         if language.code == code then
@@ -158,24 +161,24 @@ local function addLanguageMenu(rootDescription)
         return (ns.db.language or "auto") == choice
     end
     local function setSelected(choice)
-        ns.db.language = choice
-        if ns.ResolveLanguage(choice) ~= ns.language then
-            ns.Print(L["Tidy Pack switches language after a reload of the interface (/reload)."])
+        local newLanguage = ns.ResolveLanguage(choice)
+        if newLanguage == ns.language then
+            ns.db.language = choice -- nothing to reload: the same language shows
+            return MenuResponse.Refresh
         end
-        return MenuResponse.Refresh -- the menu stays open, so the button below can be clicked
+        -- The choice is saved only if the player says yes; Cancel leaves everything as it was.
+        ns.ShowDialog(L["Reload the interface now to show Tidy Pack in %s?"]:format(languageName(newLanguage)),
+            L["Reload Now"], false, nil, function()
+                ns.db.language = choice
+                C_UI.Reload()
+            end)
+        return MenuResponse.CloseAll -- the menu closes, so the question shows
     end
     menu:CreateRadio(L["Automatic (%s)"]:format(languageName(ns.ResolveLanguage("auto"))),
         isSelected, setSelected, "auto")
     for _, language in ipairs(ns.LANGUAGES) do
         menu:CreateRadio(language.name, isSelected, setSelected, language.code)
     end
-    menu:CreateDivider()
-    local reload = menu:CreateButton(L["Reload Now"], function()
-        C_UI.Reload()
-    end)
-    reload:SetEnabled(function()
-        return ns.ResolveLanguage(ns.db.language) ~= ns.language
-    end)
 end
 
 -- The menu under the gear, built with the game's own menu system. With an item on the cursor:

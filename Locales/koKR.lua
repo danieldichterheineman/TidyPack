@@ -80,7 +80,7 @@ ns.AddTranslation("koKR", {
     ["You looted %s, which is on your junk list. Delete it?"] = "잡동사니 목록에 있는 %s을 획득했습니다. 삭제할까요?",
     ["Not now"] = "나중에",
     ["Language"] = "언어",
-    ["Tidy Pack switches language after a reload of the interface (/reload)."] = "Tidy Pack은 인터페이스를 다시 불러온 후(/reload) 언어를 바꿉니다.",
+    ["Reload the interface now to show Tidy Pack in %s?"] = "지금 인터페이스를 다시 불러와 Tidy Pack을 %s(으)로 표시할까요?",
     ["Automatic (%s)"] = "자동 (%s)",
     ["Reload Now"] = "지금 다시 불러오기",
     ["Item"] = "아이템",

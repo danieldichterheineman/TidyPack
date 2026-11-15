@@ -258,8 +258,11 @@ with a default need no migration; a key that is removed or changes meaning needs
 
 - Tidy Pack follows the game's language (`GetLocale`) or the one picked under gear → Language ▸, any
   of the game's eleven: enUS, deDE, esES, esMX, frFR, itIT, ptBR, ruRU, koKR, zhCN, zhTW (`enGB` shows
-  as enUS, `ptPT` as ptBR). No Swedish – the game has no Swedish client. A change applies after
-  `/reload` (the menu's Reload Now, `C_UI.Reload`).
+  as enUS, `ptPT` as ptBR). No Swedish – the game has no Swedish client. A change needs a reload of
+  the interface, so choosing a language asks first (Tidy Pack's own dialog, `ns.ShowDialog`): "Reload
+  Now" saves the choice and reloads (`C_UI.Reload`), "Cancel" changes nothing (the owner's wish
+  2026-11-15). A choice that shows the same language is saved without asking. The dialog's buttons
+  and height follow the text, so long translations fit.
 - The English text is the key: `L["English text"]`. `L` looks up the translation every time a text
   is used. Never build texts when a file loads; `ns.groupNames` and `ns.optionMenus` are (re)built in
   `ns.OnLoad`, and `Core.lua` calls `ns.SetLanguage` before every `ns.OnLoad`.
@@ -344,9 +347,11 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 27. With Questie: yellow exclamation marks and "Needed later for: …". Without: one chat line, once.
 
 **Languages**
-28. Gear → Language ▸ → Deutsch → Reload Now: tabs, menus, headings, tooltips and panels in German.
-    Try Русский, 한국어 and 简体中文: characters show (no boxes); long buttons (Rename, Add, Delete,
-    Not now, Show Tips Again) don't clip. Back to Automatic → Reload Now: the game's language again.
+28. Gear → Language ▸ → Deutsch: the menu closes and a question asks to reload. Cancel: nothing
+    reloads, and Language ▸ still has the old language ticked. Again → Reload Now: tabs, menus,
+    headings, tooltips and panels in German, and the question's text and buttons fit. Try Русский,
+    한국어 and 简体中文: characters show (no boxes); long buttons (Rename, Add, Delete, Not now, Show Tips
+    Again) don't clip. Back to Automatic → Reload Now: the game's language again.
 
 **Guide and options page**
 29. Gear → Show Tips Again, reopen the bags: four tips – an item, the gear, the Bank tab, the Quests

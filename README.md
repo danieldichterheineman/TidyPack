@@ -64,8 +64,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Gear button** (next to the close button): all options, in three menus (Show, Merchants and
   loot, Bag and bank), plus your junk list and your own groups, which open in the bag window.
 - **Quests tab**: click a heading to open it, then a quest to see its items.
-- **Language**: gear button → Language. "Automatic" follows the game's language. Press "Reload
-  Now" (or type `/reload`) to switch.
+- **Language**: gear button → Language. "Automatic" follows the game's language. Pick another, and
+  Tidy Pack asks to reload the interface; "Reload Now" switches, "Cancel" keeps the language you had.
 - **Settings**: right-click the Tidy Pack logo, or use `/tidypack` or the minimap's addon menu
   with your bags open, for the gear button's menu. With your bags closed, `/tidypack` opens
   Esc → Options → AddOns → Tidy Pack, which has a short guide and a link to updates.
