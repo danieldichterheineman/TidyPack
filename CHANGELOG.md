@@ -13,6 +13,12 @@
   your bank and your bags, drag it onto the other tab, or drop it on an empty spot in the Bank tab.
   Away from the bank, the tab shows what your bank held the last time you were there (for each
   character) – you can see the items and their tooltips, but not move them.
+- The Bank tab's bottom row shows your bank's slots: the bank itself, your bank bags with their
+  size, bag slots you've bought but not filled, "+" for the next slot to buy (with its price – you
+  buy it in the game's bank window) and a lock for the rest. Point at the bank or a bag to light up
+  its items, drop a bag on a slot to put it in or swap it, or drop any item to put it in that bag.
+  Point at "N free" to see how much room each bag and bank bag has left. In "Show by bag", each
+  bank heading shows the bag's name and its free slots.
 - Item tooltips show how many you have in your bags and in your bank, and the total ("Bags 12 ·
   Bank 40 · Total 52"), also away from the bank.
 - The reagent bag is part of the bag window: its items get their own part at the bottom, and the

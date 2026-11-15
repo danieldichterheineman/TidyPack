@@ -23,6 +23,8 @@ you do with an item – use, equip, sell, split, link – works as usual, also w
 - **Bank tab**: at a banker, your bank is sorted in the same groups as your bags. Right-click or
   drag items between your bank and your bags, or drop an item on an empty spot to put it in
   your bank. Away from the bank, the tab shows what your bank held the last time you were there.
+  The bottom row shows your bank's bag slots: your bank bags and their size, empty slots, "+" for
+  the next slot to buy (with its price), and how much room is left – point at "N free" for each bag.
 - **Bag and bank counts**: item tooltips show how many you have in your bags and in your bank
   ("Bags 12 · Bank 40 · Total 52").
 - **Crafting materials** are grouped by type (Cloth, Herb, Leather …), with the ones your

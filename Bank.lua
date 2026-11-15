@@ -49,6 +49,35 @@ local function takesOverBank()
 end
 ns.TakesOverBank = takesOverBank -- the gear menu (Marks.lua)
 
+-- WoW Forever's bank (Camelot/BankFrame.lua in the game's code): "tab" 1 is the main bank (28 slots),
+-- and tabs 2 to FetchMaxNumBankTabs are the bank's bag slots, bought one at a time. A bought slot is a
+-- container (CharacterBankTab_1 + index - 1) as big as the bag in it, or 0 without a bag. The bag itself
+-- sits in the pseudo container Characterbanktab at the slot's index. The game's tab names and icons
+-- are only placeholders here ("Tab 1" and a question mark), so Tidy Pack names the main bank "Bank" and
+-- each bag slot after its bag (sketch .design/sketch-bank-slots.html, the owner's wish 2026-11-15).
+-- ⚠️ Buying a slot (C_Bank.PurchaseBankTab) is restricted to the game's own code: the "+" opens the
+--    game's bank window, where the player buys it.
+local BANK_ICON = "Interface\\Icons\\INV_Box_02"
+local FIRST_TAB = Enum.BagIndex and Enum.BagIndex.CharacterBankTab_1
+local BAG_SLOT_CONTAINER = Enum.BagIndex and Enum.BagIndex.Characterbanktab
+
+-- The slot index (1 = the main bank) of a bank container, or nil when the game doesn't number them.
+local function tabIndexOf(containerID)
+    return FIRST_TAB and containerID - FIRST_TAB + 1 or nil
+end
+
+-- The bag in a bank bag slot: its location, or nil if the slot has no bag.
+local function bankBagLocation(index)
+    if not (BAG_SLOT_CONTAINER and index and index > 1) then
+        return nil
+    end
+    local location = ItemLocation:CreateFromBagAndSlot(BAG_SLOT_CONTAINER, index)
+    if location:IsValid() and C_Item.DoesItemExist(location) then
+        return location
+    end
+    return nil
+end
+
 -- The bank tabs (containers' numbers, names, icons and sizes) the character has bought.
 local function bankTabInfos()
     local result = {}
@@ -56,13 +85,29 @@ local function bankTabInfos()
         return result
     end
     if C_Bank.FetchPurchasedBankTabData then
-        for _, tab in ipairs(C_Bank.FetchPurchasedBankTabData(BANK_TYPE) or {}) do
-            result[#result + 1] = {
+        for position, tab in ipairs(C_Bank.FetchPurchasedBankTabData(BANK_TYPE) or {}) do
+            local index = tabIndexOf(tab.ID) or position
+            local info = {
                 id = tab.ID,
+                index = index,
                 name = tab.name,
                 icon = tab.icon,
                 slots = C_Container.GetContainerNumSlots(tab.ID) or 0,
+                free = C_Container.GetContainerNumFreeSlots(tab.ID) or 0,
             }
+            if index == 1 then
+                info.name, info.icon = L["Bank"], BANK_ICON
+            else
+                local location = bankBagLocation(index)
+                if location then
+                    info.icon = C_Item.GetItemIcon(location)
+                    info.link = C_Item.GetItemLink(location)
+                    info.name = C_Item.GetItemName(location) or info.name
+                else
+                    info.icon, info.name = nil, L["Empty bank bag slot"]
+                end
+            end
+            result[#result + 1] = info
         end
         return result
     end
@@ -232,7 +277,12 @@ local function scanLiveBank(onSlot)
         end
     end
     freeSlots = free
-    ns.charDb.bank = { time = time(), free = free, items = items, tabs = tabs }
+    local maxTabs = C_Bank.FetchMaxNumBankTabs and C_Bank.FetchMaxNumBankTabs(BANK_TYPE) or #tabs
+    local nextTab = C_Bank.FetchNextPurchasableBankTabData and C_Bank.FetchNextPurchasableBankTabData(BANK_TYPE)
+    ns.charDb.bank = {
+        time = time(), free = free, items = items, tabs = tabs, maxTabs = maxTabs,
+        nextCost = nextTab and nextTab.tabCost or nil,
+    }
 end
 
 local function saveBank()
@@ -288,6 +338,84 @@ function ns.ForEachBankSlot(callback)
     for index, item in ipairs(saved.items or {}) do
         emitSaved(index, item, item.bag, item.slot)
     end
+end
+
+-- The bank's slots for the bottom row of the Bank tab (Layout.lua), in order: 1 is the main bank, then
+-- the bag slots. Each is { index, bought, id, slots, free, icon, name, link }, and nextCost is what the
+-- next bag slot costs (nil when all are bought). At a banker from the game, away from what was saved.
+function ns.GetBankSlots()
+    local tabs, maxTabs, nextCost
+    if atBank then
+        tabs = bankTabInfos()
+        maxTabs = C_Bank.FetchMaxNumBankTabs and C_Bank.FetchMaxNumBankTabs(BANK_TYPE) or #tabs
+        local nextTab = C_Bank.FetchNextPurchasableBankTabData and C_Bank.FetchNextPurchasableBankTabData(BANK_TYPE)
+        nextCost = nextTab and nextTab.tabCost or nil
+    else
+        local saved = ns.GetSavedBank()
+        if not (saved and saved.tabs) then
+            return {}, nil
+        end
+        tabs, maxTabs, nextCost = saved.tabs, saved.maxTabs or #saved.tabs, saved.nextCost
+    end
+    local byIndex = {}
+    for position, tab in ipairs(tabs) do
+        byIndex[tab.index or position] = tab
+    end
+    local slots = {}
+    for index = 1, math.max(maxTabs or 0, #tabs) do
+        local tab = byIndex[index]
+        slots[index] = tab and {
+            index = index, bought = true, id = tab.id, slots = tab.slots or 0, free = tab.free or 0,
+            icon = tab.icon, name = tab.name, link = tab.link,
+        } or { index = index, bought = false }
+    end
+    return slots, nextCost
+end
+
+-- The bottom row of the Bank tab: something dropped on a bank slot. A bag goes into a bag slot (or swaps
+-- with the bag there, like the game's own bag slot buttons); any other item goes into the first free
+-- slot of that container, or anywhere in the bank when it is full. Only at a banker.
+function ns.DropOnBankSlot(index)
+    if not atBank or GetCursorInfo() ~= "item" then
+        return
+    end
+    local _, itemID = GetCursorInfo()
+    local classID = itemID and select(6, C_Item.GetItemInfoInstant(itemID))
+    if index > 1 and classID == Enum.ItemClass.Container and BAG_SLOT_CONTAINER then
+        C_Container.PickupContainerItem(BAG_SLOT_CONTAINER, index)
+        return
+    end
+    for _, tab in ipairs(bankTabInfos()) do
+        if (tab.index or 0) == index then
+            for slot = 1, tab.slots do
+                if not C_Container.GetContainerItemInfo(tab.id, slot) then
+                    C_Container.PickupContainerItem(tab.id, slot)
+                    return
+                end
+            end
+        end
+    end
+    -- That bag is full, or the slot has no bag: anywhere in the bank, like a drop on the window.
+    ns.PutCursorItemInBank()
+end
+
+-- Picks up the bag in a bank bag slot (a click with nothing on the cursor), as the game's own bag slot
+-- buttons do. Only at a banker.
+function ns.PickupBankBag(index)
+    if atBank and BAG_SLOT_CONTAINER and bankBagLocation(index) then
+        C_Container.PickupContainerItem(BAG_SLOT_CONTAINER, index)
+    end
+end
+
+-- Shows the bag in a bank bag slot in the tooltip: from the game at a banker, from its link away.
+function ns.SetBankBagTooltip(tooltip, slot)
+    if atBank and BAG_SLOT_CONTAINER and bankBagLocation(slot.index) then
+        return tooltip:SetBagItem(BAG_SLOT_CONTAINER, slot.index)
+    elseif slot.link then
+        tooltip:SetHyperlink(slot.link)
+        return true
+    end
+    return false
 end
 
 -- Puts the item on the cursor in the first free bank slot (drop anywhere in the Bank tab).

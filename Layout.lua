@@ -872,6 +872,10 @@ updateFreeText = function()
     freeText:SetText(L["%d free"]:format(free))
     freeText:SetTextColor((free <= LOW_SPACE and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR):GetRGB())
     freeText:Show()
+    -- The row after the count: your bags, or in the Bank tab the bank's own slots.
+    if ns.UpdateBottomRow then
+        ns.UpdateBottomRow(ns.GetView and ns.GetView() == "bank")
+    end
 end
 
 -- Hides Tidy Pack's own buttons (Bank.lua and the reagent bag) that don't show after this pass.
@@ -1025,6 +1029,9 @@ local function flow(cols, apply, junkValue)
         if bankFlow then
             for _, tab in ipairs(ns.GetBankTabs and ns.GetBankTabs() or {}) do
                 local title = tab.icon and ("|T%s:13:13|t %s"):format(tab.icon, tab.name or "") or (tab.name or "")
+                if tab.free and (tab.slots or 0) > 0 then
+                    title = ("%s |cff999999· %s|r"):format(title, L["%d free"]:format(tab.free))
+                end
                 placeBagSection("bag" .. tab.id, title)
             end
         else
@@ -1917,9 +1924,10 @@ ns.OnLoad(function()
     local BAG_ICON = 22
     local bagButtons = {}
     -- The items in the bag get a blue glow, and the rest dims (bagID nil: everything as usual).
-    local function dimOthers(bagID)
-        -- The bag row is about your bags, not the bank: in the Bank tab nothing dims.
-        if bagID ~= nil and ns.GetView and ns.GetView() == "bank" then
+    -- inBank: the bag is one of the bank's (the bank row below), which dims in the Bank tab instead.
+    local function dimOthers(bagID, inBank)
+        local bankView = ns.GetView and ns.GetView() == "bank"
+        if bagID ~= nil and bankView ~= (inBank == true) then
             return
         end
         hoveredBagID = bagID
@@ -2009,6 +2017,218 @@ ns.OnLoad(function()
         bagButtons[bagID] = button
     end
     label:SetPoint("LEFT", bagButtons[#bagButtons], "RIGHT", 10, 0)
+
+    -- The bank's row (the owner's wish 2026-11-15, sketch .design/sketch-bank-slots.html): in the Bank
+    -- tab the row shows the bank's own slots instead of your bags – the main bank, then the bank's bag
+    -- slots: a bag (icon and size), a bought empty slot, "+" for the next slot to buy, and a lock for the
+    -- rest. The data comes from Bank.lua (ns.GetBankSlots), at a banker live and away as saved.
+    local bankButtons = {}
+    local bankNextCost
+    local function showBankSlotTooltip(self)
+        local slot, kind = self.slot, self.kind
+        local atBank = ns.IsAtBank and ns.IsAtBank()
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        if kind == "main" then
+            GameTooltip_SetTitle(GameTooltip, L["Bank"])
+        elseif kind == "bag" then
+            if not (ns.SetBankBagTooltip and ns.SetBankBagTooltip(GameTooltip, slot)) then
+                GameTooltip_SetTitle(GameTooltip, slot.name or L["Bank"])
+            end
+        elseif kind == "empty" then
+            GameTooltip_SetTitle(GameTooltip, L["Empty bank bag slot"])
+        else
+            GameTooltip_SetTitle(GameTooltip, L["Bank bag slot %d"]:format(slot.index - 1))
+        end
+        if kind == "main" or kind == "bag" then
+            GameTooltip_AddNormalLine(GameTooltip, L["%d slots · %d free"]:format(slot.slots, slot.free))
+        end
+        if kind == "buy" then
+            if bankNextCost then
+                GameTooltip_AddNormalLine(GameTooltip, L["Costs %s."]:format(GetMoneyString(bankNextCost)))
+            end
+            GameTooltip_AddInstructionLine(GameTooltip, atBank
+                and L["Click to open the game's bank window, where you buy it."] or L["Visit a banker to buy it."])
+        elseif kind == "lock" then
+            GameTooltip_AddNormalLine(GameTooltip, L["Buy the slots before it first."])
+        elseif atBank and kind == "empty" then
+            GameTooltip_AddInstructionLine(GameTooltip, L["Drop a bag here to put it in your bank."])
+        elseif atBank and kind == "bag" then
+            GameTooltip_AddInstructionLine(GameTooltip, L["Drop a bag here to swap it."])
+        end
+        GameTooltip:Show()
+        if (kind == "main" or kind == "bag") and slot.id then
+            dimOthers(slot.id, true)
+            self.glow:Show()
+        end
+    end
+    -- A click or a drop on a bank slot. Buying goes through the game's bank window (Bank.lua).
+    local function onBankSlotClick(self)
+        local kind, slot = self.kind, self.slot
+        if GetCursorInfo() == "item" then
+            if (kind == "main" or kind == "bag" or kind == "empty") and ns.DropOnBankSlot then
+                ns.DropOnBankSlot(slot.index)
+            end
+        elseif kind == "buy" then
+            if ns.IsAtBank and ns.IsAtBank() and not ns.IsGameBankFrameShown() then
+                ns.ToggleGameBankFrame()
+            end
+        elseif kind == "bag" and ns.PickupBankBag then
+            ns.PickupBankBag(slot.index)
+        end
+    end
+    local function bankButtonFor(index)
+        local button = bankButtons[index]
+        if button then
+            return button
+        end
+        button = CreateFrame("Button", nil, freeHolder)
+        button:SetSize(BAG_ICON, BAG_ICON)
+        if index == 1 then
+            button:SetPoint("LEFT", freeText, "RIGHT", 12, 0)
+        else
+            button:SetPoint("LEFT", bankButtons[index - 1], "RIGHT", 5, 0)
+        end
+        button.icon = button:CreateTexture(nil, "ARTWORK")
+        button.icon:SetAllPoints()
+        button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+        button.count:SetPoint("BOTTOMRIGHT", 3, -2)
+        button.plus = button:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        button.plus:SetPoint("CENTER", 0, 1)
+        button.plus:SetText("+")
+        button.lock = button:CreateTexture(nil, "OVERLAY")
+        button.lock:SetAtlas("LFG-lock")
+        button.lock:SetSize(12, 14)
+        button.lock:SetPoint("CENTER")
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        button.glow = button:CreateTexture(nil, "OVERLAY", nil, 7)
+        button.glow:SetAtlas(BAG_GLOW_ATLAS, true)
+        local glowWidth, glowHeight = button.glow:GetSize()
+        button.glow:SetSize(glowWidth * BAG_ICON / BUTTON, glowHeight * BAG_ICON / BUTTON)
+        button.glow:SetPoint("CENTER")
+        button.glow:SetBlendMode("ADD")
+        button.glow:SetVertexColor(unpack(BAG_GLOW_COLOR))
+        button.glow:Hide()
+        button:RegisterForClicks("LeftButtonUp")
+        button:SetScript("OnClick", onBankSlotClick)
+        button:SetScript("OnReceiveDrag", onBankSlotClick)
+        button:SetScript("OnEnter", showBankSlotTooltip)
+        button:SetScript("OnLeave", function(self)
+            GameTooltip_Hide()
+            dimOthers(nil)
+            self.glow:Hide()
+        end)
+        bankButtons[index] = button
+        return button
+    end
+
+    -- Shows your bags or the bank's slots after the free count (updateFreeText calls this).
+    function ns.UpdateBottomRow(isBank)
+        for _, button in pairs(bagButtons) do
+            button:SetShown(not isBank)
+        end
+        local slots, nextCost = {}, nil
+        if isBank and ns.GetBankSlots then
+            slots, nextCost = ns.GetBankSlots()
+        end
+        bankNextCost = nextCost
+        local firstUnbought = true
+        for index, slot in ipairs(slots) do
+            local button = bankButtonFor(index)
+            local kind
+            if index == 1 then
+                kind = "main"
+            elseif slot.bought then
+                kind = (slot.slots or 0) > 0 and "bag" or "empty"
+            elseif firstUnbought then
+                kind, firstUnbought = "buy", false
+            else
+                kind = "lock"
+            end
+            button.slot, button.kind = slot, kind
+            local texture = kind == "main" and "Interface\\Icons\\INV_Box_02"
+                or kind == "bag" and (slot.icon or "Interface\\Icons\\INV_Misc_Bag_08") or nil
+            if texture then
+                button.icon:SetTexture(texture)
+                button.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+                button.icon:SetAlpha(1)
+            else
+                button.icon:SetTexture("Interface\\Buttons\\UI-EmptySlot")
+                button.icon:SetTexCoord(0.140625, 0.84375, 0.140625, 0.84375)
+                button.icon:SetAlpha(kind == "empty" and 0.7 or 0.35)
+            end
+            button.count:SetText((kind == "main" or kind == "bag") and slot.slots or "")
+            button.plus:SetShown(kind == "buy")
+            button.lock:SetShown(kind == "lock")
+            button:Show()
+        end
+        for index = #slots + 1, #bankButtons do
+            bankButtons[index]:Hide()
+        end
+        -- The line "Drop anywhere ..." stands after the last button in the row.
+        label:ClearAllPoints()
+        label:SetPoint("LEFT", isBank and bankButtons[#slots] or bagButtons[#bagButtons], "RIGHT", 10, 0)
+    end
+
+    -- Point at the free count: how full each bag is, and in the Bank tab the bank's whole picture (how
+    -- many bag slots are bought and filled, and what the next one costs).
+    local function showFreeTooltip(self)
+        if not freeText:IsShown() then
+            return -- with a controller the count isn't shown
+        end
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        local white, gold, grey = HIGHLIGHT_FONT_COLOR, NORMAL_FONT_COLOR, GRAY_FONT_COLOR
+        if ns.GetView and ns.GetView() == "bank" and ns.GetBankSlots then
+            local slots, nextCost = ns.GetBankSlots()
+            local total, free, bought, withBag = 0, 0, 0, 0
+            for index, slot in ipairs(slots) do
+                if slot.bought then
+                    total, free = total + (slot.slots or 0), free + (slot.free or 0)
+                    if index > 1 then
+                        bought = bought + 1
+                        if (slot.slots or 0) > 0 then
+                            withBag = withBag + 1
+                        end
+                    end
+                end
+            end
+            GameTooltip_SetTitle(GameTooltip, L["Bank"])
+            GameTooltip:AddLine(L["%d free of %d"]:format(free, total), gold:GetRGB())
+            for index, slot in ipairs(slots) do
+                if slot.bought and (slot.slots or 0) > 0 then
+                    GameTooltip:AddLine(L["%s: %d free of %d"]:format(index == 1 and L["Bank"] or (slot.name or ""),
+                        slot.free or 0, slot.slots), white:GetRGB())
+                end
+            end
+            if #slots > 1 then
+                GameTooltip:AddLine(L["Bag slots: %d of %d bought, %d with a bag"]:format(bought, #slots - 1, withBag),
+                    grey:GetRGB())
+            end
+            if nextCost then
+                GameTooltip:AddLine(L["Next bag slot: %s"]:format(GetMoneyString(nextCost)), GREEN_FONT_COLOR:GetRGB())
+            end
+            local age = not (ns.IsAtBank and ns.IsAtBank()) and ns.SavedBankAge and ns.SavedBankAge()
+            if age then
+                GameTooltip:AddLine(L["Last seen %s"]:format(age), grey:GetRGB())
+            end
+        else
+            GameTooltip_SetTitle(GameTooltip, L["Bags"])
+            for bagID = 0, LAST_BAG do
+                local size = C_Container.GetContainerNumSlots(bagID)
+                if size > 0 then
+                    local name = C_Container.GetBagName(bagID) or (bagID == 0 and BACKPACK_TOOLTIP) or ""
+                    GameTooltip:AddLine(L["%s: %d free of %d"]:format(name,
+                        C_Container.GetContainerNumFreeSlots(bagID) or 0, size), white:GetRGB())
+                end
+            end
+        end
+        GameTooltip:Show()
+    end
+    local freeHover = CreateFrame("Frame", nil, freeHolder)
+    freeHover:SetPoint("TOPLEFT", freeText, "TOPLEFT", -4, 4)
+    freeHover:SetPoint("BOTTOMRIGHT", freeText, "BOTTOMRIGHT", 4, -4)
+    freeHover:EnableMouse(true)
+    freeHover:SetScript("OnEnter", showFreeTooltip)
+    freeHover:SetScript("OnLeave", GameTooltip_Hide)
 
     function ns.UpdateBagBar()
         for bagID, button in pairs(bagButtons) do

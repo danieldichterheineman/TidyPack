@@ -48,3 +48,7 @@ TooltipDataHandlerMixin:AddLineDataText -- upgrade arrows read leftColor from a 
 # Names the script can't find in the game's code.
 ignore LibQuestieDB -- Questie's database, an optional dependency; every call is inside pcall
 ignore CONTAINER_SLOTS -- a game text ("%d Slot Bag") that the game's own Lua never uses; BagSwap.lua has a fallback pattern
+
+# A tooltip method that the game's documentation doesn't list but the game's own bank uses
+# (Camelot/BankFrame.lua, BankItemButtonBagMixin:OnEnter) for its bank bag slots.
+ignore SetBagItem -- GameTooltip:SetBagItem(Enum.BagIndex.Characterbanktab, index) shows a bank bag, as in the game's bank window

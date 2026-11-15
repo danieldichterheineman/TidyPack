@@ -141,6 +141,7 @@ Status: ✅ tried in the game · ⚠️ built, not tried in the game yet.
   blue, the rest dims; works on the saved bank by item name.
 - ⚠️ Bag row at the bottom, on a taller money row: "N free" (red at 5 or fewer) and small icons of
   your bags; point at one to light up its items; drop a bag on one to swap it (`PutItemInBag`).
+  Point at "N free" for each bag's free slots. In the Bank tab the row shows the bank's slots (below).
 - ⚠️ Bag swap: right-click a bigger spare bag (or Equip with a controller) to replace your smallest
   bag (`BagSwap.lua`, outside combat).
 - ⚠️ Keyring: with a controller (and `showKeyring` on) the game shows keys in the bag window and
@@ -181,8 +182,19 @@ Status: ✅ tried in the game · ⚠️ built, not tried in the game yet.
   gear → Bag and bank → "Show the game's bank window" brings it back (buying a bank slot). Closing
   the bags closes the bank. Setting `bankTab`.
 - ⚠️ Away from the bank: what the bank held last time (per character), with tooltips.
+- ⚠️ Bottom row in Bank (`ns.UpdateBottomRow` in `Layout.lua`, `ns.GetBankSlots` in `Bank.lua`; owner's
+  wish 2026-11-15, sketch `.design/sketch-bank-slots.html`): the bank itself (chest, its size), bank
+  bags (icon and size), bought empty slots, "+" for the next slot (price from
+  `C_Bank.FetchNextPurchasableBankTabData`; a click opens the game's bank window, because
+  `C_Bank.PurchaseBankTab` has restrictions) and locks for the rest. Point at the bank or a bag: its
+  items light up. Drop a bag on a bag slot: it goes in or swaps
+  (`PickupContainerItem(Enum.BagIndex.Characterbanktab, index)`, like the game's own bank bag buttons);
+  drop another item: the first free slot there. "N free" tooltip: free per container, bag slots
+  bought and filled, the next price, and how old the saved bank is. The bank's first part is called
+  Bank (it was "Tab 1" with a "?"), bank bags have their item's name, and "Show by bag" headings add
+  "· N free".
 - ⚠️ Tooltip counts (`showCounts`): "Bags 12 · Bank 40 · Total 52", this character only.
-- Not built: the account (warband) bank, bank bags and buying slots in the bottom row, controller.
+- Not built: the account (warband) bank, buying a slot right from the "+", controller.
 
 **Quests tab**
 - ⚠️ Quest items show "3/7" (green when done); the tooltip says which quest. Extra stacks beyond
@@ -218,8 +230,10 @@ with a default need no migration; a key that is removed or changes meaning needs
   `upgradeArrows`, `questHints`, `showCounts`, `tooltipLines`, `showQuestItemsInBags`, `junkValue`,
   `showSearchBox` (false), `groupByBag` (false), `lockAtMerchant`, `suggestOnLoot`, `suggestWhenFull`,
   `replaceBagBar`, `bankTab`; `dataVersion`.
-- `TidyPackCharDB` (character): `bank` = `{ time, free, tabs, items = { { link, count, quality, icon,
-  bag, slot, quest, bound, noValue } } }`, saved at every change at a banker; `dataVersion`.
+- `TidyPackCharDB` (character): `bank` = `{ time, free, maxTabs, nextCost, tabs = { { id, index, name,
+  icon, link, slots, free } }, items = { { link, count, quality, icon, bag, slot, quest, bound,
+  noValue } } }`, saved at every change at a banker; `dataVersion`. Banks saved before 1.2.0 lack
+  `index`, `free`, `maxTabs` and `nextCost` until the next visit to a banker (read with defaults).
 - Migrations: account 2 (2026-11-10) removes `sellJunkButton`; character 2 (2026-11-14) removes
   `sets` (the Sets tab).
 
@@ -236,9 +250,9 @@ with a default need no migration; a key that is removed or changes meaning needs
 - `QuestHints.lua` – items that later quests need (QuestieDB).
 - `BagSwap.lua` – bag swaps and which bags get a green arrow.
 - `Layout.lua` – rearranges the bag window: groups, parts, headings, marks, locks, special and
-  reagent bags, money and bag row, search, tabs, views, drop glow, fade. (2,366 lines – a candidate
+  reagent bags, money, bag row and the bank's row, search, tabs, views, drop glow, fade. (2,583 lines – a candidate
   for splitting, section 10.)
-- `Bank.lua` – the Bank tab, saved bank, tooltip counts, the game's bank window.
+- `Bank.lua` – the Bank tab, saved bank, the bank's slots and bags, tooltip counts, the game's bank window.
 - `QuestsView.lua` – the Quests tab.
 - `Marks.lua` – favorites, junk list marks, Alt-click, the gear button and its menu, Language ▸.
 - `Panels.lua` – the junk list and own groups in the bag window.
@@ -333,8 +347,14 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
     Right-click an item in Bank → bags, and in Bags → bank; drag between the tabs; drop on empty
     space in Bank → bank; "N free" shows the bank's free slots. Gear → "Show the game's bank window"
     and back. Closing the bags closes the bank. Open the character window (C) at the banker.
+    Bottom row: the chest with its size, your bank bags with their size, an empty bought slot, "+"
+    (tooltip with the price; a click shows the game's bank window) and locks. Point at the chest or a
+    bag – its items light up. Drop a bag on an empty bag slot – it goes in; on a bag – they swap;
+    drop another item on a bag – it goes in that bag. Point at "N free" – free slots per container.
+    Show by bag: headings "Bank · N free" and the bags' names. Buy a slot – the row shows it.
 23. Away from the banker: "You're not at a banker – this is what your bank held today …"; a character
     that never visited: "Visit a banker once …". "Use the Bank tab at bankers" off: the game's window.
+    The bottom row and the "N free" tooltip as last time, with "Last seen today".
 24. Tooltip counts: "Bags N · Bank N · Total N" for an item in both; none for an item only in the
     bags; counts follow changes at the banker.
 
@@ -431,7 +451,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 - 2026-11-11: The logo replaces the game's bag bar; bags are swapped in the bag row.
 - 2026-11-12: All options in the gear menu; the game's options page only informs.
 - 2026-11-14: Solid window background; the Sets tab removed; the window opens on Bags.
-- 2026-11-15: Languages (section 7); Show ▸ with headings; the guide shows the Bank tab.
+- 2026-11-15: Languages (section 7); Show ▸ with headings; the guide shows the Bank tab; the Bank
+  tab's bottom row shows the bank's slots, and "+" sends you to the game's bank window to buy.
 
 **Open ideas** (proposed, not decided)
 - Counts for all your characters in the tooltip (needs bags and bank saved per character in
@@ -440,7 +461,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
   `Camelot/BankFrame.lua`).
 - Controller access to the Bank tab and the panels (issue #6).
 - Split `Layout.lua` into smaller files.
-- Bank: bank bags and buying slots in the bottom row (issue #4).
+- Bank: buy the next bag slot right from the "+" (`C_Bank.PurchaseBankTab` must be called in the
+  click itself; issue #4).
 
 **Rejected by the owner – don't suggest again unless asked**
 - 2026-11-09: several looks, choosing the order, mail and trade, browsing other characters' bags.
