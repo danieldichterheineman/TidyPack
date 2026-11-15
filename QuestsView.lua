@@ -1,41 +1,41 @@
 -- TidyPack – QuestsView.lua
--- Fliken Quests i väskfönstret: en lista över quests som kräver saker. Avsnitten "Ready to turn in",
--- "In progress" och "Other quest items" fäller du ut med ett klick på rubriken, och då syns en rad
--- per quest med namn och hur långt du kommit. Ett klick på en quest fäller ut just den: de riktiga
--- rutorna du har (de går att använda, dra och sälja som i väskan, och har samma lås hos en
--- handlare) och vad som behövs. Det du inte har plockat än syns som en tom ruta. Saker som spelet
--- själv markerat som quest-saker men som inte hör till en quest står sist under "Other quest
--- items". Valen sparas i TidyPackDB.questOpen. Från början är allt hopfällt, utom "Ready to turn in"
--- när någon quest är klar. Samma rutor flyttas mellan flikarna (Layout.lua), så en sak syns
--- aldrig på två ställen.
--- Layout.lua ger den här filen rutorna och en funktion för att placera dem, och filen lägger ut
--- rubriker och texter (de delarna återanvänds mellan genomgångarna).
--- ⚠️ Sakerna känns igen på namnet i questloggens text, alltså på spelets språk.
--- ⚠️ Får inte alla quests plats får de sista vänta ("...and N more"), eftersom fönstret inte
---    får bli högre än skärmen. Fäll då ihop ett avsnitt.
+-- The Quests tab in the bag window: a list of quests that need items. You open the parts "Ready to
+-- turn in", "In progress" and "Other quest items" with a click on the heading, and then there is a
+-- line per quest with its name and how far you've come. A click on a quest opens just that one: the
+-- real item buttons you have (they can be used, dragged and sold as in the bags, and have the same
+-- locks at a merchant) and what is needed. What you haven't picked up yet shows as an empty slot.
+-- Items the game itself marks as quest items but that don't belong to a quest come last under
+-- "Other quest items". The choices are saved in TidyPackDB.questOpen. At first everything is closed,
+-- except "Ready to turn in" when a quest is ready. The same buttons move between the tabs
+-- (Layout.lua), so an item never shows in two places.
+-- Layout.lua gives this file the buttons and a function to place them, and this file lays out
+-- headings and texts (those parts are reused between passes).
+-- ⚠️ Items are recognised by their name in the quest log's text, so in the game's language.
+-- ⚠️ The list never makes the window taller than the other tabs; it scrolls with the mouse wheel
+--    instead (ns.ScrollQuests).
 
 local _, ns = ...
 local L = ns.L
 
-local ITEM_CELL = 42          -- en ruta och luften efter den
-local OBJECTIVE_HEIGHT = 30   -- en rad för en sak i en uppfälld quest
-local SMALL_ICON = 26         -- en liten ruta i en uppfälld quest
+local ITEM_CELL = 42          -- one slot and the space after it
+local OBJECTIVE_HEIGHT = 30   -- one line for an item in an opened quest
+local SMALL_ICON = 26         -- a small slot in an opened quest
 local SMALL_CELL = 28
-local QUEST_HEIGHT = 24       -- en quests rad när den är hopfälld
-local INDENT = 16             -- quests står indragna under sin rubrik
-local SCROLL_WIDTH = 4        -- rullistens bredd
-local SCROLL_ROOM = 12        -- plats till höger för rullisten
-local scrollOffset = 0        -- hur många delar listan är rullad
+local QUEST_HEIGHT = 24       -- a quest's line when it is closed
+local INDENT = 16             -- quests are indented under their heading
+local SCROLL_WIDTH = 4        -- the scroll bar's width
+local SCROLL_ROOM = 12        -- room to the right for the scroll bar
+local scrollOffset = 0        -- how many parts the list is scrolled
 local maxOffset = 0
-local track, thumb            -- rullisten
-local HEADER_HEIGHT = 26      -- ett avsnitts rubrik
+local track, thumb            -- the scroll bar
+local HEADER_HEIGHT = 26      -- a part's heading
 local SECTION_GAP = 6
-local MAX_SLOTS = 4           -- så många rutor (högar av samma sak) visas på en rad
+local MAX_SLOTS = 4           -- this many slots (stacks of the same item) show in one line
 local GHOST_SIZE = 22
 local EMPTY_SLOT = "Interface\\Buttons\\UI-EmptySlot"
 local CHECK = "common-icon-checkmark"
 
-local host                    -- en egen ram i väskfönstret för texterna och rubrikerna
+local host                    -- an own frame in the bag window for the texts and headings
 local texts, ghosts, headers = {}, {}, {}
 local usedTexts, usedGhosts, usedHeaders = 0, 0, 0
 
@@ -83,7 +83,7 @@ local function acquireGhost()
     return ghost
 end
 
--- Är avsnittet öppet? Sparat val först, annars: bara "Ready to turn in" när någon quest är klar.
+-- Is the part open? A saved choice first, otherwise: only "Ready to turn in" when a quest is ready.
 local function isOpen(key, defaultOpen)
     local saved = ns.db and ns.db.questOpen and ns.db.questOpen[key]
     if saved == nil then
@@ -92,7 +92,7 @@ local function isOpen(key, defaultOpen)
     return saved
 end
 
--- En rubrik du kan klicka på för att öppna eller fälla ihop avsnittet.
+-- A heading you can click to open or close the part.
 local function acquireHeader(key, text, rightText, open, color, width, indent)
     usedHeaders = usedHeaders + 1
     local header = headers[usedHeaders]
@@ -130,8 +130,8 @@ local function acquireHeader(key, text, rightText, open, color, width, indent)
     return header
 end
 
--- Döljer allt som den här filen har lagt ut (när du byter till en annan flik, och först i varje
--- genomgång av fliken Quests).
+-- Hides everything this file has laid out (when you switch to another tab, and first in every
+-- pass of the Quests tab).
 function ns.HideQuestsView()
     for _, text in ipairs(texts) do
         text:Hide()
@@ -157,7 +157,7 @@ local function progressText(have, need)
     return text
 end
 
--- Rullar listan en del (mushjulet över väskan, Layout.lua). delta 1 = uppåt.
+-- Scrolls the list one part (the mouse wheel over the bags, Layout.lua). delta 1 = up.
 function ns.ScrollQuests(delta)
     local new = math.max(0, math.min(scrollOffset - delta, maxOffset))
     if new ~= scrollOffset then
@@ -168,13 +168,13 @@ function ns.ScrollQuests(delta)
     end
 end
 
--- Lägger ut fliken Quests.
---   byName      sakens namn → rutorna (entries i Layout.lua) som hör till en quest
---   others      rutor med saker som spelet markerat som quest-saker men som inte hör till en quest ovan
---   width       rutnätets bredd
---   maxHeight   så högt får innehållet bli (nil = obegränsat)
---   placeEntry(entry, x, y) och placeRegion(del, x, y) placerar en ruta eller en text, rubrik eller bild
--- Returnerar höjden, listan med rutor i ordning och första rutan i varje quest (för handkontrollen).
+-- Lays out the Quests tab.
+--   byName      item name → the buttons (entries in Layout.lua) that belong to a quest
+--   others      buttons with items the game marks as quest items but that belong to no quest above
+--   width       the grid's width
+--   maxHeight   how tall the content may get (nil = no limit)
+--   placeEntry(entry, x, y) and placeRegion(part, x, y) place a button or a text, heading or image
+-- Returns the height, the list of buttons in order and the first button of each quest (for the controller).
 function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeRegion)
     ensureHost()
     ns.HideQuestsView()
@@ -187,9 +187,9 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
     end
 
     local y = 0
-    local placedEntries = {}  -- en ruta visas bara en gång, även om flera quests behöver saken
+    local placedEntries = {}  -- a button shows only once, even if several quests need the item
 
-    -- Plats för rullisten till höger, så att siffrorna inte hamnar under den.
+    -- Room for the scroll bar on the right, so the numbers don't end up under it.
     local rowWidth = width - SCROLL_ROOM
 
     local function section(key, label, count, open, color)
@@ -198,7 +198,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         y = y + HEADER_HEIGHT
     end
 
-    -- Hur långt en quest har kommit: antalet om en sak, annars hur många mål som är klara.
+    -- How far a quest has come: the count for one item, otherwise how many objectives are done.
     local function questTotal(quest)
         if #quest.objectives == 1 then
             return progressText(quest.objectives[1].have, quest.objectives[1].need)
@@ -212,8 +212,8 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         return progressText(done, #quest.objectives)
     end
 
-    -- Innehållet i en uppfälld quest: en rad för varje sak, med en liten ruta för varje hög du har
-    -- (eller en tom ruta) och därefter sakens namn och hur många som behövs. Returnerar höjden.
+    -- The content of an opened quest: a line per item, with a small slot for each stack you have
+    -- (or an empty slot), then the item's name and how many are needed. Returns the height.
     local function placeBody(quest)
         local rowY = y
         local first
@@ -233,7 +233,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
                 end
             else
                 placeRegion(acquireGhost(), INDENT + 2, rowY + 4)
-                shown = 1 -- den tomma rutan tar en plats
+                shown = 1 -- the empty slot takes one place
             end
             local line = acquireText("GameFontHighlightSmall")
             local textX = INDENT + math.max(shown, 1) * SMALL_CELL + 4
@@ -246,7 +246,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         return rowY - y + 2
     end
 
-    -- En quest: en rad du kan klicka på, och när den är uppfälld dess innehåll.
+    -- A quest: a line you can click, and when it is open, its content.
     local function placeQuest(quest)
         local key = "q" .. quest.questID
         local open = isOpen(key, false)
@@ -261,9 +261,9 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         end
     end
 
-    -- Allt som kan visas, som en lista med delar (rubrik, quest, rad med rutor) och deras höjd. Fliken
-    -- är aldrig högre än de andra flikarna; ryms inte allt rullar man med mushjulet (ns.ScrollQuests),
-    -- och en smal rullist till höger visar var man är (användarens önskan 2026-11-11).
+    -- Everything that can show, as a list of parts (heading, quest, line of slots) and their height.
+    -- The tab is never taller than the other tabs; if not everything fits you scroll with the mouse
+    -- wheel (ns.ScrollQuests), and a thin scroll bar on the right shows where you are (2026-11-11).
     local units = {}
     local function addUnit(height, draw)
         units[#units + 1] = { height = height, draw = draw }
@@ -294,7 +294,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
     addSection("ready", L["Ready to turn in"], ready, GREEN_FONT_COLOR, true)
     addSection("progress", L["In progress"], progress, NORMAL_FONT_COLOR, false)
 
-    -- Quest-saker utan quest ovan, i ett rutnät (en del per rad).
+    -- Quest items without a quest above, in a grid (one part per row).
     if #others > 0 then
         local open = isOpen("other", false)
         addUnit(HEADER_HEIGHT, function()
@@ -318,7 +318,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         addUnit(SECTION_GAP, nil)
     end
 
-    -- Hur mycket som ryms, och var listan börjar.
+    -- How much fits, and where the list starts.
     local total = 0
     for _, unit in ipairs(units) do
         total = total + unit.height
@@ -326,7 +326,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
     local scrolling = maxHeight and total > maxHeight
     local firstUnit = 1
     if scrolling then
-        -- Den sista platsen man kan rulla till: så att listans slut står längst ner.
+        -- The last place you can scroll to: so that the end of the list is at the bottom.
         local lastStart, room = #units, maxHeight
         for index = #units, 1, -1 do
             if room - units[index].height < 0 then
@@ -355,7 +355,7 @@ function ns.BuildQuestsView(byName, others, width, maxHeight, placeEntry, placeR
         y = unitY + unit.height
     end
 
-    -- Rullisten: ett smalt spår och en markering för den del som syns.
+    -- The scroll bar: a thin track and a marker for the part that shows.
     if scrolling then
         local before = 0
         for index = 1, firstUnit - 1 do
