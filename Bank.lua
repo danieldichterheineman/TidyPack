@@ -482,6 +482,11 @@ local function updateGameBankFrame()
         BankFrame:SetScale(originalScale)
     end
     gameFrameHidden = hide
+    -- The game shrank the bags to leave room for its window when it opened them; they get their size
+    -- back now that the window is invisible (Layout.lua).
+    if hide and ns.KeepBagScaleAtBank then
+        ns.KeepBagScaleAtBank()
+    end
 end
 
 -- Safety net from Layout.lua: says when the Bank tab finished drawing (or when the layout failed).

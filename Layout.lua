@@ -632,6 +632,7 @@ end
 
 local updateFreeText -- further down; applySize updates the free-slot count
 local hideReagentBagFrame -- further down; hides the game's separate reagent window with the mouse
+local keepBagScaleAtBank  -- further down; the bags' size at a banker, without the game's bank window
 local hoveredBagID -- the bag the mouse points at in the bag row, otherwise nil
 
 local function wantSearchBox()
@@ -757,6 +758,9 @@ local function applySize()
     positionSearchBox()
     if hideReagentBagFrame then
         hideReagentBagFrame()
+    end
+    if keepBagScaleAtBank then
+        keepBagScaleAtBank()
     end
 end
 
@@ -2475,8 +2479,39 @@ ns.OnLoad(function()
         reagentFrame:ClearAllPoints()
         reagentFrame:SetPoint("TOPLEFT", UIParent, "TOPRIGHT", 1000, 1000)
     end
+    -- At a banker the game shrinks the bags so they don't overlap its bank window (GetContainerScale in
+    -- ContainerFrame.lua: leftLimit = BankFrame:GetRight()), but only when it places the bags – so the
+    -- bags got smaller when the bank opened them, and not when they were already open (the owner's
+    -- screenshots 2026-11-15). Tidy Pack makes that window invisible (Bank.lua), so the bags get the
+    -- size the game's own rule gives without it: as large as possible, at most 1, at least 0.75, and
+    -- short enough to fit above CONTAINER_OFFSET_Y. The offsets are kept where the game put them.
+    keepBagScaleAtBank = function()
+        if not (BankFrame and BankFrame:IsShown() and ns.IsGameBankFrameShown and not ns.IsGameBankFrameShown())
+            or not bagFrame:IsShown() then
+            return
+        end
+        local wanted = 1
+        while wanted > 0.75 and bagFrame:GetHeight(true) > (GetScreenHeight() - (CONTAINER_OFFSET_Y or 85)) / wanted do
+            wanted = wanted - 0.01
+        end
+        wanted = math.max(wanted, 0.75)
+        local old = bagFrame:GetScale()
+        if math.abs(wanted - old) < 0.001 then
+            return
+        end
+        local point, relativeTo, relativePoint, x, y = bagFrame:GetPoint(1)
+        bagFrame:SetScale(wanted)
+        if point then
+            bagFrame:ClearAllPoints()
+            bagFrame:SetPoint(point, relativeTo, relativePoint, x * old / wanted, y * old / wanted)
+        end
+    end
+    ns.KeepBagScaleAtBank = keepBagScaleAtBank
     if UpdateContainerFrameAnchors then
-        hooksecurefunc("UpdateContainerFrameAnchors", hideReagentBagFrame)
+        hooksecurefunc("UpdateContainerFrameAnchors", function()
+            hideReagentBagFrame()
+            keepBagScaleAtBank()
+        end)
     end
 
     -- When the window closes, the group New is forgotten and any search text is cleared.

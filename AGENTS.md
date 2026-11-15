@@ -80,8 +80,11 @@ controller. The rules below each come from a real problem.
    (`HookScript("OnShow")`), so it never flashes (2026-11-15; waiting for the first layout let it
    show for a frame). The safety net: an error in a layout (`ns.SetBankLayoutOk(false)`) or no Bank
    tab laid out within a second brings the game's window back. The bags switch to Bank at once and
-   again a frame later (`ns.SetView("bank", true)`, no fade). The reagent bag's own window is moved
-   off screen the same way.
+   again a frame later (`ns.SetView("bank", true)`, no fade). The game shrinks the bags to leave room
+   for its bank window when it opens them (`GetContainerScale`, `leftLimit = BankFrame:GetRight()`),
+   so `Layout.lua` (`keepBagScaleAtBank`, after `UpdateContainerFrameAnchors` and when the window
+   turns invisible) gives them the game's scale without the bank window. The reagent bag's own window
+   is moved off screen the same way.
 7. **Own item buttons use the game's template** (`ContainerFrameItemButtonTemplate`) on a holder
    frame with `SetID(bag)`, and the button with `SetID(slot)`. The game's click reads
    `GetParent():GetID()` and `GetID()`, so right-click, drag and drop work untainted. Never set
@@ -370,7 +373,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 **Bank**
 22. At a banker: the bags open on the Bank tab, sorted, with no blue frame on the slots (also the
     first time after `/reload`); the game's bank window never shows, not even for a moment, and the
-    Bags tab doesn't flash first.
+    Bags tab doesn't flash first. The bag window has the same size whether the bags were open or
+    closed when you spoke to the banker.
     Right-click an item in Bank → bags, and in Bags → bank; drag between the tabs; drop on empty
     space in Bank → bank; "N free" shows the bank's free slots. Gear → "Show the game's bank window"
     and back. Closing the bags closes the bank. Open the character window (C) at the banker.
