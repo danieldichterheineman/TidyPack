@@ -1,0 +1,78 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Tidy Pack – sketch: choosing a language</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1500px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:720px 720px;gap:20px}.col h2{font-size:14px;color:#ffd100;margin:0 0 6px}
+.scr{position:relative;height:360px;background:radial-gradient(ellipse at 50% 40%,#3d4a3a,#161a16);border:1px solid #2a2f3a;overflow:hidden}
+.tabs{position:absolute;display:flex;gap:3px}
+.tab{width:78px;height:22px;background:linear-gradient(#3a3226,#201a12);border:1px solid #6e6252;border-bottom:none;border-radius:5px 5px 0 0;color:#ffd100;font:12px/21px Georgia;text-align:center}
+.tab.on{background:linear-gradient(#5a4a2a,#2a2014);color:#fff;border-color:#d4af37}
+.bag{position:absolute;background:#1a1816;border:2px solid #6e6252;border-radius:5px}
+.bag .t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;color:#ffd100;text-align:center;font:14px/18px Arial}
+.inset{position:absolute;left:8px;right:8px;top:30px;bottom:34px;background:#0d0c0b;border:1px solid #3a342c;padding:6px 8px}
+.gr{display:inline-block;vertical-align:top;margin:0 12px 6px 0}.gr b{display:block;color:#ffd100;font:11px Arial;font-weight:normal;margin-bottom:3px}
+.sl{display:inline-block;width:26px;height:26px;border:1px solid #555;border-radius:3px;margin-right:3px}
+.money{position:absolute;left:8px;right:8px;bottom:6px;height:22px;color:#ddd;font:11px/22px Arial;text-align:right;padding-right:6px}
+.m{position:absolute;background:#0c0c0c;border:1px solid #777;padding:4px 10px;font:12px/1.75 Arial;color:#fff;white-space:nowrap;z-index:3}
+.m b{color:#ffd100;font-weight:normal;display:block}.m .a{display:flex;justify-content:space-between;gap:18px}.m .a i{color:#ffd100;font-style:normal}
+.m .sep{border-top:1px solid #444;margin:3px 0}.m .hl{background:#2b2b3a;margin:0 -10px;padding:0 10px}
+.m .r{display:flex;gap:6px;align-items:center}.m .r::before{content:"";width:9px;height:9px;border-radius:50%;border:1px solid #aaa;display:inline-block}
+.m .r.sel::before{background:#ffd100;border-color:#ffd100}
+.sub{z-index:4;border-color:#4aa3ff}
+.dlg{position:absolute;width:320px;background:#15130f;border:2px solid #8a7a5a;border-radius:6px;z-index:5;box-shadow:0 6px 18px #000}
+.dlg .t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000}
+.dlg p{margin:12px 16px 14px;text-align:center;color:#fff;font:13px/1.4 Arial}
+.btns{display:flex;justify-content:center;gap:8px;margin-bottom:12px}
+.btn{min-width:100px;height:22px;padding:0 10px;background:linear-gradient(#a01818,#5a0808);border:1px solid #d4af37;border-radius:3px;color:#ffd100;font:12px/20px Arial;text-align:center}
+.call{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:12px/1.3 Arial;padding:4px 8px;border-radius:4px;z-index:6}
+.ptr{position:absolute;z-index:7;color:#fff;font:18px Arial;text-shadow:1px 1px 0 #000}
+</style></head><body>
+<h1>Choosing a language</h1>
+<p class="n">A sketch, not the game. Blue boxes explain. The gear menu, the question and the window are drawn roughly; in the game they are the game's own menu and Tidy Pack's own dialog.</p>
+<div class="grid">
+
+<div class="col"><h2>1. Gear → Language ▸: Automatic and the game's eleven languages</h2><div class="scr">
+<div class="tabs" style="left:40px;top:38px"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Quests</div></div>
+<div class="bag" style="left:30px;top:60px;width:330px;height:270px"><div class="t">&nbsp;</div><div class="g">⚙</div><div class="x"></div>
+<div class="inset"><div class="gr"><b>★ Favorites</b><span class="sl" style="background:#8ab"></span></div><div class="gr"><b>Consumables</b><span class="sl" style="background:#c33"></span><span class="sl" style="background:#36c"></span></div><br><div class="gr"><b>Equipment</b><span class="sl" style="background:#69a"></span><span class="sl" style="background:#a64"></span></div></div>
+<div class="money">27 ● 26 ●</div></div>
+<div class="m" style="left:250px;top:84px"><b>Tidy Pack</b>Junk List...<br>Groups...<div class="sep"></div><div class="a">Show<i>▶</i></div><div class="a">Merchants and loot<i>▶</i></div><div class="a">Bag and bank<i>▶</i></div><div class="a hl">Language<i>▶</i></div><div class="sep"></div>Show Tips Again</div>
+<div class="m sub" style="left:430px;top:40px"><div class="r sel">Automatic (English)</div><div class="r">English</div><div class="r hl">Deutsch</div><div class="r">Español (España)</div><div class="r">Español (Latinoamérica)</div><div class="r">Français</div><div class="r">Italiano</div><div class="r">Português (Brasil)</div><div class="r">Русский</div><div class="r">한국어</div><div class="r">简体中文</div><div class="r">繁體中文</div></div>
+<div class="ptr" style="left:500px;top:84px">⬉</div>
+<div class="call" style="left:20px;top:8px">Each language in its own name. "Automatic" follows the game.</div>
+<div class="call" style="left:600px;top:250px;width:110px">Click Deutsch: the menu closes →</div>
+</div></div>
+
+<div class="col"><h2>2. Tidy Pack asks before anything changes</h2><div class="scr">
+<div class="tabs" style="left:40px;top:38px"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Quests</div></div>
+<div class="bag" style="left:30px;top:60px;width:330px;height:270px;opacity:.75"><div class="t">&nbsp;</div><div class="g">⚙</div><div class="x"></div>
+<div class="inset"><div class="gr"><b>★ Favorites</b><span class="sl" style="background:#8ab"></span></div><div class="gr"><b>Consumables</b><span class="sl" style="background:#c33"></span><span class="sl" style="background:#36c"></span></div><br><div class="gr"><b>Equipment</b><span class="sl" style="background:#69a"></span><span class="sl" style="background:#a64"></span></div></div>
+<div class="money">27 ● 26 ●</div></div>
+<div class="dlg" style="left:330px;top:80px"><div class="t">Tidy Pack</div><p>Reload the interface now to show Tidy Pack in Deutsch?</p><div class="btns"><div class="btn">Reload Now</div><div class="btn">Cancel</div></div></div>
+<div class="call" style="left:390px;top:210px;width:280px">Nothing is saved yet. The question is Tidy Pack's own dialog, not the game's shared popup, so the game never blocks anything.</div>
+<div class="call" style="left:20px;top:8px">The buttons and the box grow with the text, so long translations fit.</div>
+</div></div>
+
+<div class="col"><h2>3a. Cancel: nothing changes</h2><div class="scr">
+<div class="tabs" style="left:40px;top:38px"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Quests</div></div>
+<div class="bag" style="left:30px;top:60px;width:330px;height:270px"><div class="t">&nbsp;</div><div class="g">⚙</div><div class="x"></div>
+<div class="inset"><div class="gr"><b>★ Favorites</b><span class="sl" style="background:#8ab"></span></div><div class="gr"><b>Consumables</b><span class="sl" style="background:#c33"></span><span class="sl" style="background:#36c"></span></div><br><div class="gr"><b>Equipment</b><span class="sl" style="background:#69a"></span><span class="sl" style="background:#a64"></span></div></div>
+<div class="money">27 ● 26 ●</div></div>
+<div class="m sub" style="left:430px;top:60px"><div class="r sel">Automatic (English)</div><div class="r">English</div><div class="r">Deutsch</div><div class="r">…</div></div>
+<div class="call" style="left:400px;top:190px;width:300px">No reload, and the language stays as it was. Language ▸ still has the old choice ticked.</div>
+<div class="call" style="left:20px;top:8px">Same language (e.g. Automatic → English on an English game): saved at once, no question.</div>
+</div></div>
+
+<div class="col"><h2>3b. Reload Now: the interface reloads in German</h2><div class="scr">
+<div class="tabs" style="left:40px;top:38px"><div class="tab on">Taschen</div><div class="tab">Bank</div><div class="tab">Quests</div></div>
+<div class="bag" style="left:30px;top:60px;width:330px;height:270px"><div class="t">&nbsp;</div><div class="g">⚙</div><div class="x"></div>
+<div class="inset"><div class="gr"><b>★ Favoriten</b><span class="sl" style="background:#8ab"></span></div><div class="gr"><b>Verbrauchbares</b><span class="sl" style="background:#c33"></span><span class="sl" style="background:#36c"></span></div><br><div class="gr"><b>Ausrüstung</b><span class="sl" style="background:#69a"></span><span class="sl" style="background:#a64"></span></div></div>
+<div class="money">27 ● 26 ●</div></div>
+<div class="m" style="left:250px;top:84px"><b>Tidy Pack</b>Plunderliste...<br>Gruppen...<div class="sep"></div><div class="a">Anzeigen<i>▶</i></div><div class="a">Händler und Beute<i>▶</i></div><div class="a">Taschen und Bank<i>▶</i></div><div class="a">Sprache<i>▶</i></div><div class="sep"></div>Tipps erneut zeigen</div>
+<div class="call" style="left:440px;top:90px;width:260px">Tabs, headings, menus, tooltips, panels and questions in German. Item names and the game's own buttons stay in the game's language.</div>
+<div class="call" style="left:440px;top:210px;width:260px">Back to English: Sprache ▸ Automatisch (English) → the same question, in German.</div>
+</div></div>
+
+</div></body></html>
