@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Tidy Pack – sketch: money on your characters</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#0b0d12;color:#d8d8d8;font:14px/1.4 Arial,sans-serif;width:1500px}
+h1{font-size:20px;margin:0 0 4px;color:#fff}.n{color:#a8a8a8;margin:0 0 14px;max-width:1440px}
+.grid{display:grid;grid-template-columns:720px 720px;gap:22px 20px}.col h2{font-size:14px;color:#ffd100;margin:0 0 6px}
+.scr{position:relative;height:350px;background:radial-gradient(ellipse at 50% 40%,#3d4a3a,#161a16);border:1px solid #2a2f3a;overflow:hidden}
+.tabs{position:absolute;display:flex;gap:3px}
+.tab{width:78px;height:22px;background:linear-gradient(#3a3226,#201a12);border:1px solid #6e6252;border-bottom:none;border-radius:5px 5px 0 0;color:#ffd100;font:12px/21px Georgia;text-align:center}
+.tab.on{background:linear-gradient(#5a4a2a,#2a2014);color:#fff;border-color:#d4af37}
+.bag{position:absolute;background:#1a1816;border:2px solid #6e6252;border-radius:5px}
+.bag .t{height:22px;background:linear-gradient(#3a3631,#24221f);color:#ffd100;font:12px/22px Georgia;text-align:center;border-bottom:1px solid #000}
+.x{position:absolute;top:2px;right:3px;width:18px;height:18px;border-radius:50%;background:#a01010;border:1px solid #d4af37}
+.g{position:absolute;top:2px;right:25px;width:18px;height:18px;color:#ffd100;text-align:center;font:14px/18px Arial}
+.inset{position:absolute;left:8px;right:8px;top:30px;bottom:52px;background:#0d0c0b;border:1px solid #3a342c;padding:6px 8px;overflow:hidden}
+.gr{display:inline-block;vertical-align:top;margin:0 10px 4px 0}.gr b{display:block;color:#ffd100;font:11px Arial;font-weight:normal;margin-bottom:2px}
+.sl{display:inline-block;width:24px;height:24px;border:1px solid #555;border-radius:3px;margin-right:2px;position:relative;background:#0a0a0a}
+.sl i{position:absolute;inset:2px;border-radius:2px}
+.foot{position:absolute;left:8px;right:8px;bottom:6px;height:38px;display:flex;align-items:center;gap:5px;font:11px Arial;color:#fff;background:#151210;border:1px solid #4a3a20;border-radius:4px;padding:0 8px}
+.foot .free{margin-right:6px}.money{margin-left:auto;color:#ddd;padding:2px 4px}.money.hover{outline:1px solid #ffd100;border-radius:3px}
+.bb{width:20px;height:20px;border:1px solid #888;border-radius:3px;background:#3a2a18;flex:none}
+.co{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:-1px;margin:0 3px 0 2px}
+.au{background:#e8c13a}.ag{background:#c0c0c0}.cu{background:#b87333}
+.tip{position:absolute;background:#0c0c18;border:1px solid #888;border-radius:4px;padding:6px 9px;font:12px/1.55 Arial;color:#fff;z-index:5;white-space:nowrap}
+.tip b{color:#fff;font-size:13px;display:block;font-weight:normal}.tip .y{color:#ffd100}.tip .gy{color:#999}
+.tip .row{display:flex;justify-content:space-between;gap:28px}
+.war{color:#c69b6d}.mag{color:#3fc7eb}.pal{color:#f48cba}
+.call{position:absolute;background:#12263d;border:1px solid #4aa3ff;color:#bfe0ff;font:12px/1.3 Arial;padding:4px 8px;border-radius:4px;z-index:6}
+.m{position:absolute;background:#0c0c0c;border:1px solid #777;padding:4px 10px;font:12px/1.75 Arial;color:#fff;white-space:nowrap;z-index:3}
+.m .h{color:#999;font-size:11px}.m .hl{background:#2b2b3a;margin:0 -10px;padding:0 10px}
+.m .c{display:flex;gap:6px;align-items:center}.m .c::before{content:"";width:10px;height:10px;border:1px solid #aaa;display:inline-block;background:#111}
+.m .c.on::before{background:#ffd100;border-color:#ffd100}
+.ptr{position:absolute;z-index:8;color:#fff;font:18px Arial;text-shadow:1px 1px 0 #000}
+</style></head><body>
+<h1>Money on your characters – proposal</h1>
+<p class="n">A sketch, not the game. Point at the money at the bottom right of the bag window, and a tooltip shows how much each of your characters on this realm has, and the total – the same kind of tooltip as "N free". Each character saves its money when you play it (together with its item counts), so a character shows up after you have logged in with it once.</p>
+<div class="grid">
+
+<div class="col"><h2>1. Point at the money</h2><div class="scr">
+<div class="tabs" style="left:40px;top:18px"><div class="tab on">Bags</div><div class="tab">Bank</div><div class="tab">Quests</div></div>
+<div class="bag" style="left:30px;top:40px;width:420px;height:295px"><div class="t">&nbsp;</div><div class="g">⚙</div><div class="x"></div>
+<div class="inset"><div class="gr"><b>Consumables</b><span class="sl"><i style="background:#c33"></i></span><span class="sl"><i style="background:#36c"></i></span></div><div class="gr"><b>Trade Goods</b><span class="sl"><i style="background:#c9b48a"></i></span><span class="sl"><i style="background:#8a6"></i></span></div></div>
+<div class="foot"><span class="free">18 free</span><span class="bb"></span><span class="bb"></span><span class="bb"></span><span class="bb"></span><span class="money hover">1<span class="co au"></span>43<span class="co ag"></span>6<span class="co cu"></span></span></div></div>
+<div class="ptr" style="left:405px;top:310px">⬉</div>
+<div class="tip" style="left:236px;top:112px;width:250px"><b>Money</b><span class="y">Total: 2,489<span class="co au"></span>11<span class="co ag"></span>30<span class="co cu"></span></span>
+<div class="row"><span class="war">Daniel</span><span>1<span class="co au"></span>43<span class="co ag"></span>6<span class="co cu"></span></span></div>
+<div class="row"><span class="pal">Torvald</span><span>1,957<span class="co au"></span>56<span class="co ag"></span>24<span class="co cu"></span></span></div>
+<div class="row"><span class="mag">Mira</span><span>430<span class="co au"></span>12<span class="co ag"></span>0<span class="co cu"></span></span></div>
+<div class="row"><span>Account bank</span><span>100<span class="co au"></span>0<span class="co ag"></span>0<span class="co cu"></span></span></div></div>
+<div class="call" style="left:500px;top:40px;width:205px">The character you play first, then the others with the most first. Names in their class color, like in item tooltips.</div>
+<div class="call" style="left:500px;top:118px;width:205px">The gold line is the total of everything below – like "15 free of 48" in the bank's tooltip.</div>
+<div class="call" style="left:500px;top:182px;width:205px">"Account bank": money in the bank all your characters share. Only shown when there is some.</div>
+<div class="call" style="left:500px;top:262px;width:205px">At most 8 characters; the rest as "+2 more characters", still counted in the total.</div>
+</div></div>
+
+<div class="col"><h2>2. When there is no tooltip, and how to turn it off</h2><div class="scr">
+<div class="call" style="left:20px;top:16px;width:300px">Only one character (and nothing in the account bank): no tooltip – the money row already says it all.</div>
+<div class="call" style="left:20px;top:84px;width:300px">Clicking the money works as before: the game's own box for picking up money opens (for trading or mail).</div>
+<div class="call" style="left:20px;top:152px;width:300px">Only characters on this realm, the same as the item counts. Gear → Bag and bank → Forget a Character removes their money too.</div>
+<div class="m" style="left:360px;top:18px"><div class="h">In tooltips</div><div class="c on">Bag and bank counts</div><div class="c on hl">Other characters</div><div class="c on">Group line</div></div>
+<div class="tip" style="left:360px;top:122px;width:330px;white-space:normal"><b>Other characters</b>Item tooltips and the money's tooltip also show your other characters on this realm, as it was when you last played them. A character shows up after you log in with it once, and its bank after a visit to a banker.</div>
+<div class="call" style="left:360px;top:258px;width:330px">No new option: "Other characters" (gear → Show) turns off the money tooltip too. Its explanation gets the words "and the money's tooltip".</div>
+</div></div>
+
+</div></body></html>
