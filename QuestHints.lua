@@ -256,7 +256,11 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tool
     for index = 1, math.min(#quests, MAX_TOOLTIP_QUESTS) do
         tooltip:AddLine(L["Needed later for: %s"]:format(describeQuest(quests[index])), NORMAL_FONT_COLOR:GetRGB())
     end
-    if #quests > MAX_TOOLTIP_QUESTS then
-        tooltip:AddLine(L["...and %d more quests"]:format(#quests - MAX_TOOLTIP_QUESTS), NORMAL_FONT_COLOR:GetRGB())
+    -- Samma ord som raden "Needed for" (QuestLock.lua), med ental för en enda quest.
+    local more = #quests - MAX_TOOLTIP_QUESTS
+    if more == 1 then
+        tooltip:AddLine(L["And 1 more quest."], NORMAL_FONT_COLOR:GetRGB())
+    elseif more > 1 then
+        tooltip:AddLine(L["And %d more quests."]:format(more), NORMAL_FONT_COLOR:GetRGB())
     end
 end)

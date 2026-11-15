@@ -242,8 +242,15 @@ local function showHeaderTooltip(hover)
     end
     GameTooltip:SetOwner(hover, "ANCHOR_TOPLEFT")
     GameTooltip_SetTitle(GameTooltip, ns.groupNames[hover.group] or hover.text:GetText())
-    GameTooltip_AddNormalLine(GameTooltip, (slots == 1 and L["%d items in 1 slot"] or L["%d items in %d slots"])
-        :format(items, slots))
+    local countText
+    if items == 1 then
+        countText = L["1 item in 1 slot"]
+    elseif slots == 1 then
+        countText = L["%d items in 1 slot"]:format(items)
+    else
+        countText = L["%d items in %d slots"]:format(items, slots)
+    end
+    GameTooltip_AddNormalLine(GameTooltip, countText)
     if value > 0 then
         GameTooltip_AddNormalLine(GameTooltip, L["Worth %s at a merchant"]:format(GetMoneyString(value)))
     end

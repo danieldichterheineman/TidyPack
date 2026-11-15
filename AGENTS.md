@@ -116,7 +116,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
 - ✅ Egna grupper (`Groups.lua`, `GroupsPage.lua`, byggda 2026-11-10 efter skissen
   `.design/sketch-groups.html`): upp till 8 per konto, efter Favorites och "Add to bag". En sak
   läggs dit med kugghjulets meny ("Add to Group ▸", med en bockruta per grupp och "New
-  Group...") eller en hel typ ("Add all "<typ>" items to Group ▸": klass och undertyp ur
+  Group...") eller en hel typ ("Add All "<typ>" Items to Group ▸": klass och undertyp ur
   `C_Item.GetItemInfoInstant`, typens namn ur `C_Item.GetItemSubClassInfo`). En sak eller
   typ ligger i högst en grupp (en bockruta flyttar den). Företräde i `ns.GetGroup`: Favorites,
   New, Quest Items och Junk först, sedan de egna grupperna (enskild sak före typregel, sedan
@@ -152,7 +152,7 @@ Bara väskorna som karaktären bär med sig. Fungerar med mus och handkontroll.
   spelet, särskilt med handkontroll.
 - ⚠️ Inställningar i väskan (`Options.lua`, `Marks.lua`, `Panels.lua`, 2026-11-12; skissen `.design/sketch-settings-in-bag.html`):
   allt finns under kugghjulet. Menyn: Junk List…, Groups…, undermenyerna Show (Item level and BoE, Upgrade
-  arrows, Quest items in Bags, Marks for later quests – grå utan Questie, Bag and bank counts, Tidy Pack lines in
+  arrows, Quest items in Bags, Marks for later quests – grå utan Questie, Bag and bank counts, Group line in
   tooltips `tooltipLines`, Junk value in the header `junkValue`, Search box `showSearchBox`), Merchants and loot (Lock items at merchants, Ask
   to delete junk list loot, Suggest a deletion when full) och Bag and bank (Replace the game's bag buttons, Use the
   Bank tab at bankers, Show by bag `groupByBag`, hos bankiren Show the game's bank window), och Show Tips Again. Valen definieras i
@@ -506,7 +506,7 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     med A kan läggas ner på rutan.
 34. Egna grupper: släpp en dryck på kugghjulet → "Add to Group ▸ New Group..." → namnet "Potions"
     → saken hamnar i gruppen Potions (efter Favorites och "Add to bag"). Släpp en annan dryck →
-    "Add all "Potion" items to Group ▸ Potions": alla drycker flyttar dit och lämnar Consumables.
+    "Add All "Potion" Items to Group ▸ Potions": alla drycker flyttar dit och lämnar Consumables.
     Kontrollera: tooltipen visar "Tidy Pack group: Potions"; en favorit och en skräpmarkerad sak
     ligger kvar i Favorites och Junk; en ny dryck du lootar ligger i New tills du stänger väskan
     och sedan i Potions. Esc → Options → AddOns → Tidy Pack → Groups: välj gruppen, ▲▼ ändrar
@@ -523,7 +523,7 @@ kontrakt 3 (ett annat addon, som skriptet inte läser).
     Rename, ✕ (frågar), klicka en rad för att fälla ut: regler med kryss, små rutor, "+", skrivruta. Esc →
     Options → AddOns → Tidy Pack: logga, version, "By …", hjälpen, länken och Show Tips Again; klicka på länken, Cmd+C,
     klistra in i webbläsaren (öppna sidan också i strid: ingen "Interface action failed"). Högerklick på loggan öppnar väskan med menyn;
-    `/tidypack` och addonmenyn gör det med öppen väska (stängd väska: inställningssidan, test 49). Show ▸ Tidy Pack lines in tooltips av: inga rader om set och grupp.
+    `/tidypack` och addonmenyn gör det med öppen väska (stängd väska: inställningssidan, test 49). Show ▸ Group line in tooltips av: ingen rad "Tidy Pack group".
     Junk value in the header av: rubriken Junk utan pengar. Starta om spelet (TOC-filen ändrad).
 49. Antal i tooltipen (2026-11-12): besök banken, gå därifrån och peka på en sak som finns både i väskan och
     i banken: "Bags N · Bank N · Total N" i blått. En sak som bara finns i väskan: ingen rad. Lägg in eller

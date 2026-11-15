@@ -501,7 +501,7 @@ local function buildGroups(width)
     local full = #list >= (ns.MAX_GROUPS or 8)
     newRow:SetEnabled(not full)
     newRow.text:SetText(full and L["You can have at most %d groups."]:format(ns.MAX_GROUPS or 8)
-        or L["+ New group – click, or drop an item"])
+        or L["+ New Group – click, or drop an item"])
     newRow:Show()
     y = y + ROW
     child:SetHeight(y)

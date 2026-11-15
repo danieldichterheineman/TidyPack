@@ -418,7 +418,7 @@ function ns.AddGroupMenus(rootDescription, itemID)
 
     if classID and subClassID then
         local typeName = ns.GetTypeName(classID, subClassID)
-        local byType = rootDescription:CreateButton(L["Add all \"%s\" items to Group"]:format(typeName))
+        local byType = rootDescription:CreateButton(L["Add All \"%s\" Items to Group"]:format(typeName))
         addGroupChoices(byType, function(index)
             return ns.IsTypeInGroup(index, classID, subClassID)
         end, function(index, inGroup)
@@ -433,7 +433,7 @@ end
 
 -- En rad i sakens tooltip med den egna gruppen, om saken ligger i en.
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-    -- Inställningen "Tidy Pack lines in tooltips" (kugghjulets Show ▸).
+    -- Inställningen "Group line in tooltips" (kugghjulets Show ▸).
     if not data or type(data.id) ~= "number" or ns.db == nil or ns.db.tooltipLines == false then
         return
     end

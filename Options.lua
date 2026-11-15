@@ -47,8 +47,8 @@ ns.optionMenus = {
                 end },
             { key = "showCounts", name = L["Bag and bank counts"],
                 tooltip = L["Item tooltips show how many you have in your bags and in your bank, and the total. Only for items in your bank, and only for this character."] },
-            { key = "tooltipLines", name = L["Tidy Pack lines in tooltips"],
-                tooltip = L["The line \"Tidy Pack group: ...\" in item tooltips. Lines about quests and locks always show."] },
+            { key = "tooltipLines", name = L["Group line in tooltips"],
+                tooltip = L["The line \"Tidy Pack group: ...\" in the tooltip of items in your own groups. Lines about quests and locks always show."] },
             { key = "junkValue", name = L["Junk value in the header"],
                 tooltip = L["What your junk sells for, next to the Junk header."], onChange = refresh },
             { key = "showSearchBox", name = L["Search box"],
@@ -87,7 +87,7 @@ ns.optionMenus = {
                     refresh()
                 end },
             { key = "groupByBag", name = L["Show by bag"],
-                tooltip = L["Show each bag (and bank tab) in slot order with its empty slots, instead of grouping everything by type. Favorites and your custom groups stay at the top."],
+                tooltip = L["Show each bag (and bank tab) in slot order with its empty slots, instead of grouping everything by type. Favorites and your own groups stay at the top."],
                 onChange = refresh },
         },
         -- Hos bankiren: spelets eget bankfönster, t.ex. för att köpa en bankplats (Bank.lua).
