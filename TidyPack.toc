@@ -40,6 +40,7 @@ QuestLock.lua
 QuestHints.lua
 BagSwap.lua
 Layout.lua
+Tabs.lua
 Bank.lua
 Characters.lua
 QuestsView.lua

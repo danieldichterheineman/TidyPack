@@ -275,8 +275,10 @@ with a default need no migration; a key that is removed or changes meaning needs
 - `QuestHints.lua` – items that later quests need (QuestieDB).
 - `BagSwap.lua` – bag swaps and which bags get a green arrow.
 - `Layout.lua` – rearranges the bag window: groups, parts, headings, marks, locks, special and
-  reagent bags, money, bag row and the bank's row, search, tabs, views, drop glow, fade. (2,583 lines – a candidate
-  for splitting, section 10.)
+  reagent bags, money, bag row and the bank's row, search, views, drop glow, fade. (2,545 lines – being
+  split, section 10.)
+- `Tabs.lua` – the tabs Bags, Bank and Quests and the switch between views (`ns.SetView`,
+  `ns.GetView`); loads right after `Layout.lua`.
 - `Bank.lua` – the Bank tab, saved bank, the bank's slots and bags, the game's bank window.
 - `Characters.lua` – counts in item tooltips, for this character and your other characters; the
   money's tooltip; Forget a Character.
@@ -507,7 +509,11 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 - The account (warband) bank in the Bank tab – Forever has it (`Enum.BankType.Account` in
   `Camelot/BankFrame.lua`).
 - Controller access to the Bank tab and the panels (issue #6).
-- Split `Layout.lua` into smaller files.
+- Split `Layout.lua` into smaller files (owner's yes 2026-11-17), one step at a time, each tried
+  in the game: 1 `Tabs.lua` (done, not tried yet), 2 `GameWindow.lua`, 3 `BottomRow.lua`,
+  4 `ItemMarks.lua`, 5 `Search.lua`. Code moves unchanged; shared parts go through `ns.layout`.
+  Players notice nothing, so no release of its own. Lua 5.1 allows 200 locals in a file's main
+  chunk; `Layout.lua` had 143.
 - Bank: buy the next bag slot right from the "+" (`C_Bank.PurchaseBankTab` must be called in the
   click itself; issue #4).
 
