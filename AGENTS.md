@@ -82,7 +82,7 @@ controller. The rules below each come from a real problem.
    tab laid out within a second brings the game's window back. The bags switch to Bank at once and
    again a frame later (`ns.SetView("bank", true)`, no fade). The game shrinks the bags to leave room
    for its bank window when it opens them (`GetContainerScale`, `leftLimit = BankFrame:GetRight()`),
-   so `Layout.lua` (`keepBagScaleAtBank`, after `UpdateContainerFrameAnchors` and when the window
+   so `GameWindow.lua` (`keepBagScaleAtBank`, after `UpdateContainerFrameAnchors` and when the window
    turns invisible) gives them the game's scale without the bank window. The reagent bag's own window
    is moved off screen the same way.
 7. **Own item buttons use the game's template** (`ContainerFrameItemButtonTemplate`) on a holder
@@ -275,10 +275,12 @@ with a default need no migration; a key that is removed or changes meaning needs
 - `QuestHints.lua` – items that later quests need (QuestieDB).
 - `BagSwap.lua` – bag swaps and which bags get a green arrow.
 - `Layout.lua` – rearranges the bag window: groups, parts, headings, marks, locks, special and
-  reagent bags, money, bag row and the bank's row, search, views, drop glow, fade. (2,545 lines – being
+  reagent bags, money, bag row and the bank's row, search, views, drop glow, fade. (2,466 lines – being
   split, section 10.)
 - `Tabs.lua` – the tabs Bags, Bank and Quests and the switch between views (`ns.SetView`,
   `ns.GetView`); loads right after `Layout.lua`.
+- `GameWindow.lua` – the game's own windows around the bags: the reagent bag's window put away,
+  the bags' size at a banker (`ns.KeepBagScaleAtBank`), the sort button and bag menu hidden.
 - `Bank.lua` – the Bank tab, saved bank, the bank's slots and bags, the game's bank window.
 - `Characters.lua` – counts in item tooltips, for this character and your other characters; the
   money's tooltip; Forget a Character.
@@ -510,7 +512,7 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
   `Camelot/BankFrame.lua`).
 - Controller access to the Bank tab and the panels (issue #6).
 - Split `Layout.lua` into smaller files (owner's yes 2026-11-17), one step at a time, each tried
-  in the game: 1 `Tabs.lua` (done, not tried yet), 2 `GameWindow.lua`, 3 `BottomRow.lua`,
+  in the game: 1 `Tabs.lua` (tried 2026-11-17), 2 `GameWindow.lua` (done, not tried yet), 3 `BottomRow.lua`,
   4 `ItemMarks.lua`, 5 `Search.lua`. Code moves unchanged; shared parts go through `ns.layout`.
   Players notice nothing, so no release of its own. Lua 5.1 allows 200 locals in a file's main
   chunk; `Layout.lua` had 143.
