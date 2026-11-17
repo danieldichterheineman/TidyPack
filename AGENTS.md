@@ -274,8 +274,8 @@ with a default need no migration; a key that is removed or changes meaning needs
 - `QuestLock.lua` – locks (quests, equipment sets), merchant state, quest tooltip lines.
 - `QuestHints.lua` – items that later quests need (QuestieDB).
 - `BagSwap.lua` – bag swaps and which bags get a green arrow.
-- `Layout.lua` – rearranges the bag window: groups, parts, headings, marks, locks, special and
-  reagent bags, search, views, fade, and the blue glow on a bag's items (`ns.DimBag`). (1,965 lines – being
+- `Layout.lua` – rearranges the bag window: groups, parts, headings, special and
+  reagent bags, search, views, fade, and the blue glow on a bag's items (`ns.DimBag`). (1,660 lines – being
   split, section 10.)
 - `Tabs.lua` – the tabs Bags, Bank and Quests and the switch between views (`ns.SetView`,
   `ns.GetView`); loads right after `Layout.lua`.
@@ -284,6 +284,9 @@ with a default need no migration; a key that is removed or changes meaning needs
 - `BottomRow.lua` – the bottom row: "N free" and its tooltip (`ns.UpdateFreeText`), the taller money
   row (`ns.IsMoneyRaised`), the bag row, the bank's row, and the yellow border while you hold an
   item. Shared numbers come from `ns.layout`.
+- `ItemMarks.lua` – marks on the item buttons: item level, BoE, upgrade arrow, locks, the Alt "..."
+  and empty-slot counts (`ns.UpdateItemMarks`, `ns.SetButtonLocked`); the tables `extras`,
+  `lockedButtons` and `disabledButtons` are created in `Layout.lua` and shared in `ns.layout`.
 - `Bank.lua` – the Bank tab, saved bank, the bank's slots and bags, the game's bank window.
 - `Characters.lua` – counts in item tooltips, for this character and your other characters; the
   money's tooltip; Forget a Character.
@@ -515,8 +518,8 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
   `Camelot/BankFrame.lua`).
 - Controller access to the Bank tab and the panels (issue #6).
 - Split `Layout.lua` into smaller files (owner's yes 2026-11-17), one step at a time, each tried
-  in the game: 1 `Tabs.lua` (tried 2026-11-17), 2 `GameWindow.lua` (tried 2026-11-17), 3 `BottomRow.lua` (done, not tried yet),
-  4 `ItemMarks.lua`, 5 `Search.lua`. Code moves unchanged; shared parts go through `ns.layout`.
+  in the game: 1 `Tabs.lua` (tried 2026-11-17), 2 `GameWindow.lua` (tried 2026-11-17), 3 `BottomRow.lua` (tried 2026-11-17),
+  4 `ItemMarks.lua` (done, not tried yet), 5 `Search.lua`. Code moves unchanged; shared parts go through `ns.layout`.
   Players notice nothing, so no release of its own. Lua 5.1 allows 200 locals in a file's main
   chunk; `Layout.lua` had 143.
 - Bank: buy the next bag slot right from the "+" (`C_Bank.PurchaseBankTab` must be called in the

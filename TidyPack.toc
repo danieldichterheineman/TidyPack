@@ -43,6 +43,7 @@ Layout.lua
 Tabs.lua
 GameWindow.lua
 BottomRow.lua
+ItemMarks.lua
 Bank.lua
 Characters.lua
 QuestsView.lua
