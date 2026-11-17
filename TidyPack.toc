@@ -42,6 +42,7 @@ BagSwap.lua
 Layout.lua
 Tabs.lua
 GameWindow.lua
+BottomRow.lua
 Bank.lua
 Characters.lua
 QuestsView.lua
