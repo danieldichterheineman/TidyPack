@@ -522,7 +522,7 @@ otherwise `/reload`. Have `/console scriptErrors 1` and `/console taintLog 1` on
 - Controller access to the Bank tab and the panels (issue #6).
 - Split `Layout.lua` into smaller files (owner's yes 2026-11-17), one step at a time, each tried
   in the game: 1 `Tabs.lua` (tried 2026-11-17), 2 `GameWindow.lua` (tried 2026-11-17), 3 `BottomRow.lua` (tried 2026-11-17),
-  4 `ItemMarks.lua` (tried 2026-11-17), 5 `Search.lua` (done, not tried yet). Code moves unchanged; shared parts go through `ns.layout`.
+  4 `ItemMarks.lua` (tried 2026-11-17), 5 `Search.lua` (tried 2026-11-17). Code moves unchanged; shared parts go through `ns.layout`.
   Players notice nothing, so no release of its own. Lua 5.1 allows 200 locals in a file's main
   chunk; `Layout.lua` had 143 before the split and 112 after.
 - Bank: buy the next bag slot right from the "+" (`C_Bank.PurchaseBankTab` must be called in the
