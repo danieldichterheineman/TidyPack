@@ -331,49 +331,6 @@ end
 
 local hoveredBagID -- the bag the mouse points at in the bag row, otherwise nil
 
-local function wantSearchBox()
-    if not (ns.db and ns.db.showSearchBox) then
-        return false
-    end
-    local view = ns.GetView and ns.GetView() or "bags"
-    return view == "bags" or view == "bank"
-end
-
-local function positionSearchBox(searchBox)
-    searchBox = searchBox or BagItemSearchBox
-    if not (searchBox and bagFrame and wantSearchBox()) then
-        return
-    end
-    -- Three tabs (3 * 90 + 2 * 2 = 274 wide, from x = 14 to 288). SearchBoxTemplate has
-    -- its left edge texture 5 units left of the frame (-5), so x = 19 and width 269
-    -- make the search box start at the left edge of Bags (14) and end at the right edge of Quests (288).
-    searchBox:SetSize(269, 18)
-    searchBox:SetFrameStrata(ns.gearButton and ns.gearButton:GetFrameStrata() or "HIGH")
-    searchBox:SetFrameLevel(ns.gearButton and ns.gearButton:GetFrameLevel() or (bagFrame:GetFrameLevel() + 30))
-    searchBox:ClearAllPoints()
-    searchBox:SetPoint("TOPLEFT", bagFrame, "TOPLEFT", 19, -3)
-end
-
-local function syncSearchBox()
-    if not BagItemSearchBox then
-        return
-    end
-    if bagFrame and bagFrame:IsShown() and wantSearchBox() then
-        if BagItemSearchBox:GetParent() ~= bagFrame then
-            BagItemSearchBox:SetParent(bagFrame)
-        end
-        positionSearchBox(BagItemSearchBox)
-        BagItemSearchBox:Show()
-    else
-        if BagItemSearchBox:GetText() ~= "" then
-            BagItemSearchBox:SetText("")
-        end
-        if BagItemSearchBox:GetParent() == bagFrame then
-            BagItemSearchBox:Hide()
-        end
-    end
-end
-
 -- True for Tidy Pack's own buttons from the game's template (the reagent bag and the bank at a banker).
 -- The game's own buttons (parent bagFrame) get their search state from the game itself, when the search
 -- box changes the game's search (C_Container.SetItemSearch → UpdateSearchResults). Tidy Pack never writes
@@ -390,7 +347,7 @@ local function applySearchHighlights()
         return
     end
     local query = ""
-    if wantSearchBox() and BagItemSearchBox and BagItemSearchBox:IsShown() then
+    if ns.WantSearchBox and ns.WantSearchBox() and BagItemSearchBox and BagItemSearchBox:IsShown() then
         query = (BagItemSearchBox:GetText() or ""):match("^%s*(.-)%s*$"):lower()
     end
     local searching = query ~= ""
@@ -430,6 +387,7 @@ local function applySearchHighlights()
         end
     end
 end
+ns.ApplySearchHighlights = applySearchHighlights -- also when the game's search changes (Search.lua)
 
 -- The items in the bag get a blue glow, and the rest dims (bagID nil: everything as usual).
 -- inBank: the bag is one of the bank's (the bank's row in BottomRow.lua), which dims in the Bank tab
@@ -479,7 +437,9 @@ local function applySize()
     if ns.UpdateFreeText then
         ns.UpdateFreeText() -- the free-slot count and the row after it (BottomRow.lua)
     end
-    positionSearchBox()
+    if ns.PositionSearchBox then
+        ns.PositionSearchBox() -- Search.lua
+    end
     -- The game's own windows (GameWindow.lua): the reagent bag's window and the size at a banker.
     if ns.HideReagentBagFrame then
         ns.HideReagentBagFrame()
@@ -1212,7 +1172,9 @@ local function relayout()
     local atMerchant = ns.IsAtMerchant()
     local view = ns.GetView and ns.GetView() or "bags"
     updateTitle()
-    syncSearchBox()
+    if ns.SyncSearchBox then
+        ns.SyncSearchBox() -- Search.lua
+    end
 
     -- 1. Sort every item into its group, and work out the Bags tab's size. All three tabs
     -- get the same width and height: the larger of the Bags tab and the Quests minimum. So the window
@@ -1391,11 +1353,6 @@ ns.RegisterEvent("BAG_UPDATE_DELAYED", function()
     end
 end)
 
-ns.RegisterEvent("INVENTORY_SEARCH_UPDATE", function()
-    if bagFrame and bagFrame:IsShown() and wantSearchBox() then
-        applySearchHighlights()
-    end
-end)
 
 ns.RegisterEvent("ITEM_LOCK_CHANGED", function(bagID)
     if bagID == REAGENT_BAG and bagFrame and bagFrame:IsShown()
@@ -1572,24 +1529,7 @@ ns.OnLoad(function()
     bankNote:SetTextColor(1, 0.85, 0.63)
     bankNote:Hide()
 
-    -- The search box is off by default but can be turned on under the gear → Show → Search box,
-    -- and then shows only in the Bags and Bank tabs (in the title bar).
     -- The bag icon is swapped for the game's frame without an icon (the same frames as the game's other windows).
-    if BagItemSearchBox then
-        hooksecurefunc(bagFrame, "SetSearchBoxPoint", function(_, searchBox)
-            positionSearchBox(searchBox)
-        end)
-        hooksecurefunc(BagItemSearchBox, "Show", function(self)
-            if self:GetParent() == bagFrame then
-                if wantSearchBox() then
-                    positionSearchBox(self)
-                else
-                    self:Hide()
-                end
-            end
-        end)
-        syncSearchBox()
-    end
     if bagFrame.PortraitContainer then
         bagFrame.PortraitContainer:Hide()
     end

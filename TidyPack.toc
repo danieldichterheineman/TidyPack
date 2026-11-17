@@ -44,6 +44,7 @@ Tabs.lua
 GameWindow.lua
 BottomRow.lua
 ItemMarks.lua
+Search.lua
 Bank.lua
 Characters.lua
 QuestsView.lua
